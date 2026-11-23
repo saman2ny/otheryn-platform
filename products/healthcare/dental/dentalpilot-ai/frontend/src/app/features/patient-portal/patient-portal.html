@@ -1,0 +1,242 @@
+<main class="min-h-screen bg-[#f7f6f1] px-4 py-10 text-zinc-900">
+  <div class="mx-auto max-w-3xl">
+    <header class="mb-8">
+      <a
+        href="/patient-portal"
+        class="text-xs font-semibold tracking-[0.18em] text-teal-800 uppercase"
+      >
+        DentalPilot AI
+      </a>
+      <h1 class="mt-4 text-3xl font-semibold tracking-tight">Patient passport</h1>
+      <p class="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+        Secure access to records shared by your dental practice. Your portal account is separate
+        from clinic staff access.
+      </p>
+    </header>
+
+    @if (isSharedView()) {
+      @if (shared(); as share) {
+        <section class="rounded-xl border border-zinc-200 bg-white p-6">
+          <div class="flex flex-wrap justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold">{{ share.purpose }}</h2>
+              <p class="mt-1 text-sm text-zinc-500">Shared with {{ share.recipientName }}</p>
+            </div>
+            <span class="text-xs text-zinc-500"
+              >Expires {{ share.expiresAt | date: 'medium' }}</span
+            >
+          </div>
+          <div class="mt-5 grid gap-3">
+            @for (record of share.records; track record.id) {
+              <article class="rounded-lg border border-zinc-200 p-4">
+                <h3 class="font-medium">{{ record.title }}</h3>
+                <p class="mt-1 text-sm text-zinc-500">
+                  {{ record.recordType }} · {{ record.sourceName }} · version
+                  {{ record.versionNumber }}
+                </p>
+                <code class="mt-2 block break-all text-xs text-zinc-400">{{
+                  record.provenanceHash
+                }}</code>
+              </article>
+            } @empty {
+              <p class="text-sm text-zinc-500">There are no records in this share.</p>
+            }
+          </div>
+        </section>
+      } @else {
+        <p class="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
+          Checking this secure share link…
+        </p>
+      }
+    } @else if (patient(); as profile) {
+      <section
+        class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-5"
+      >
+        <div>
+          <h2 class="font-semibold">{{ profile.fullName }}</h2>
+          <p class="text-sm text-zinc-500">{{ profile.email }}</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          (click)="logout()"
+        >
+          Sign out
+        </button>
+      </section>
+      @if (treatmentCharges().length) {
+        <section class="mb-5 rounded-xl border border-zinc-200 bg-white p-5">
+          <h2 class="text-lg font-semibold">Treatment balances</h2>
+          <p class="mt-1 text-sm text-zinc-500">
+            Online checkout is available for balances supported by this clinic.
+          </p>
+          <div class="mt-4 grid gap-3">
+            @for (charge of treatmentCharges(); track charge.chargeEntryId) {
+              <article class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-4">
+                <div>
+                  <h3 class="font-medium">Treatment charge</h3>
+                  <p class="mt-1 text-sm text-zinc-600">
+                    Balance due: {{ charge.currency }} {{ charge.balanceAmount.toFixed(2) }}
+                  </p>
+                  <p class="text-xs text-zinc-500">
+                    Charge {{ charge.chargeEntryId.slice(0, 8) }} · Paid {{ charge.currency }}
+                    {{ charge.paidAmount.toFixed(2) }}
+                  </p>
+                </div>
+                @if (charge.paymentEnabled) {
+                  <button
+                    type="button"
+                    class="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    [disabled]="payingChargeId() !== ''"
+                    (click)="startTreatmentPayment(charge)"
+                  >
+                    {{ payingChargeId() === charge.chargeEntryId ? 'Opening checkout…' : 'Pay balance' }}
+                  </button>
+                } @else {
+                  <span class="text-xs text-zinc-500">Online payment unavailable</span>
+                }
+              </article>
+            }
+          </div>
+        </section>
+      }
+      <section class="rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 class="text-lg font-semibold">Your records</h2>
+        <div class="mt-4 grid gap-3">
+          @for (record of records(); track record.id) {
+            <article
+              class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-4"
+            >
+              <div>
+                <h3 class="font-medium">{{ record.title }}</h3>
+                <p class="text-sm text-zinc-500">
+                  {{ record.recordType }} · {{ record.sourceName }} · version
+                  {{ record.versionNumber }}
+                </p>
+                <code class="mt-1 block text-xs text-zinc-400"
+                  >{{ record.provenanceHash.slice(0, 16) }}…</code
+                >
+              </div>
+              <button
+                type="button"
+                class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                (click)="downloadRecord(record)"
+              >
+                Download record
+              </button>
+              <label class="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  [checked]="selectedRecordIds().has(record.id)"
+                  (change)="toggleRecordSelection(record.id, $event)"
+                />
+                Select to share
+              </label>
+            </article>
+          } @empty {
+            <p class="text-sm text-zinc-500">Your clinic has not added records yet.</p>
+          }
+        </div>
+      </section>
+      <section class="mt-5 rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 class="text-lg font-semibold">Share selected records</h2>
+        <p class="mt-1 text-sm text-zinc-500">
+          Create a view-only link that expires after seven days. Select records above first.
+        </p>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="shareForm.recipientName"
+            name="shareRecipient"
+            placeholder="Recipient name"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="shareForm.purpose"
+            name="sharePurpose"
+            placeholder="Purpose"
+          />
+        </div>
+        <button
+          type="button"
+          class="mt-3 rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white"
+          (click)="shareRecords()"
+        >
+          Create secure link
+        </button>
+        @if (shareLink()) {
+          <p class="mt-3 break-all rounded bg-teal-50 p-3 text-xs text-teal-900">
+            {{ shareLink() }}
+          </p>
+        }
+      </section>
+    } @else {
+      @if (invitationToken()) {
+        <section class="mb-5 rounded-xl border border-teal-200 bg-white p-5">
+          <h2 class="text-lg font-semibold">Activate your patient account</h2>
+          <p class="mt-1 text-sm text-zinc-500">
+            Set a password for the invitation supplied by your clinic.
+          </p>
+          <input
+            class="mt-4 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [value]="invitationToken()"
+            (input)="updateInvitationToken($event)"
+            aria-label="Invitation token"
+            placeholder="Invitation token"
+          />
+          <input
+            class="mt-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="activationForm.password"
+            name="activationPassword"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Create password (12+ characters)"
+          />
+          <button
+            type="button"
+            class="mt-3 rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white"
+            [disabled]="loading()"
+            (click)="activateInvitation()"
+          >
+            Activate account
+          </button>
+        </section>
+      }
+      <section class="rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 class="text-lg font-semibold">Sign in</h2>
+        <div class="mt-4 grid gap-3">
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="loginForm.clinicId"
+            name="clinicId"
+            placeholder="Clinic ID"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="loginForm.email"
+            name="patientEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="Email address"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="loginForm.password"
+            name="patientPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Password"
+          />
+        </div>
+        <button
+          type="button"
+          class="mt-3 rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white"
+          [disabled]="loading()"
+          (click)="login()"
+        >
+          {{ loading() ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </section>
+    }
+  </div>
+</main>

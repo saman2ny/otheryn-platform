@@ -1,0 +1,139 @@
+<dp-page-header
+  title="Clinic Profile"
+  subtitle="This profile shapes every piece of AI-generated content for your clinic."
+/>
+
+@if (!loading()) {
+  <form
+    class="max-w-3xl rounded-lg border border-zinc-200 bg-white p-6"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+  >
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="name">Clinic name</label>
+        <input
+          id="name"
+          type="text"
+          [class]="inputClass(form.controls.name)"
+          formControlName="name"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="specialty">Specialty</label>
+        <select
+          id="specialty"
+          [class]="inputClass(form.controls.specialty)"
+          formControlName="specialty"
+        >
+          <option value="general-dentistry">General Dentistry</option>
+          <option value="orthodontics">Orthodontics</option>
+          <option value="cosmetic-dentistry">Cosmetic Dentistry</option>
+          <option value="implants">Implants</option>
+          <option value="pediatric-dentistry">Pediatric Dentistry</option>
+        </select>
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="phone">Phone</label>
+        <input
+          id="phone"
+          type="tel"
+          [class]="inputClass(form.controls.phone)"
+          formControlName="phone"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="website">Website</label>
+        <input
+          id="website"
+          type="url"
+          [class]="inputClass(form.controls.website)"
+          formControlName="website"
+          placeholder="https://"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="address">Address</label>
+        <input
+          id="address"
+          type="text"
+          [class]="inputClass(form.controls.address)"
+          formControlName="address"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="city">City</label>
+        <input
+          id="city"
+          type="text"
+          [class]="inputClass(form.controls.city)"
+          formControlName="city"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="country">Country</label>
+        <input
+          id="country"
+          type="text"
+          [class]="inputClass(form.controls.country)"
+          formControlName="country"
+        />
+      </div>
+
+      <div class="mb-4 flex flex-col gap-1">
+        <label class="text-sm font-semibold text-zinc-900" for="brandTone">Brand tone</label>
+        <select
+          id="brandTone"
+          [class]="inputClass(form.controls.brandTone)"
+          formControlName="brandTone"
+        >
+          <option value="friendly">Friendly</option>
+          <option value="professional">Professional</option>
+          <option value="premium">Premium</option>
+          <option value="playful">Playful</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="targetAudience"
+        >Target audience</label
+      >
+      <input
+        id="targetAudience"
+        type="text"
+        [class]="inputClass(form.controls.targetAudience)"
+        formControlName="targetAudience"
+        placeholder="e.g. Families in downtown Austin"
+      />
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="aboutText">About your clinic</label>
+      <textarea
+        id="aboutText"
+        [class]="inputClass(form.controls.aboutText, 'min-h-[96px] resize-y')"
+        formControlName="aboutText"
+        placeholder="Used by the AI to keep content on-brand."
+      ></textarea>
+    </div>
+
+    @if (canManage()) {
+      <button
+        type="submit"
+        class="rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'Saving…' : 'Save profile' }}
+      </button>
+    } @else {
+      <p class="m-0 text-xs text-zinc-500">View-only — ask a clinic owner to make changes.</p>
+    }
+  </form>
+}

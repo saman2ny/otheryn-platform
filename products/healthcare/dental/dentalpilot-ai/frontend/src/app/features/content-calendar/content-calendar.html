@@ -1,0 +1,92 @@
+<dp-page-header title="Content Calendar" subtitle="Plan and track when your content goes live." />
+
+<div class="grid grid-cols-1 items-start gap-6 md:grid-cols-[340px_1fr]">
+  <form
+    class="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-6"
+    [formGroup]="form"
+    (ngSubmit)="schedule()"
+  >
+    <h3 class="text-base font-semibold text-zinc-900">Schedule content</h3>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="contentId">Content</label>
+      <select
+        id="contentId"
+        [class]="inputClass(form.controls.contentId)"
+        formControlName="contentId"
+      >
+        <option value="" disabled>Select generated content</option>
+        @for (item of availableContent(); track item.id) {
+          <option [value]="item.id">{{ item.headline }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="scheduledAt">Date & time</label>
+      <input
+        id="scheduledAt"
+        type="datetime-local"
+        [class]="inputClass(form.controls.scheduledAt)"
+        formControlName="scheduledAt"
+      />
+    </div>
+
+    <button
+      type="submit"
+      class="rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+      [disabled]="scheduling()"
+    >
+      {{ scheduling() ? 'Scheduling…' : 'Schedule post' }}
+    </button>
+  </form>
+
+  <div class="rounded-lg border border-zinc-200 bg-white p-6">
+    <h3 class="mb-3 text-base font-semibold text-zinc-900">Upcoming</h3>
+    @if (!loading() && sortedEvents().length) {
+      <ul class="flex flex-col gap-3">
+        @for (event of sortedEvents(); track event.id) {
+          <li
+            class="flex items-center justify-between gap-3 border-b border-zinc-200 pb-3 last:border-0 last:pb-0"
+          >
+            <div>
+              <strong class="text-zinc-900">{{ event.title }}</strong>
+              <div class="text-xs text-zinc-500">
+                {{ event.scheduledAt | date: 'EEE, MMM d · h:mm a' }}
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+              <span
+                class="inline-flex items-center rounded-md border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-500"
+              >
+                {{ event.platform }}
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  [class.bg-green-600]="event.status === 'published'"
+                  [class.bg-amber-500]="event.status === 'scheduled'"
+                  [class.bg-red-600]="event.status === 'missed'"
+                ></span>
+                {{ event.status }}
+              </span>
+              <button
+                type="button"
+                class="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                (click)="removeEvent(event.id)"
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else if (!loading()) {
+      <dp-empty-state
+        icon="🗓️"
+        title="Nothing scheduled"
+        message="Schedule your first post to see it appear here."
+      />
+    }
+  </div>
+</div>

@@ -1,0 +1,66 @@
+<h2 class="text-lg font-semibold text-zinc-900">Create your account</h2>
+<p class="mb-3 text-zinc-500">Start generating dental-specific marketing content in minutes.</p>
+
+<form class="flex flex-col gap-3" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="fullName">Your name</label>
+    <input
+      id="fullName"
+      type="text"
+      [class]="inputClass(form.controls.fullName)"
+      formControlName="fullName"
+      autocomplete="name"
+    />
+  </div>
+
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="clinicName">Clinic name</label>
+    <input
+      id="clinicName"
+      type="text"
+      [class]="inputClass(form.controls.clinicName)"
+      formControlName="clinicName"
+    />
+  </div>
+
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="email">Email</label>
+    <input
+      id="email"
+      type="email"
+      [class]="inputClass(form.controls.email)"
+      formControlName="email"
+      autocomplete="email"
+    />
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <span class="text-xs text-red-600">Enter a valid email address.</span>
+    }
+  </div>
+
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="password">Password</label>
+    <input
+      id="password"
+      type="password"
+      [class]="inputClass(form.controls.password)"
+      formControlName="password"
+      autocomplete="new-password"
+    />
+    @if (form.controls.password.invalid && form.controls.password.touched) {
+      <span class="text-xs text-red-600">Password must be at least 8 characters.</span>
+    }
+  </div>
+
+  <button
+    type="submit"
+    class="w-full rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+    [disabled]="submitting()"
+  >
+    {{ submitting() ? 'Creating account…' : 'Create account' }}
+  </button>
+</form>
+
+<div class="mt-4 flex justify-between text-sm">
+  <span class="text-zinc-500">Already have an account?</span>
+  <a class="text-teal-700 hover:underline" routerLink="/auth/login">Sign in</a>
+</div>

@@ -1,0 +1,10 @@
+<div class="dp-stat-card">
+  @if (icon()) {
+    <span class="dp-stat-icon" aria-hidden="true">{{ icon() }}</span>
+  }
+  <span class="dp-stat-label">{{ label() }}</span>
+  <span class="dp-stat-value">{{ value() }}</span>
+  @if (hint()) {
+    <span class="dp-stat-hint">{{ hint() }}</span>
+  }
+</div>

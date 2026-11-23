@@ -1,0 +1,101 @@
+<dp-page-header
+  title="Export Content"
+  subtitle="Bundle generated content for offline use or handoff."
+/>
+
+<div class="grid grid-cols-1 items-start gap-6 md:grid-cols-[380px_1fr]">
+  <form
+    class="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-6"
+    [formGroup]="form"
+    (ngSubmit)="submitExport()"
+  >
+    <h3 class="text-base font-semibold text-zinc-900">Select content</h3>
+
+    @if (availableContent().length) {
+      <ul class="flex max-h-64 flex-col gap-2 overflow-y-auto">
+        @for (item of availableContent(); track item.id) {
+          <li>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                class="accent-teal-700"
+                (change)="toggleSelection(item.id, $any($event.target).checked)"
+              />
+              {{ item.headline }}
+              <span
+                class="inline-flex items-center rounded-md border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-500"
+              >
+                {{ item.platform }}
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p>Generate some content first to export it.</p>
+    }
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="format">Export format</label>
+      <select id="format" [class]="inputClass(form.controls.format)" formControlName="format">
+        <option value="pdf">PDF</option>
+        <option value="png">PNG</option>
+        <option value="csv">CSV</option>
+      </select>
+    </div>
+
+    <button
+      type="submit"
+      class="rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+      [disabled]="submitting()"
+    >
+      {{ submitting() ? 'Exporting…' : 'Export selected' }}
+    </button>
+  </form>
+
+  <div class="rounded-lg border border-zinc-200 bg-white p-6">
+    <h3 class="mb-3 text-base font-semibold text-zinc-900">Export history</h3>
+    @if (jobs().length) {
+      <ul class="flex flex-col gap-3">
+        @for (job of jobs(); track job.id) {
+          <li
+            class="flex items-center justify-between gap-3 border-b border-zinc-200 pb-3 last:border-0 last:pb-0"
+          >
+            <div>
+              <strong class="text-zinc-900"
+                >{{ job.format | uppercase }} · {{ job.contentIds.length }} item(s)</strong
+              >
+              <div class="text-xs text-zinc-500">{{ job.createdAt | date: 'MMM d, h:mm a' }}</div>
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  [class.bg-green-600]="job.status === 'completed'"
+                  [class.bg-amber-500]="job.status === 'processing' || job.status === 'pending'"
+                  [class.bg-red-600]="job.status === 'failed'"
+                ></span>
+                {{ job.status }}
+              </span>
+              @if (job.downloadUrl) {
+                <button
+                  type="button"
+                  class="rounded-md px-3 py-1.5 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50"
+                  (click)="download(job.id)"
+                >
+                  Download
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <dp-empty-state
+        icon="⬇️"
+        title="No exports yet"
+        message="Your export jobs will show up here."
+      />
+    }
+  </div>
+</div>

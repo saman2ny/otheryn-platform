@@ -1,0 +1,45 @@
+<h2 class="text-lg font-semibold text-zinc-900">Welcome back</h2>
+<p class="mb-3 text-zinc-500">Sign in to keep your clinic's marketing running.</p>
+
+<form class="flex flex-col gap-3" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="email">Email</label>
+    <input
+      id="email"
+      type="email"
+      [class]="inputClass(form.controls.email)"
+      formControlName="email"
+      autocomplete="email"
+    />
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <span class="text-xs text-red-600">Enter a valid email address.</span>
+    }
+  </div>
+
+  <div class="mb-4 flex flex-col gap-1">
+    <label class="text-sm font-semibold text-zinc-900" for="password">Password</label>
+    <input
+      id="password"
+      type="password"
+      [class]="inputClass(form.controls.password)"
+      formControlName="password"
+      autocomplete="current-password"
+    />
+    @if (form.controls.password.invalid && form.controls.password.touched) {
+      <span class="text-xs text-red-600">Password must be at least 8 characters.</span>
+    }
+  </div>
+
+  <button
+    type="submit"
+    class="w-full rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+    [disabled]="submitting()"
+  >
+    {{ submitting() ? 'Signing in…' : 'Sign in' }}
+  </button>
+</form>
+
+<div class="mt-4 flex justify-between text-sm">
+  <a class="text-teal-700 hover:underline" routerLink="/auth/forgot-password">Forgot password?</a>
+  <a class="text-teal-700 hover:underline" routerLink="/auth/register">Create an account</a>
+</div>

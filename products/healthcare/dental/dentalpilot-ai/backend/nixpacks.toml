@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["python311"]
+
+# No [phases.install] override — Nixpacks' built-in Python installer already creates a venv
+# with pip via ensurepip and runs `pip install -r requirements.txt` reliably. A custom install
+# phase here bypasses that and hits "No module named pip" on plain `python311` from nixpkgs,
+# which doesn't always bundle pip.
+
+# Fallback only — railway.toml's [deploy].startCommand is what Railway actually runs
+# (it also chains `alembic upgrade head` first). Keep this in sync if that ever changes,
+# and never set a Custom Start Command in the Railway dashboard — it silently overrides both.
+[start]
+cmd = "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"

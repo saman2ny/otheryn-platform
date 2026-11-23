@@ -1,0 +1,1866 @@
+<dp-page-header
+  [title]="pageTitle()"
+  subtitle="Connected tools for patient records, treatment decisions, clinic operations, and consent."
+/>
+
+<div class="dp-workflow-tabs mb-6 flex gap-2 border-b border-zinc-200">
+  @for (tab of tabs; track tab.key) {
+    <button
+      type="button"
+      (click)="setTab(tab.key)"
+      [class]="
+        activeTab() === tab.key
+          ? 'border-b-2 border-teal-700 px-4 py-3 text-sm font-semibold text-teal-700'
+          : 'border-b-2 border-transparent px-4 py-3 text-sm font-medium text-zinc-500'
+      "
+    >
+      {{ tab.label }}
+    </button>
+  }
+</div>
+
+@if (activeTab() === 'overview') {
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-4 font-semibold text-zinc-900">Register patient</h2>
+      <div class="grid gap-3">
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="patientForm.fullName"
+          name="fullName"
+          placeholder="Full name"
+        />
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="patientForm.email"
+          name="email"
+          placeholder="Email"
+          type="email"
+        />
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="patientForm.phone"
+          name="phone"
+          placeholder="Phone"
+        />
+        <select
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="patientForm.consentChannel"
+          name="consentChannel"
+        >
+          <option value="email">Email</option>
+          <option value="sms">SMS</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="phone">Phone</option>
+        </select>
+        <button
+          type="button"
+          class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+          [disabled]="saving()"
+          (click)="createPatient()"
+        >
+          {{ saving() ? 'Saving...' : 'Add patient' }}
+        </button>
+      </div>
+    </section>
+    <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-4 font-semibold text-zinc-900">Patients</h2>
+      @if (patients().length === 0) {
+        <p class="text-sm text-zinc-500">No patients registered yet.</p>
+      } @else {
+        <div class="space-y-2">
+          @for (patient of patients(); track patient.id) {
+            <div class="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-2">
+              <div>
+                <div class="text-sm font-medium">{{ patient.fullName }}</div>
+                <div class="text-xs text-zinc-500">
+                  {{ patient.email || patient.phone || 'No contact' }}
+                </div>
+              </div>
+              @if (patient.email) {
+                <button
+                  type="button"
+                  class="rounded border border-zinc-300 px-2 py-1 text-xs"
+                  (click)="createPortalInvitation(patient.id)"
+                >
+                  Invite to portal
+                </button>
+              }
+            </div>
+          }
+        </div>
+        @if (portalInvitation(); as invitation) {
+          <div class="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 text-sm">
+            <p class="font-medium">One-time patient invitation</p>
+            <code class="mt-1 block break-all text-xs">{{ invitation.invitationToken }}</code>
+            <a
+              class="mt-2 block break-all text-xs text-teal-800 underline"
+              [href]="portalInvitationUrl()"
+            >
+              {{ portalInvitationUrl() }}
+            </a>
+            <p class="mt-1 text-xs text-zinc-600">
+              Expires {{ invitation.expiresAt | date: 'medium' }}. Deliver this token securely.
+              Patients can activate at /patient-portal.
+            </p>
+          </div>
+        }
+      }
+    </section>
+  </div>
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-1 font-semibold text-zinc-900">Add patient enquiry</h2>
+      <p class="mb-4 text-sm text-zinc-500">
+        Track prospective patients without creating a patient record until they are ready.
+      </p>
+      <div class="grid gap-3">
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="enquiryForm.fullName"
+          name="enquiryName"
+          placeholder="Full name"
+        />
+        <div class="grid gap-3 md:grid-cols-2">
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="enquiryForm.email"
+            name="enquiryEmail"
+            placeholder="Email (or phone)"
+            type="email"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="enquiryForm.phone"
+            name="enquiryPhone"
+            placeholder="Phone"
+          />
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="enquiryForm.source"
+            name="enquirySource"
+            placeholder="Enquiry source"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="enquiryForm.requestedService"
+            name="enquiryService"
+            placeholder="Requested service"
+          />
+        </div>
+        <textarea
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="enquiryForm.notes"
+          name="enquiryNotes"
+          placeholder="Notes"
+          rows="2"
+        ></textarea>
+        <button
+          type="button"
+          class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+          (click)="createEnquiry()"
+        >
+          Add enquiry
+        </button>
+      </div>
+    </section>
+    <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-4 font-semibold text-zinc-900">Enquiry pipeline</h2>
+      @if (enquiries().length === 0) {
+        <p class="text-sm text-zinc-500">No enquiries have been recorded.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (enquiry of enquiries(); track enquiry.id) {
+            <article class="rounded-md bg-zinc-50 p-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-medium text-zinc-900">{{ enquiry.fullName }}</h3>
+                  <p class="text-xs text-zinc-500">
+                    {{ enquiry.email || enquiry.phone }} · {{ enquiry.source }}
+                  </p>
+                  @if (enquiry.requestedService) {
+                    <p class="mt-1 text-xs text-zinc-600">{{ enquiry.requestedService }}</p>
+                  }
+                  @if (enquiry.notes) {
+                    <p class="mt-1 text-xs text-zinc-600">{{ enquiry.notes }}</p>
+                  }
+                </div>
+                <span class="rounded-full bg-white px-2 py-1 text-xs capitalize text-zinc-600">
+                  {{ enquiry.status }}
+                </span>
+              </div>
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <select
+                  class="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
+                  [ngModel]="enquiry.status"
+                  (ngModelChange)="updateEnquiryStatus(enquiry.id, $event)"
+                  [attr.aria-label]="'Update status for ' + enquiry.fullName"
+                >
+                  <option [value]="enquiry.status">{{ enquiry.status }}</option>
+                  @if (enquiry.status === 'new') {
+                    <option value="contacted">contacted</option>
+                    <option value="closed">closed</option>
+                  } @else if (enquiry.status === 'contacted') {
+                    <option value="consultation-booked">consultation booked</option>
+                    <option value="closed">closed</option>
+                  } @else if (enquiry.status === 'consultation-booked') {
+                    <option value="closed">closed</option>
+                  }
+                </select>
+                @if (enquiry.status === 'consultation-booked') {
+                  <button
+                    type="button"
+                    class="rounded-md border border-teal-200 bg-white px-3 py-1 text-xs font-medium text-teal-800"
+                    (click)="convertEnquiry(enquiry.id)"
+                  >
+                    Convert to patient
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </div>
+  <section class="mt-6 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-1 font-semibold text-zinc-900">Patient communication history</h2>
+    <p class="mb-4 text-sm text-zinc-500">
+      Log interactions and queue consent-confirmed email through the configured SMTP outbox. SMS and
+      WhatsApp remain manual.
+    </p>
+    <div class="grid gap-3 md:grid-cols-3">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="selectedCrmPatientId()"
+        (ngModelChange)="loadPatientCommunications($event)"
+        name="communicationPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="communicationForm.channel"
+        name="communicationChannel"
+      >
+        <option value="phone">Phone</option>
+        <option value="email">Email</option>
+        <option value="sms">SMS</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="in-person">In person</option>
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="communicationForm.direction"
+        name="communicationDirection"
+      >
+        <option value="outbound">Clinic contacted patient</option>
+        <option value="inbound">Patient contacted clinic</option>
+      </select>
+      <textarea
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+        [(ngModel)]="communicationForm.summary"
+        name="communicationSummary"
+        placeholder="Interaction summary"
+        rows="2"
+      ></textarea>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        [disabled]="!selectedCrmPatientId()"
+        (click)="createCommunication()"
+      >
+        Log interaction
+      </button>
+    </div>
+    <div class="mt-5 grid gap-3 rounded-md border border-zinc-200 p-4 md:grid-cols-2">
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="patientEmailForm.subject"
+        name="patientEmailSubject"
+        placeholder="Email subject"
+      />
+      <label class="flex items-center gap-2 text-sm text-zinc-700">
+        <input
+          type="checkbox"
+          [(ngModel)]="patientEmailForm.consentConfirmed"
+          name="patientEmailConsent"
+        />
+        Patient has consented to email
+      </label>
+      <textarea
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+        [(ngModel)]="patientEmailForm.bodyText"
+        name="patientEmailBody"
+        placeholder="Email message"
+        rows="3"
+      ></textarea>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white md:col-span-2"
+        [disabled]="!selectedCrmPatientId()"
+        (click)="sendPatientEmail()"
+      >
+        Queue email
+      </button>
+    </div>
+    @if (emailOutbox().length) {
+      <div class="mt-4 space-y-2">
+        @for (email of emailOutbox(); track email.id) {
+          <div class="flex flex-wrap justify-between gap-2 rounded-md bg-zinc-50 px-3 py-2 text-xs">
+            <span>{{ email.recipientEmail }} · {{ email.subject }}</span>
+            <span class="capitalize">{{ email.status }} · {{ email.attemptCount }} attempts</span>
+          </div>
+        }
+      </div>
+    }
+    @if (selectedCrmPatientId()) {
+      <div class="mt-5 space-y-2">
+        @for (communication of communications(); track communication.id) {
+          <article class="rounded-md bg-zinc-50 px-3 py-3">
+            <div class="flex flex-wrap justify-between gap-2 text-xs text-zinc-500">
+              <span class="font-medium capitalize text-zinc-700">
+                {{ communication.direction }} · {{ communication.channel }}
+              </span>
+              <time>{{ communication.createdAt | date: 'medium' }}</time>
+            </div>
+            <p class="mt-1 text-sm text-zinc-700">{{ communication.summary }}</p>
+          </article>
+        } @empty {
+          <p class="text-sm text-zinc-500">No communication history for this patient.</p>
+        }
+      </div>
+    }
+  </section>
+}
+
+@if (activeTab() === 'revenue') {
+  <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white p-4">
+    <div>
+      <h2 class="font-semibold text-zinc-900">Accounting exports</h2>
+      <p class="text-sm text-zinc-500">Provider-neutral CSV files for your accounting and claims reconciliation.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        (click)="downloadAccountingCsv('ledger')"
+      >
+        Export ledger CSV
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        (click)="downloadAccountingCsv('claims')"
+      >
+        Export insurance claims CSV
+      </button>
+    </div>
+  </section>
+  @if (recovery(); as summary) {
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <dp-stat-card
+        label="Pending treatment"
+        [value]="summary.currency + ' ' + summary.pendingValue"
+      />
+      <dp-stat-card
+        label="Overdue treatment"
+        [value]="summary.currency + ' ' + summary.overdueValue"
+      />
+      <dp-stat-card label="Deferred" [value]="summary.currency + ' ' + summary.deferredValue" />
+      <dp-stat-card label="Declined" [value]="summary.currency + ' ' + summary.declinedValue" />
+      <dp-stat-card label="Accepted" [value]="summary.currency + ' ' + summary.acceptedValue" />
+      <dp-stat-card label="Completed" [value]="summary.currency + ' ' + summary.completedValue" />
+      <dp-stat-card label="Charges" [value]="summary.currency + ' ' + summary.chargesValue" />
+      <dp-stat-card
+        label="Payments received"
+        [value]="summary.currency + ' ' + summary.paymentsReceived"
+      />
+      <dp-stat-card label="Refunds" [value]="summary.currency + ' ' + summary.refundsValue" />
+      <dp-stat-card label="Net collected" [value]="summary.currency + ' ' + summary.netCollected" />
+      <dp-stat-card
+        label="Outstanding balance"
+        [value]="summary.currency + ' ' + summary.outstandingBalance"
+      />
+      <dp-stat-card label="Conversion" [value]="summary.conversionRate + '%'" />
+      <dp-stat-card label="Completion" [value]="summary.completionRate + '%'" />
+    </div>
+    <section class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="font-semibold text-zinc-900">Recovery pipeline</h2>
+      <p class="mt-2 text-sm text-zinc-600">
+        {{ summary.pendingStageCount }} treatment stages remain open;
+        {{ summary.overdueStageCount }} are overdue. {{ summary.decisionCount }} patient decisions
+        have been recorded.
+      </p>
+    </section>
+  }
+  <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-1 font-semibold text-zinc-900">Record treatment payment or adjustment</h2>
+    <p class="mb-4 text-sm text-zinc-500">
+      Record offline adjustments or accept a Razorpay payment against an outstanding treatment charge.
+      Online checkout uses the server-calculated balance; the browser never sets the amount.
+    </p>
+    <div class="grid gap-3 md:grid-cols-3">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="ledgerForm.patientId"
+        (ngModelChange)="updateLedgerPatient($event)"
+        name="ledgerPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="ledgerForm.stageId"
+        (ngModelChange)="updateLedgerStage($event)"
+        name="ledgerStage"
+        [disabled]="!ledgerForm.patientId"
+      >
+        <option value="">Not linked to a treatment stage</option>
+        @for (stage of availableLedgerStages(); track stage.id) {
+          <option [value]="stage.id">
+            {{ stage.name }} · {{ stage.currency }} {{ stage.estimatedValue }}
+          </option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="ledgerForm.entryType"
+        (ngModelChange)="updateLedgerEntryType($event)"
+        name="ledgerEntryType"
+      >
+        <option value="charge">Charge</option>
+        <option value="payment">Payment</option>
+        <option value="refund">Refund</option>
+      </select>
+      @if (ledgerForm.entryType !== 'charge') {
+        <select
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="ledgerForm.chargeEntryId"
+          (ngModelChange)="updateLedgerCharge($event)"
+          name="ledgerCharge"
+          [disabled]="!ledgerForm.patientId"
+        >
+          <option value="">Unlinked adjustment</option>
+          @for (charge of availableLedgerCharges(); track charge.id) {
+            <option [value]="charge.id">
+              {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }} {{ charge.amount }}
+            </option>
+          }
+        </select>
+      }
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="ledgerForm.amount"
+        name="ledgerAmount"
+        type="number"
+        min="0.01"
+        step="0.01"
+        placeholder="Amount"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="ledgerForm.currency"
+        name="ledgerCurrency"
+      >
+        <option value="INR">INR</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="ledgerForm.method"
+        name="ledgerMethod"
+      >
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="bank-transfer">Bank transfer</option>
+        <option value="insurance">Insurance</option>
+        <option value="other">Other</option>
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="ledgerForm.reference"
+        name="ledgerReference"
+        placeholder="Receipt/reference (optional)"
+      />
+      <textarea
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+        [(ngModel)]="ledgerForm.notes"
+        name="ledgerNotes"
+        placeholder="Notes (optional)"
+        rows="2"
+      ></textarea>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="createLedgerEntry()"
+      >
+        Save ledger entry
+      </button>
+    </div>
+    <div class="mt-4 space-y-2">
+      @for (entry of ledgerEntries(); track entry.id) {
+        <div class="flex flex-wrap justify-between gap-2 rounded-md bg-zinc-50 px-3 py-2 text-sm">
+          <span class="capitalize"
+            >{{ entry.entryType }} · {{ entry.method }} · {{ entry.reference }}</span
+          >
+          <span
+            >{{ entry.currency }} {{ entry.amount }} · {{ entry.createdAt | date: 'medium' }}</span
+          >
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No ledger entries have been recorded.</p>
+      }
+    </div>
+    <div class="mt-4 space-y-2 border-t border-zinc-200 pt-4">
+      @for (charge of ledgerEntries(); track charge.id) {
+        @if (charge.entryType === 'charge' && chargeBalance(charge) > 0) {
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-teal-50 px-3 py-3">
+            <div class="text-sm">
+              <span class="font-medium">{{ patientName(charge.patientId) }}</span>
+              <span class="text-zinc-600">
+                · Balance {{ charge.currency }} {{ chargeBalance(charge) }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="rounded-md bg-teal-700 px-3 py-2 text-xs font-semibold text-white"
+              [disabled]="creatingPaymentForCharge() === charge.id"
+              (click)="startPatientPayment(charge)"
+            >
+              {{ creatingPaymentForCharge() === charge.id ? 'Starting checkout…' : 'Pay with Razorpay' }}
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+  <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-1 font-semibold text-zinc-900">Manual insurance claims</h2>
+    <p class="mb-4 text-sm text-zinc-500">
+      Track payer decisions and remittances without sending patient data to an unconfigured
+      clearinghouse. Recorded insurer payments are added to the linked treatment ledger.
+    </p>
+    <div class="grid gap-3 md:grid-cols-3">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="insuranceClaimForm.patientId"
+        (ngModelChange)="updateInsuranceClaimPatient($event)"
+        name="claimPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [ngModel]="insuranceClaimForm.chargeEntryId"
+        (ngModelChange)="updateInsuranceClaimCharge($event)"
+        name="claimCharge"
+      >
+        <option value="">No linked treatment charge</option>
+        @for (charge of availableClaimCharges(); track charge.id) {
+          <option [value]="charge.id">
+            {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }} {{ charge.amount }}
+          </option>
+        }
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="insuranceClaimForm.payerName"
+        name="claimPayer"
+        placeholder="Insurance payer"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="insuranceClaimForm.claimNumber"
+        name="claimNumber"
+        placeholder="Claim number (optional)"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="insuranceClaimForm.billedAmount"
+        name="claimBilledAmount"
+        type="number"
+        min="0.01"
+        step="0.01"
+        placeholder="Billed amount"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="insuranceClaimForm.supportingRecordId"
+        name="claimRecord"
+      >
+        <option value="">No supporting record</option>
+        @for (record of availableClaimRecords(); track record.id) {
+          <option [value]="record.id">{{ record.title }}</option>
+        }
+      </select>
+      <textarea
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+        [(ngModel)]="insuranceClaimForm.notes"
+        name="claimNotes"
+        placeholder="Claim notes (optional)"
+        rows="2"
+      ></textarea>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="createInsuranceClaim()"
+      >
+        Create claim
+      </button>
+    </div>
+    <div class="mt-5 space-y-3">
+      @for (claim of insuranceClaims(); track claim.id) {
+        <article class="rounded-md border border-zinc-200 p-4">
+          <div class="flex flex-wrap justify-between gap-2 text-sm">
+            <strong>{{ claim.payerName }} · {{ patientName(claim.patientId) }}</strong>
+            <span class="capitalize">{{ claim.status }}</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            {{ claim.claimNumber || 'No claim number' }} · Billed {{ claim.currency }} {{ claim.billedAmount }}
+            · Approved {{ claim.approvedAmount ?? '—' }} · Paid {{ claim.paidAmount }}
+          </p>
+          <div class="mt-3 grid gap-2 md:grid-cols-2">
+            <select
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [ngModel]="insuranceClaimEdit(claim).status"
+              (ngModelChange)="updateInsuranceClaimStatus(claim, $event)"
+              [name]="'claimStatus-' + claim.id"
+            >
+              @for (status of insuranceClaimStatusOptions(claim); track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [ngModel]="insuranceClaimEdit(claim).approvedAmount"
+              (ngModelChange)="updateInsuranceClaimApprovedAmount(claim, $event)"
+              [name]="'claimApproved-' + claim.id"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Approved amount"
+            />
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [ngModel]="insuranceClaimEdit(claim).paidAmount"
+              (ngModelChange)="updateInsuranceClaimPaidAmount(claim, $event)"
+              [name]="'claimPaid-' + claim.id"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Total payer remittance"
+            />
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [ngModel]="insuranceClaimEdit(claim).denialReason"
+              (ngModelChange)="updateInsuranceClaimDenialReason(claim, $event)"
+              [name]="'claimDenial-' + claim.id"
+              placeholder="Denial reason (required when denied)"
+            />
+            <textarea
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+              [ngModel]="insuranceClaimEdit(claim).notes"
+              (ngModelChange)="updateInsuranceClaimNotes(claim, $event)"
+              [name]="'claimEditNotes-' + claim.id"
+              placeholder="Claim notes"
+              rows="2"
+            ></textarea>
+            <button
+              type="button"
+              class="rounded-md border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-800"
+              (click)="saveInsuranceClaim(claim)"
+            >
+              Save claim update
+            </button>
+          </div>
+        </article>
+      } @empty {
+        <p class="text-sm text-zinc-500">No insurance claims are being tracked.</p>
+      }
+    </div>
+  </section>
+}
+
+@if (activeTab() === 'journey') {
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-3 font-semibold text-zinc-900">Patient decisions</h2>
+    <select
+      class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm md:max-w-md"
+      [ngModel]="decisionPatientId()"
+      (ngModelChange)="loadPatientDecisions($event)"
+      name="decisionPatient"
+    >
+      <option value="">Select a patient to review decisions</option>
+      @for (patient of patients(); track patient.id) {
+        <option [value]="patient.id">{{ patient.fullName }}</option>
+      }
+    </select>
+    <div class="mt-3 grid gap-2">
+      @for (decision of decisions(); track decision.id) {
+        <div class="rounded-md bg-zinc-50 px-3 py-2 text-sm">
+          <strong>{{ decision.decision }}</strong>
+          <span class="text-zinc-500"> · {{ decision.reason || 'No reason recorded' }}</span>
+          <div class="text-xs text-zinc-400">{{ decision.createdAt | date: 'medium' }}</div>
+        </div>
+      } @empty {
+        @if (decisionPatientId()) {
+          <p class="text-sm text-zinc-500">No patient decisions have been recorded.</p>
+        }
+      }
+    </div>
+  </section>
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Create treatment plan</h2>
+    <div class="grid gap-3 md:grid-cols-2">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.patientId"
+        name="planPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.title"
+        name="planTitle"
+        placeholder="Plan title"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.clinicianName"
+        name="clinicianName"
+        placeholder="Clinician name"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.notes"
+        name="planNotes"
+        placeholder="Clinical notes"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.estimatedValue"
+        name="planValue"
+        type="number"
+        placeholder="Estimated value"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.stageName"
+        name="stageName"
+        placeholder="Optional first stage"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.stageValue"
+        name="stageValue"
+        type="number"
+        placeholder="Stage value"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="planForm.currency"
+        name="planCurrency"
+      >
+        <option value="INR">INR</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+      </select>
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      [disabled]="saving()"
+      (click)="createPlan()"
+    >
+      Create plan
+    </button>
+  </section>
+  <div class="grid gap-4">
+    @for (plan of plans(); track plan.id) {
+      <section class="rounded-lg border border-zinc-200 bg-white p-5">
+        <div class="flex justify-between">
+          <div>
+            <h2 class="font-semibold text-zinc-900">{{ plan.title }}</h2>
+            <p class="text-sm text-zinc-500">{{ plan.clinicianName }}</p>
+          </div>
+          <span class="text-sm font-medium">{{ plan.currency }} {{ plan.estimatedValue }}</span>
+        </div>
+        <div class="mt-4 grid gap-2 md:grid-cols-2">
+          @for (stage of plan.stages; track stage.id) {
+            <div class="rounded-md border border-zinc-200 px-3 py-2">
+              <div class="text-sm font-medium">{{ stage.name }}</div>
+              <div class="text-xs text-zinc-500">
+                {{ stage.status }} · {{ plan.currency }} {{ stage.estimatedValue }}
+              </div>
+              @if (stage.status !== 'completed' && stage.status !== 'declined') {
+                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                  <input
+                    class="rounded border border-zinc-300 px-2 py-1 text-xs"
+                    [ngModel]="decisionReason()"
+                    (ngModelChange)="decisionReason.set($event)"
+                    [name]="'decisionReason-' + stage.id"
+                    placeholder="Reason for deferring / declining"
+                  />
+                  <input
+                    class="rounded border border-zinc-300 px-2 py-1 text-xs"
+                    [ngModel]="stageScheduledAt()"
+                    (ngModelChange)="stageScheduledAt.set($event)"
+                    [name]="'scheduledAt-' + stage.id"
+                    type="datetime-local"
+                    aria-label="Appointment time"
+                  />
+                </div>
+                <div class="mt-2 flex gap-2">
+                  @if (stage.status === 'recommended' || stage.status === 'deferred') {
+                    <button
+                      type="button"
+                      class="rounded border px-2 py-1 text-xs"
+                      (click)="updateStage(stage.id, 'accepted')"
+                    >
+                      Accept
+                    </button>
+                  }
+                  @if (stage.status !== 'deferred' && stage.status !== 'scheduled') {
+                    <button
+                      type="button"
+                      class="rounded border px-2 py-1 text-xs"
+                      (click)="updateStage(stage.id, 'deferred')"
+                    >
+                      Defer
+                    </button>
+                  }
+                  @if (stage.status !== 'scheduled') {
+                    <button
+                      type="button"
+                      class="rounded border px-2 py-1 text-xs"
+                      (click)="updateStage(stage.id, 'declined')"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded border px-2 py-1 text-xs"
+                      (click)="updateStage(stage.id, 'scheduled')"
+                    >
+                      Schedule
+                    </button>
+                  }
+                  @if (stage.status === 'accepted' || stage.status === 'scheduled') {
+                    <button
+                      type="button"
+                      class="rounded border px-2 py-1 text-xs"
+                      (click)="updateStage(stage.id, 'completed')"
+                    >
+                      Complete
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    } @empty {
+      <p class="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-500">
+        No treatment plans have been created.
+      </p>
+    }
+  </div>
+}
+
+@if (activeTab() === 'passport') {
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Add patient record</h2>
+    <div class="grid gap-3 md:grid-cols-2">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.patientId"
+        name="recordPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.recordType"
+        name="recordType"
+      >
+        <option value="xray">X-ray</option>
+        <option value="estimate">Estimate</option>
+        <option value="prescription">Prescription</option>
+        <option value="visit-summary">Visit summary</option>
+        <option value="lab-report">Lab report</option>
+        <option value="image">Image</option>
+        <option value="document">Document</option>
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.title"
+        name="recordTitle"
+        placeholder="Record title"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.sourceName"
+        name="recordSource"
+        placeholder="Source clinic or laboratory"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.authorName"
+        name="recordAuthor"
+        placeholder="Clinician or author"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="recordForm.documentUrl"
+        name="recordUrl"
+        placeholder="Document URL"
+        type="url"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        type="file"
+        (change)="onRecordFileSelected($event)"
+        aria-label="Upload a private record file"
+      />
+      @if (selectedRecordFile(); as selectedFile) {
+        <span class="self-center text-xs text-zinc-500">{{ selectedFile.name }}</span>
+      }
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      [disabled]="saving()"
+      (click)="createRecord()"
+    >
+      Add record
+    </button>
+  </section>
+  <div class="grid gap-3">
+    @for (record of records(); track record.id) {
+      <div class="rounded-lg border border-zinc-200 bg-white p-4">
+        <div class="flex justify-between">
+          <div>
+            <span class="font-medium">{{ record.title }}</span>
+            <div class="text-xs text-zinc-500">
+              {{ record.recordType }} · {{ record.sourceName }} ·
+              {{ record.authorName || 'Author not recorded' }} ·
+              {{ record.createdAt | date: 'mediumDate' }} · v{{ record.versionNumber }}
+            </div>
+          </div>
+          <code class="text-xs text-zinc-400">{{ record.provenanceHash.slice(0, 12) }}</code>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="rounded border border-zinc-300 px-2 py-1 text-xs"
+            (click)="toggleRecordRevisions(record.id)"
+          >
+            {{ revisionRecordId() === record.id ? 'Hide history' : 'View correction history' }}
+          </button>
+          <button
+            type="button"
+            class="rounded border border-zinc-300 px-2 py-1 text-xs"
+            (click)="openRecordCorrection(record)"
+          >
+            Correct record
+          </button>
+          @if (record.originalFilename) {
+            <button
+              type="button"
+              class="rounded border border-zinc-300 px-2 py-1 text-xs"
+              (click)="downloadRecordFile(record)"
+            >
+              Download {{ record.originalFilename }}
+            </button>
+          }
+        </div>
+        @if (recordCorrectionId() === record.id) {
+          <div class="mt-3 grid gap-2 rounded-md bg-zinc-50 p-3 sm:grid-cols-2">
+            <input
+              class="rounded border border-zinc-300 px-2 py-1 text-sm"
+              [(ngModel)]="recordCorrectionForm.title"
+              [name]="'correctionTitle-' + record.id"
+              placeholder="Corrected title"
+            />
+            <input
+              class="rounded border border-zinc-300 px-2 py-1 text-sm"
+              [(ngModel)]="recordCorrectionForm.sourceName"
+              [name]="'correctionSource-' + record.id"
+              placeholder="Corrected source"
+            />
+            <input
+              class="rounded border border-zinc-300 px-2 py-1 text-sm"
+              [(ngModel)]="recordCorrectionForm.authorName"
+              [name]="'correctionAuthor-' + record.id"
+              placeholder="Corrected author"
+            />
+            <input
+              class="rounded border border-zinc-300 px-2 py-1 text-sm"
+              [(ngModel)]="recordCorrectionForm.correctionReason"
+              [name]="'correctionReason-' + record.id"
+              placeholder="Reason for correction (required)"
+            />
+            <button
+              type="button"
+              class="rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white"
+              (click)="correctRecord()"
+            >
+              Save version {{ record.versionNumber + 1 }}
+            </button>
+          </div>
+        }
+        @if (revisionRecordId() === record.id) {
+          <div class="mt-3 grid gap-2">
+            @for (revision of revisions(); track revision.id) {
+              <div class="rounded bg-zinc-50 px-3 py-2 text-xs">
+                <strong>Version {{ revision.revisionNumber }}</strong> ·
+                {{ revision.correctionReason }}
+                <span class="text-zinc-500"> · {{ revision.createdAt | date: 'medium' }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @empty {
+      <p class="text-sm text-zinc-500">No patient records are available.</p>
+    }
+  </div>
+}
+
+@if (activeTab() === 'consent') {
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Record-sharing consent</h2>
+    <div class="grid gap-3 md:grid-cols-2">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.patientId"
+        name="consentPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.purpose"
+        name="consentPurpose"
+        placeholder="Purpose"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.recipientName"
+        name="consentRecipient"
+        placeholder="Recipient"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.recordIdsText"
+        name="consentRecordIds"
+        placeholder="Record IDs, separated by commas"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.scope"
+        name="consentScope"
+      >
+        <option value="view">View</option>
+        <option value="download">Download</option>
+        <option value="share">Share</option>
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="consentForm.expiresAt"
+        name="consentExpiry"
+        type="datetime-local"
+        aria-label="Consent expiry (optional)"
+      />
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      (click)="createConsent()"
+    >
+      Grant consent
+    </button>
+  </section>
+  <section class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Consent history</h2>
+    @for (consent of consents(); track consent.id) {
+      <div class="mb-2 flex items-center justify-between rounded-md bg-zinc-50 px-3 py-3">
+        <div>
+          <div class="text-sm font-medium">{{ consent.purpose }} · {{ consent.recipientName }}</div>
+          <div class="text-xs text-zinc-500">
+            {{ consent.recordIds.length }} records · {{ consent.scope.join(', ') }} ·
+            {{
+              consent.expiresAt
+                ? 'expires ' + (consent.expiresAt | date: 'mediumDate')
+                : 'no expiry'
+            }}
+            · {{ consent.revokedAt ? 'revoked' : 'active' }}
+          </div>
+        </div>
+        @if (!consent.revokedAt) {
+          <button
+            type="button"
+            class="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-700"
+            (click)="revokeConsent(consent.id)"
+          >
+            Revoke
+          </button>
+        }
+      </div>
+    } @empty {
+      <p class="text-sm text-zinc-500">No consent grants have been created.</p>
+    }
+  </section>
+}
+
+@if (activeTab() === 'reminders') {
+  @if (auth.currentUser()?.role === 'owner') {
+    <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-1 font-semibold text-zinc-900">Recall automation intervals</h2>
+      <p class="mb-4 text-sm text-zinc-500">
+        Automated reminders enter the approval queue; staff must verify consent before email is
+        queued.
+      </p>
+      <div class="grid gap-3 md:grid-cols-4">
+        <label class="grid gap-1 text-xs text-zinc-600">
+          Post-treatment follow-up (days)
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="recallSettingsForm.postProcedureDays"
+            name="postProcedureDays"
+            type="number"
+            min="1"
+            max="365"
+          />
+        </label>
+        <label class="grid gap-1 text-xs text-zinc-600">
+          Deferred treatment follow-up (days)
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="recallSettingsForm.pendingTreatmentDays"
+            name="pendingTreatmentDays"
+            type="number"
+            min="1"
+            max="365"
+          />
+        </label>
+        <label class="grid gap-1 text-xs text-zinc-600">
+          Hygiene recall (days)
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="recallSettingsForm.hygieneRecallDays"
+            name="hygieneRecallDays"
+            type="number"
+            min="1"
+            max="730"
+          />
+        </label>
+        <button
+          type="button"
+          class="self-end rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+          (click)="saveRecallSettings()"
+        >
+          Save intervals
+        </button>
+      </div>
+    </section>
+  }
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Schedule consent-based reminder</h2>
+    <div class="grid gap-3 md:grid-cols-2">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="reminderForm.patientId"
+        name="reminderPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="reminderForm.reminderType"
+        name="reminderType"
+      >
+        <option value="review">Review</option>
+        <option value="hygiene">Hygiene</option>
+        <option value="post-procedure">Post-procedure</option>
+        <option value="pending-visit">Pending visit</option>
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="reminderForm.message"
+        name="reminderMessage"
+        placeholder="Clinician-authored message"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="reminderForm.scheduledAt"
+        name="reminderAt"
+        type="datetime-local"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="reminderForm.channel"
+        name="reminderChannel"
+      >
+        <option value="email">Email</option>
+        <option value="sms">SMS</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="phone">Phone</option>
+      </select>
+      <label class="flex items-center gap-2 text-sm text-zinc-700">
+        <input type="checkbox" [(ngModel)]="reminderForm.consentConfirmed" name="reminderConsent" />
+        Patient communication consent confirmed
+      </label>
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      (click)="createReminder()"
+    >
+      Schedule reminder
+    </button>
+  </section>
+  <div class="grid gap-3">
+    @for (reminder of reminders(); track reminder.id) {
+      <div class="rounded-lg border border-zinc-200 bg-white p-4">
+        <div class="flex justify-between">
+          <span class="font-medium">{{ reminder.reminderType }}</span
+          ><span class="text-xs text-zinc-500">{{ reminder.scheduledAt | date: 'medium' }}</span>
+        </div>
+        <p class="mt-2 text-sm text-zinc-600">{{ reminder.message }}</p>
+        <div class="mt-2 text-xs text-zinc-500">
+          {{ reminder.channel }} · {{ reminder.status }} · consent
+          {{ reminder.consentConfirmed ? 'confirmed' : 'missing' }}
+        </div>
+        @if (reminder.status === 'pending-approval') {
+          @if (pendingApprovalReminderId() !== reminder.id) {
+            <button
+              type="button"
+              class="mt-3 rounded border border-teal-200 px-3 py-1 text-xs font-medium text-teal-800"
+              (click)="beginReminderApproval(reminder.id)"
+            >
+              Review and approve
+            </button>
+          } @else {
+            <div class="mt-3 grid gap-2 rounded-md bg-amber-50 p-3">
+              <label class="flex items-center gap-2 text-xs text-zinc-700">
+                <input
+                  type="checkbox"
+                  [ngModel]="reminderConsentConfirmed()"
+                  (ngModelChange)="reminderConsentConfirmed.set($event)"
+                  [name]="'approvalConsent-' + reminder.id"
+                />
+                I verified this patient’s email consent for this reminder.
+              </label>
+              <button
+                type="button"
+                class="justify-self-start rounded bg-teal-700 px-3 py-1 text-xs font-semibold text-white"
+                (click)="approveReminder()"
+              >
+                Approve and queue email
+              </button>
+            </div>
+          }
+        }
+        @if (reminder.status === 'scheduled') {
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="rounded border px-2 py-1 text-xs"
+              (click)="updateReminder(reminder.id, 'sent')"
+            >
+              Mark sent
+            </button>
+            <button
+              type="button"
+              class="rounded border px-2 py-1 text-xs"
+              (click)="updateReminder(reminder.id, 'completed')"
+            >
+              Complete
+            </button>
+            <button
+              type="button"
+              class="rounded border px-2 py-1 text-xs"
+              (click)="updateReminder(reminder.id, 'failed')"
+            >
+              Mark failed
+            </button>
+            <button
+              type="button"
+              class="rounded border px-2 py-1 text-xs"
+              (click)="updateReminder(reminder.id, 'cancelled')"
+            >
+              Cancel
+            </button>
+          </div>
+        }
+      </div>
+    } @empty {
+      <p class="text-sm text-zinc-500">No consent-confirmed reminders scheduled.</p>
+    }
+  </div>
+  <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Patient visits</h2>
+    <div class="grid gap-3 md:grid-cols-3">
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="visitForm.patientId"
+        name="visitPatient"
+      >
+        <option value="">Select patient</option>
+        @for (patient of patients(); track patient.id) {
+          <option [value]="patient.id">{{ patient.fullName }}</option>
+        }
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="visitForm.visitType"
+        name="visitType"
+      >
+        <option value="hygiene">Hygiene</option>
+        <option value="consultation">Consultation</option>
+        <option value="treatment">Treatment</option>
+        <option value="other">Other</option>
+      </select>
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="visitForm.status"
+        name="visitStatus"
+      >
+        <option value="completed">Completed</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="no-show">No-show</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="visitForm.visitAt"
+        name="visitAt"
+        type="datetime-local"
+        aria-label="Visit date and time"
+      />
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
+        [(ngModel)]="visitForm.notes"
+        name="visitNotes"
+        placeholder="Visit notes (optional)"
+      />
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="createVisit()"
+      >
+        Record visit
+      </button>
+    </div>
+    <div class="mt-4 space-y-2">
+      @for (visit of visits(); track visit.id) {
+        <div class="flex flex-wrap justify-between gap-2 rounded-md bg-zinc-50 px-3 py-2 text-sm">
+          <span class="capitalize">{{ visit.visitType }} · {{ visit.status }}</span>
+          <span>{{
+            visit.completedAt || visit.scheduledAt || visit.createdAt | date: 'medium'
+          }}</span>
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No visits have been recorded.</p>
+      }
+    </div>
+  </section>
+  <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Email delivery queue</h2>
+    @for (email of emailOutbox(); track email.id) {
+      <div
+        class="mb-2 flex flex-wrap justify-between gap-2 rounded-md bg-zinc-50 px-3 py-2 text-sm"
+      >
+        <span>{{ email.recipientEmail }} · {{ email.subject }}</span>
+        <span class="capitalize">{{ email.status }} · {{ email.attemptCount }} attempts</span>
+      </div>
+      @if (email.lastError) {
+        <p class="mb-3 text-xs text-red-700">{{ email.lastError }}</p>
+      }
+    } @empty {
+      <p class="text-sm text-zinc-500">No patient emails are queued.</p>
+    }
+  </section>
+}
+
+@if (activeTab() === 'integrations') {
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h2 class="font-semibold text-zinc-900">Provider-neutral patient CSV exchange</h2>
+        <p class="mt-1 text-sm text-zinc-500">
+          Imports create new patient rows; duplicate external references are reported and not
+          overwritten. No vendor sync is implied.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold"
+        [disabled]="exportingCsv()"
+        (click)="exportCsv()"
+      >
+        {{ exportingCsv() ? 'Preparing export…' : 'Export patient CSV' }}
+      </button>
+    </div>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <label class="grid gap-1 text-sm">
+        <span class="font-medium">CSV file</span>
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          type="file"
+          accept=".csv,text/csv"
+          (change)="onCsvSelected($event)"
+        />
+      </label>
+      <label class="grid gap-1 text-sm">
+        <span class="font-medium">Field map (app field → CSV header)</span>
+        <textarea
+          class="min-h-20 rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs"
+          [ngModel]="csvMappingText()"
+          (ngModelChange)="csvMappingText.set($event)"
+          name="csvMapping"
+        ></textarea>
+      </label>
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      [disabled]="!selectedCsvFile()"
+      (click)="importCsv()"
+    >
+      Import CSV
+    </button>
+    <div class="mt-5">
+      <h3 class="mb-2 text-sm font-semibold text-zinc-800">Recent sync jobs</h3>
+      @for (job of syncJobs(); track job.id) {
+        <div class="mb-2 rounded-md bg-zinc-50 px-3 py-2 text-sm">
+          <div class="flex flex-wrap justify-between gap-2">
+            <span>{{ job.jobType }} · {{ job.status }}</span>
+            <span>{{ job.processedCount }} added · {{ job.failedCount }} rejected</span>
+          </div>
+          @for (issue of job.errors; track issue.row) {
+            <p class="mt-1 text-xs text-red-700">Row {{ issue.row }}: {{ issue.message }}</p>
+          }
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No import or export jobs yet.</p>
+      }
+    </div>
+  </section>
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="font-semibold text-zinc-900">Reconcile a PMS transaction export</h2>
+    <p class="mt-1 text-sm text-zinc-500">
+      Upload the complete transaction CSV for the period you want to compare. Match rows by
+      transaction reference, patient ID or external patient reference, type, amount, and currency.
+      No PMS credentials or direct vendor connection are used.
+    </p>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <label class="grid gap-1 text-sm">
+        <span class="font-medium">PMS transaction CSV</span>
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          type="file"
+          accept=".csv,text/csv"
+          (change)="onPmsCsvSelected($event)"
+        />
+      </label>
+      <label class="grid gap-1 text-sm">
+        <span class="font-medium">Field map (required field → CSV header)</span>
+        <textarea
+          class="min-h-24 rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs"
+          [ngModel]="pmsMappingText()"
+          (ngModelChange)="pmsMappingText.set($event)"
+          name="pmsMapping"
+        ></textarea>
+      </label>
+    </div>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+      [disabled]="!selectedPmsCsvFile() || processingPmsCsv()"
+      (click)="reconcilePmsCsv()"
+    >
+      {{ processingPmsCsv() ? 'Reconciling…' : 'Reconcile transactions' }}
+    </button>
+    <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(16rem,1fr)_2fr]">
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-zinc-800">Reconciliation runs</h3>
+        @for (run of pmsReconciliationRuns(); track run.id) {
+          <button
+            type="button"
+            class="block w-full rounded-md border px-3 py-2 text-left text-xs"
+            [class.border-teal-500]="selectedPmsRunId() === run.id"
+            [class.bg-teal-50]="selectedPmsRunId() === run.id"
+            (click)="loadPmsReconciliationRows(run.id)"
+          >
+            <span class="block font-medium">{{ run.filename }}</span>
+            <span class="text-zinc-500">
+              {{ run.matchedRows }} matched · {{ run.mismatchRows }} mismatched ·
+              {{ run.missingLocalRows }} missing locally · {{ run.missingPmsRows }} missing in PMS
+              · {{ run.duplicateSourceRows }} duplicate · {{ run.invalidRows }} invalid
+            </span>
+          </button>
+        } @empty {
+          <p class="text-sm text-zinc-500">No reconciliation runs yet.</p>
+        }
+      </div>
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-zinc-800">Row results</h3>
+        @for (row of pmsReconciliationRows(); track row.id) {
+          <div class="rounded-md bg-zinc-50 px-3 py-2 text-xs">
+            <div class="flex flex-wrap justify-between gap-2">
+              <strong class="capitalize">{{ row.status }}</strong>
+              <span>{{ row.transactionReference || 'No transaction reference' }}</span>
+            </div>
+            <p class="mt-1 text-zinc-600">{{ row.details }}</p>
+            @if (row.externalAmount !== undefined || row.localAmount !== undefined) {
+              <p class="mt-1 text-zinc-500">
+                PMS {{ row.currency }} {{ row.externalAmount ?? '—' }} ·
+                Clinic {{ row.currency }} {{ row.localAmount ?? '—' }}
+              </p>
+            }
+          </div>
+        } @empty {
+          <p class="text-sm text-zinc-500">Select a run to inspect reconciliation results.</p>
+        }
+      </div>
+    </div>
+  </section>
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-4 font-semibold text-zinc-900">Configure integration</h2>
+    <div class="grid gap-3 md:grid-cols-3">
+      <input
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="integrationForm.provider"
+        name="provider"
+        placeholder="Provider name"
+      />
+      <select
+        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        [(ngModel)]="integrationForm.integrationType"
+        name="integrationType"
+      >
+        <option value="pms">PMS</option>
+        <option value="imaging">Imaging</option>
+        <option value="payments">Payments</option>
+        <option value="communications">Communications</option>
+      </select>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="createIntegration()"
+      >
+        Save configuration
+      </button>
+    </div>
+  </section>
+  <div class="grid gap-6 lg:grid-cols-2">
+    <section>
+      <h2 class="mb-3 font-semibold">Configured connections</h2>
+      <div class="grid gap-2">
+        @for (integration of integrations(); track integration.id) {
+          <div class="rounded-md border border-zinc-200 bg-white p-3">
+            <div class="font-medium">{{ integration.provider }}</div>
+            <div class="text-xs text-zinc-500">
+              {{ integration.integrationType }} · {{ integration.status }}
+            </div>
+          </div>
+        } @empty {
+          <p class="text-sm text-zinc-500">No integrations configured.</p>
+        }
+      </div>
+    </section>
+  </div>
+}
+
+@if (activeTab() === 'governance') {
+  <section class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-3 font-semibold text-zinc-900">Security & access audit</h2>
+    <p class="mb-4 text-sm text-zinc-500">
+      Clinic-scoped history of patient-record access, changes, sharing, and exports.
+    </p>
+    <div class="grid gap-2">
+      @for (event of audit(); track event.id) {
+        <div class="rounded-md border border-zinc-200 bg-white p-3 text-sm">
+          <strong>{{ event.action }}</strong> · {{ event.resourceType }}
+          <div class="text-xs text-zinc-500">{{ event.createdAt | date: 'medium' }}</div>
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No audit events yet.</p>
+      }
+    </div>
+  </section>
+}
+
+@if (activeTab() === 'clinic') {
+  @if (onboarding(); as setup) {
+    <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="font-semibold text-zinc-900">Guided clinic setup</h2>
+          <p class="mt-1 text-sm text-zinc-500">
+            Step {{ setup.currentStep }} of {{ setup.totalSteps }} · {{ setup.steps.filter(s => s.completed).length }} completed
+          </p>
+        </div>
+        @if (auth.canManageClinic() && !setup.onboardingCompletedAt && setup.canComplete) {
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+            (click)="completeOnboarding()"
+          >
+            Complete setup
+          </button>
+        } @else if (setup.onboardingCompletedAt) {
+          <span class="text-sm font-medium text-teal-800">
+            Completed {{ setup.onboardingCompletedAt | date: 'mediumDate' }}
+          </span>
+        }
+      </div>
+      
+      <div class="space-y-3">
+        @for (step of setup.steps; track step.id) {
+          <div class="flex items-center gap-4 p-4 rounded-lg border transition-colors"
+               [class.border-teal-200]="step.completed"
+               [class.bg-teal-50]="step.completed"
+               [class.border-zinc-200]="!step.completed"
+               [class.bg-white]="!step.completed">
+            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-semibold"
+                 [class.border-teal-500]="step.completed"
+                 [class.bg-teal-500]="step.completed"
+                 [class.text-white]="step.completed"
+                 [class.border-zinc-300]="!step.completed"
+                 [class.text-zinc-400]="!step.completed"
+                 [class.bg-zinc-100]="!step.completed">
+              @if (step.completed) {
+                ✓
+              } @else {
+                {{ step.order }}
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium text-zinc-900">{{ step.name }}</h3>
+                @if (step.required) {
+                  <span class="text-xs px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">Required</span>
+                } @else {
+                  <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700">Optional</span>
+                }
+              </div>
+              <p class="mt-1 text-sm text-zinc-500">{{ step.description }}</p>
+            </div>
+            <div class="flex-shrink-0">
+              @if (step.completed) {
+                <span class="text-sm font-medium text-teal-700">Completed</span>
+              } @else if (step.required && !setup.steps.slice(0, step.order - 1).every(s => s.completed)) {
+                <span class="text-sm text-zinc-400">Locked</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+  @if (auth.canManageClinic()) {
+    <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-4 font-semibold text-zinc-900">Add a branch</h2>
+      <div class="grid gap-3 md:grid-cols-3">
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="branchForm.name"
+          name="branchName"
+          placeholder="Branch name"
+        />
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="branchForm.address"
+          name="branchAddress"
+          placeholder="Address"
+        />
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="branchForm.phone"
+          name="branchPhone"
+          placeholder="Phone"
+        />
+      </div>
+      <button
+        type="button"
+        class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="createBranch()"
+      >
+        Add branch
+      </button>
+    </section>
+  }
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-3 font-semibold text-zinc-900">Clinic branches</h2>
+    <div class="grid gap-2 md:grid-cols-2">
+      @for (branch of branches(); track branch.id) {
+        <div class="rounded-md bg-zinc-50 p-3">
+          <div class="font-medium">{{ branch.name }} {{ branch.isPrimary ? '· Primary' : '' }}</div>
+          <div class="text-sm text-zinc-500">{{ branch.address || 'Address not set' }}</div>
+          <div class="text-xs text-zinc-500">{{ branch.phone }}</div>
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No branches have been configured.</p>
+      }
+    </div>
+  </section>
+  @if (auth.canManageClinic() && branches().length) {
+    <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="mb-4 font-semibold text-zinc-900">Invite staff</h2>
+      <div class="grid gap-3 md:grid-cols-3">
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="staffForm.fullName"
+          name="staffFullName"
+          placeholder="Full name"
+        />
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="staffForm.email"
+          name="staffEmail"
+          type="email"
+          placeholder="Email"
+        />
+        <select
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [(ngModel)]="staffForm.branchId"
+          name="staffBranch"
+        >
+          <option value="">Select branch</option>
+          @for (branch of branches(); track branch.id) {
+            <option [value]="branch.id">{{ branch.name }}</option>
+          }
+        </select>
+      </div>
+      <button
+        type="button"
+        class="mt-3 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="inviteStaff()"
+      >
+        Create invitation
+      </button>
+      @if (staffInvitation(); as invitation) {
+        <div class="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
+          <p>One-time staff invitation token — deliver securely:</p>
+          <code class="mt-1 block break-all text-xs">{{ invitation.invitationToken }}</code>
+          <a
+            class="mt-2 block break-all text-xs text-teal-800 underline"
+            [href]="staffInvitationUrl()"
+          >
+            {{ staffInvitationUrl() }}
+          </a>
+          <p class="mt-1 text-xs">Expires {{ invitation.expiresAt | date: 'medium' }}.</p>
+        </div>
+      }
+    </section>
+  }
+  <section class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-3 font-semibold text-zinc-900">Clinic team</h2>
+    <div class="grid gap-2 md:grid-cols-2">
+      @for (member of staff(); track member.id) {
+        <div class="rounded-md bg-zinc-50 p-3">
+          <div class="font-medium">{{ member.fullName }}</div>
+          <div class="text-sm text-zinc-500">{{ member.email }}</div>
+          <div class="text-xs text-zinc-500">
+            {{ member.role }} · {{ member.branchId || 'No branch' }}
+          </div>
+        </div>
+      } @empty {
+        <p class="text-sm text-zinc-500">No clinic team members are listed.</p>
+      }
+    </div>
+  </section>
+}
+
+@if (activeTab() === 'analytics') {
+  <section class="mb-5 rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="mb-3 font-semibold text-zinc-900">Analytics date range</h2>
+    <div class="flex flex-wrap items-end gap-3">
+      <label class="grid gap-1 text-xs text-zinc-600">
+        From
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="analyticsFromDate()"
+          (ngModelChange)="analyticsFromDate.set($event)"
+          name="analyticsFrom"
+          type="date"
+        />
+      </label>
+      <label class="grid gap-1 text-xs text-zinc-600">
+        To
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="analyticsToDate()"
+          (ngModelChange)="analyticsToDate.set($event)"
+          name="analyticsTo"
+          type="date"
+        />
+      </label>
+      <button
+        type="button"
+        class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        (click)="loadAnalytics()"
+      >
+        Apply range
+      </button>
+    </div>
+  </section>
+  @if (analytics(); as metrics) {
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <dp-stat-card label="Treatment stages" [value]="metrics.totalTreatmentStages.toString()" />
+      <dp-stat-card label="Accepted / scheduled" [value]="metrics.acceptedStages.toString()" />
+      <dp-stat-card label="Completed stages" [value]="metrics.completedStages.toString()" />
+      <dp-stat-card label="Workflow completion" [value]="metrics.workflowCompletionRate + '%'" />
+      <dp-stat-card label="Open follow-ups" [value]="metrics.openFollowups.toString()" />
+      <dp-stat-card label="Overdue follow-ups" [value]="metrics.overdueFollowups.toString()" />
+      <dp-stat-card label="Follow-up completion" [value]="metrics.followupCompletionRate + '%'" />
+      <dp-stat-card label="Patient decisions" [value]="metrics.decisionCount.toString()" />
+      <dp-stat-card label="Clinic branches" [value]="metrics.branchCount.toString()" />
+      <dp-stat-card label="Completed visits" [value]="metrics.completedVisits.toString()" />
+      <dp-stat-card label="Unique patients seen" [value]="metrics.uniquePatientsSeen.toString()" />
+      <dp-stat-card label="Returning patients" [value]="metrics.returningPatients.toString()" />
+      <dp-stat-card label="Patient retention" [value]="metrics.patientRetentionRate + '%'" />
+      <dp-stat-card label="No-show visits" [value]="metrics.noShowVisits.toString()" />
+      <dp-stat-card label="Scheduled visits" [value]="metrics.scheduledVisits.toString()" />
+      <dp-stat-card label="Open enquiries" [value]="metrics.openEnquiries.toString()" />
+      <dp-stat-card
+        label="Awaiting reminder approval"
+        [value]="metrics.pendingReminderApprovals.toString()"
+      />
+    </div>
+  } @else {
+    <p class="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-500">
+      Clinic analytics are not available yet.
+    </p>
+  }
+}

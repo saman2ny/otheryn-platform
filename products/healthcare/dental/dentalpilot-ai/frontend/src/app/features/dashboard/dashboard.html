@@ -1,0 +1,645 @@
+@if (summary(); as data) {
+  <section class="dp-dashboard-hero mb-7">
+    <div class="dp-hero-content">
+      <div class="dp-hero-kicker">
+        <span class="dp-live-dot"></span> DENTALPILOT · PRACTICE NOTES 01
+      </div>
+      <h1 class="dp-hero-title">Make room for<br /><em>good care.</em></h1>
+      <p class="dp-hero-copy">
+        The best part of dentistry is the people. We'll help with everything around them.
+      </p>
+      <div class="dp-hero-actions">
+        <button type="button" class="dp-button-primary" (click)="goToContentGenerator()">
+          <span aria-hidden="true">✦</span> Create with AI
+        </button>
+        <button type="button" class="dp-button-quiet" (click)="goToPatientJourneys()">
+          Follow a care journey <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </div>
+    <div class="dp-hero-visual" aria-hidden="true">
+      <span class="dp-illustration-tag dp-tag-plan">01 — THE PLAN</span>
+      <span class="dp-illustration-tag dp-tag-care">02 — THE VISIT</span>
+      <span class="dp-illustration-tag dp-tag-followup">03 — WHAT'S NEXT</span>
+      <svg class="dp-care-illustration" viewBox="0 0 520 350" fill="none">
+        <path class="dp-care-route" d="M44 195C112 80 192 82 260 173C326 262 407 264 476 147" />
+        <path
+          class="dp-care-route-secondary"
+          d="M42 213C126 101 194 104 260 190C327 277 407 280 478 164"
+        />
+        <circle cx="74" cy="160" r="8" fill="#E0FF80" stroke="#17213B" stroke-width="2" />
+        <circle cx="430" cy="191" r="8" fill="#FF6D52" stroke="#17213B" stroke-width="2" />
+        <path
+          class="dp-tooth-shape"
+          d="M260 91C234 76 205 84 190 109C169 144 190 190 205 231C217 264 232 284 245 274C256 265 253 226 264 223C276 220 279 269 292 276C307 284 321 256 333 224C349 184 359 139 338 109C321 85 290 78 260 91Z"
+        />
+        <path class="dp-tooth-detail" d="M260 112C255 147 260 180 264 211" />
+        <path d="M54 248H126" stroke="white" stroke-opacity=".48" stroke-width="1" />
+        <path d="M394 94H466" stroke="white" stroke-opacity=".48" stroke-width="1" />
+        <circle cx="126" cy="248" r="3" fill="white" />
+        <circle cx="394" cy="94" r="3" fill="white" />
+      </svg>
+    </div>
+  </section>
+
+  <nav class="dp-tab-nav mb-6" role="tablist" aria-label="Dashboard sections">
+    <button
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'overview'"
+      [class]="activeTab() === 'overview' ? 'active' : ''"
+      (click)="setTab('overview')"
+      class="dp-tab-btn"
+    >
+      Overview
+    </button>
+    <button
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'revenue'"
+      [class]="activeTab() === 'revenue' ? 'active' : ''"
+      (click)="setTab('revenue')"
+      class="dp-tab-btn"
+    >
+      Revenue
+    </button>
+    <button
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'treatment'"
+      [class]="activeTab() === 'treatment' ? 'active' : ''"
+      (click)="setTab('treatment')"
+      class="dp-tab-btn"
+    >
+      Treatment
+    </button>
+    <button
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'patients'"
+      [class]="activeTab() === 'patients' ? 'active' : ''"
+      (click)="setTab('patients')"
+      class="dp-tab-btn"
+    >
+      Patients
+    </button>
+    <button
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'operations'"
+      [attr.aria-selected]="activeTab() === 'operations'"
+      [class]="activeTab() === 'operations' ? 'active' : ''"
+      (click)="setTab('operations')"
+      class="dp-tab-btn"
+    >
+      Operations
+    </button>
+  </nav>
+
+  @switch (activeTab()) {
+    @case ('overview') {
+      <section class="mb-9" aria-label="Monthly clinic metrics">
+        <div class="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <p class="dp-hero-kicker !text-[10px] !tracking-[0.14em] !text-[#56617b]">
+              <span class="!bg-[#ff6d52] !shadow-none"></span> This month
+            </p>
+            <h2 class="mt-1 text-lg font-semibold tracking-tight text-slate-800">
+              The practice, in numbers
+            </h2>
+          </div>
+          <span class="text-[11px] text-slate-400">A live view of this clinic</span>
+        </div>
+        <div class="dp-metric-grid">
+          <article class="dp-metric-card">
+            <span class="dp-metric-icon" aria-hidden="true">✦</span>
+            <span class="dp-metric-label">Content created</span>
+            <strong class="dp-metric-value">{{ data.contentGeneratedThisMonth }}</strong>
+            <span class="dp-metric-note">AI-assisted clinic content</span>
+          </article>
+          <article class="dp-metric-card">
+            <span class="dp-metric-icon" aria-hidden="true">▦</span>
+            <span class="dp-metric-label">Upcoming posts</span>
+            <strong class="dp-metric-value">{{ data.postsScheduledUpcoming }}</strong>
+            <span class="dp-metric-note">Ready in your calendar</span>
+          </article>
+          <article class="dp-metric-card">
+            <span class="dp-metric-icon" aria-hidden="true">◉</span>
+            <span class="dp-metric-label">AI credits</span>
+            <strong class="dp-metric-value"
+              >{{ data.aiCreditsUsed
+              }}<span class="text-lg font-medium text-slate-400">
+                / {{ data.aiCreditsLimit }}</span
+              ></strong
+            >
+            <span class="dp-metric-note">{{ data.planTier }} plan usage</span>
+          </article>
+        </div>
+      </section>
+
+      @if (onboardingProgress(); as onboarding) {
+        <section class="mb-9" aria-label="Onboarding progress">
+          <div class="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <p class="dp-hero-kicker !text-[10px] !tracking-[0.14em] !text-[#56617b]">
+                <span class="!bg-[#0f766e] !shadow-none"></span> Clinic setup
+              </p>
+              <h2 class="mt-1 text-lg font-semibold tracking-tight text-slate-800">
+                Complete your onboarding
+              </h2>
+            </div>
+            <span class="text-[11px] text-slate-400">{{ onboarding.completed }} of {{ onboarding.total }} steps done</span>
+          </div>
+          <div class="dp-surface-card p-5 sm:p-6">
+            <div class="mb-4">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-slate-600">Overall progress</span>
+                <strong class="text-slate-800">{{ onboarding.percent }}%</strong>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div class="h-full bg-teal-700 transition-all duration-500" [style.width.%]="onboarding.percent"></div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-slate-600">Required steps</span>
+                <strong class="text-slate-800">{{ onboarding.requiredPercent }}%</strong>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div class="h-full bg-teal-500 transition-all duration-500" [style.width.%]="onboarding.requiredPercent"></div>
+              </div>
+            </div>
+            @if (!onboarding.canComplete && onboarding.percent < 100) {
+              <p class="text-sm text-slate-500 mb-4">Complete required steps to finish setup.</p>
+            } @else if (onboarding.canComplete && onboarding.percent < 100) {
+              <p class="text-sm text-teal-700 mb-4">All required steps done! You can complete onboarding now.</p>
+            } @else if (onboarding.percent >= 100) {
+              <p class="text-sm text-teal-700 mb-4">Onboarding complete! Your clinic is fully set up.</p>
+            }
+            <button
+              type="button"
+              class="dp-button-primary"
+              (click)="setTab('treatment')"
+            >
+              Continue setup <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+      }
+
+      <section class="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <article class="dp-surface-card p-5 sm:p-6">
+          <div class="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-[10px] font-semibold tracking-[0.14em] text-teal-800/55 uppercase">
+                Your latest work
+              </p>
+              <h2 class="dp-section-heading mt-1">Recent content</h2>
+            </div>
+            <button
+              type="button"
+              class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 hover:border-teal-200 hover:text-teal-800"
+              (click)="goToContentGenerator()"
+            >
+              Open studio <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+          @if (data.recentContent.length) {
+            <ul class="m-0 flex list-none flex-col p-0">
+              @for (item of data.recentContent; track item.id; let last = $last) {
+                <li
+                  class="flex items-center gap-3 py-3.5"
+                  [class.border-b]="!last"
+                  [class.border-slate-100]="!last"
+                >
+                  <span
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-[#e6f5ef] text-sm text-teal-800"
+                    aria-hidden="true"
+                    >✦</span
+                  >
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-slate-800">{{
+                      item.headline
+                    }}</span>
+                    <span class="mt-1 block text-[11px] text-slate-400">Created for your practice</span>
+                  </span>
+                  <span
+                    class="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500"
+                    >{{ item.platform }}</span
+                  >
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="rounded-2xl border border-dashed border-teal-900/15 bg-[#f8fcfa] px-5 py-8">
+              <span class="text-2xl text-teal-700" aria-hidden="true">✦</span>
+              <p class="mt-3 text-sm font-semibold text-slate-800">Your next idea starts here.</p>
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Create thoughtful, clinic-specific content in just a few steps.
+              </p>
+              <button
+                type="button"
+                class="mt-4 text-xs font-semibold text-teal-800 hover:text-teal-950"
+                (click)="goToContentGenerator()"
+              >
+                Create your first post <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          }
+        </article>
+
+        <article class="dp-surface-card p-5 sm:p-6">
+          <div class="mb-5">
+            <p class="text-[10px] font-semibold tracking-[0.14em] text-teal-800/55 uppercase">
+              Coming up
+            </p>
+            <h2 class="dp-section-heading mt-1">Content calendar</h2>
+          </div>
+          @if (data.upcomingEvents.length) {
+            <ul class="m-0 flex list-none flex-col p-0">
+              @for (event of data.upcomingEvents; track event.id; let last = $last) {
+                <li
+                  class="flex items-center gap-3 py-3.5"
+                  [class.border-b]="!last"
+                  [class.border-slate-100]="!last"
+                >
+                  <span
+                    class="flex w-12 shrink-0 flex-col items-center rounded-xl bg-[#f1f7f4] px-1 py-2"
+                  >
+                    <span class="text-[9px] font-bold tracking-wider text-teal-800 uppercase">{{
+                      event.scheduledAt | date: 'MMM'
+                    }}</span>
+                    <span class="mt-0.5 text-base font-semibold leading-none text-slate-800">{{
+                      event.scheduledAt | date: 'd'
+                    }}</span>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-slate-800">{{
+                      event.title
+                    }}</span>
+                    <span class="mt-1 block text-[11px] text-slate-400">{{
+                      event.scheduledAt | date: 'h:mm a'
+                    }}</span>
+                  </span>
+                  <span class="text-[10px] font-medium text-slate-400">{{ event.platform }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="rounded-2xl border border-dashed border-teal-900/15 bg-[#f8fcfa] px-5 py-8">
+              <span class="text-2xl text-teal-700" aria-hidden="true">▦</span>
+              <p class="mt-3 text-sm font-semibold text-slate-800">A little space to plan ahead.</p>
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Schedule your next post and keep your clinic visible.
+              </p>
+              <button
+                type="button"
+                class="mt-4 text-xs font-semibold text-teal-800 hover:text-teal-950"
+                (click)="goToCalendar()"
+              >
+                Plan your calendar <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          }
+        </article>
+      </section>
+    }
+
+    @case ('revenue') {
+      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">From</span>
+            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">To</span>
+            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="dp-metric-grid mb-6" aria-label="Revenue metrics">
+        @for (stat of revenueStats(); track stat.label) {
+          <dp-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+        }
+      </div>
+
+      <div class="dp-metric-grid mb-6" aria-label="Financial summary">
+        @for (stat of financialStats(); track stat.label) {
+          <dp-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+        }
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        @if (revenueMetrics(); as r) {
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Revenue by Category</h3>
+            <div class="space-y-3">
+              @for (cat of revenueCategories(); track cat.key) {
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-slate-600 capitalize">{{ cat.key }}</span>
+                  <strong class="text-sm text-slate-800">{{ cat.value }}</strong>
+                </div>
+              }
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Monthly Trend</h3>
+            <div class="space-y-3 max-h-64 overflow-y-auto">
+              @for (point of r.monthlyTrend; track point.month) {
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600">{{ point.month }}</span>
+                  <strong class="text-slate-800">{{ formatCurrency(point.revenue, r.currency) }}</strong>
+                </div>
+              }
+            </div>
+          </article>
+        }
+
+        @if (financialSummary(); as f) {
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Insurance Claims</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Total Claims</span>
+                <strong class="text-slate-800">{{ f.insuranceClaims.totalClaims }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Approval Rate</span>
+                <strong class="text-slate-800">{{ formatPercent(f.insuranceClaims.approvalRate) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Collection Rate</span>
+                <strong class="text-slate-800">{{ formatPercent(f.insuranceClaims.collectionRate) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Total Billed</span>
+                <strong class="text-slate-800">{{ formatCurrency(f.insuranceClaims.totalBilled, f.currency) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Total Paid</span>
+                <strong class="text-slate-800">{{ formatCurrency(f.insuranceClaims.totalPaid, f.currency) }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Payments by Method</h3>
+            <div class="space-y-3">
+              @for (method of paymentMethods(); track method.key) {
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600 capitalize">{{ method.key }}</span>
+                  <strong class="text-slate-800">{{ method.value }}</strong>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    @case ('treatment') {
+      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">From</span>
+            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">To</span>
+            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="dp-metric-grid mb-6" aria-label="Treatment metrics">
+        @for (stat of treatmentStats(); track stat.label) {
+          <dp-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+        }
+      </div>
+
+      @if (treatmentFollowup(); as t) {
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Follow-up Effectiveness</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Follow-ups Sent</span>
+                <strong class="text-slate-800">{{ t.followupSent }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Follow-ups Completed</span>
+                <strong class="text-slate-800">{{ t.followupCompleted }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Completion Rate</span>
+                <strong class="text-slate-800">{{ formatPercent(t.followupCompletionRate) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Avg Days to Completion</span>
+                <strong class="text-slate-800">{{ t.avgDaysToCompletion ? t.avgDaysToCompletion + ' days' : 'N/A' }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Follow-ups by Type</h3>
+            <div class="space-y-3 max-h-64 overflow-y-auto">
+              @for (followup of followupTypes(); track followup.type) {
+                <div class="p-3 bg-slate-50 rounded-lg">
+                  <div class="flex items-center justify-between text-sm mb-1">
+                    <span class="font-medium">{{ followup.type }}</span>
+                    <span class="text-slate-500">{{ followup.completionRate }}</span>
+                  </div>
+                  <div class="flex gap-4 text-xs text-slate-600">
+                    <span>Sent: {{ followup.sent }}</span>
+                    <span>Completed: {{ followup.completed }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6 xl:col-span-2">
+            <h3 class="dp-section-heading mb-4">Stage Status Breakdown</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <div class="p-3 bg-green-50 rounded-lg text-center">
+                <div class="text-2xl font-bold text-green-700">{{ t.completedStages }}</div>
+                <div class="text-xs text-green-600">Completed</div>
+              </div>
+              <div class="p-3 bg-blue-50 rounded-lg text-center">
+                <div class="text-2xl font-bold text-blue-700">{{ t.pendingStages }}</div>
+                <div class="text-xs text-blue-600">Pending</div>
+              </div>
+              <div class="p-3 bg-yellow-50 rounded-lg text-center">
+                <div class="text-2xl font-bold text-yellow-700">{{ t.overdueStages }}</div>
+                <div class="text-xs text-yellow-600">Overdue</div>
+              </div>
+              <div class="p-3 bg-red-50 rounded-lg text-center">
+                <div class="text-2xl font-bold text-red-700">{{ t.declinedStages + t.deferredStages }}</div>
+                <div class="text-xs text-red-600">Declined/Deferred</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      }
+    }
+
+    @case ('patients') {
+      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">From</span>
+            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">To</span>
+            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="dp-metric-grid mb-6" aria-label="Patient metrics">
+        @for (stat of patientStats(); track stat.label) {
+          <dp-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+        }
+      </div>
+
+      @if (patientRetention(); as p) {
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Patient Activity</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Total Unique Patients</span>
+                <strong class="text-slate-800">{{ p.totalUniquePatients }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Avg Visits per Patient</span>
+                <strong class="text-slate-800">{{ p.avgVisitsPerPatient.toFixed(1) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Patients with Completed Treatment</span>
+                <strong class="text-slate-800">{{ p.patientsWithCompletedTreatment }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Retention Breakdown</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-4 bg-green-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-green-700">{{ formatPercent(p.retentionRate) }}</div>
+                <div class="text-xs text-green-600">Retention Rate</div>
+              </div>
+              <div class="p-4 bg-blue-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-blue-700">{{ formatPercent(p.treatmentCompletionRate) }}</div>
+                <div class="text-xs text-blue-600">Treatment Completion</div>
+              </div>
+              <div class="p-4 bg-slate-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-slate-700">{{ p.returningPatients }}</div>
+                <div class="text-xs text-slate-600">Returning Patients</div>
+              </div>
+              <div class="p-4 bg-emerald-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-emerald-700">{{ p.newPatients }}</div>
+                <div class="text-xs text-emerald-600">New Patients</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      }
+    }
+
+    @case ('operations') {
+      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">From</span>
+            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">To</span>
+            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="dp-metric-grid mb-6" aria-label="Operational metrics">
+        @for (stat of operationalStats(); track stat.label) {
+          <dp-stat-card [label]="stat.label" [value]="stat.value" [icon]="stat.icon" />
+        }
+      </div>
+
+      @if (operationalMetrics(); as o) {
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Visit Summary</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Scheduled Visits</span>
+                <strong class="text-slate-800">{{ o.scheduledVisits }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Cancelled Visits</span>
+                <strong class="text-slate-800">{{ o.cancelledVisits }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Active Staff</span>
+                <strong class="text-slate-800">{{ o.activeStaffCount }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Branches</span>
+                <strong class="text-slate-800">{{ o.branchCount }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6">
+            <h3 class="dp-section-heading mb-4">Enquiry Pipeline</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Total Enquiries</span>
+                <strong class="text-slate-800">{{ o.totalEnquiries }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Converted</span>
+                <strong class="text-slate-800">{{ o.convertedEnquiries }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">Conversion Rate</span>
+                <strong class="text-slate-800">{{ formatPercent(o.enquiryConversionRate) }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="dp-surface-card p-5 sm:p-6 xl:col-span-2">
+            <h3 class="dp-section-heading mb-4">No-Show Analysis</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="p-4 bg-red-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-red-700">{{ o.noShowVisits }}</div>
+                <div class="text-xs text-red-600">No-Shows</div>
+              </div>
+              <div class="p-4 bg-orange-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-orange-700">{{ formatPercent(o.noShowRate) }}</div>
+                <div class="text-xs text-orange-600">No-Show Rate</div>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-green-700">{{ o.completedVisits }}</div>
+                <div class="text-xs text-green-600">Completed</div>
+              </div>
+              <div class="p-4 bg-slate-50 rounded-lg text-center">
+                <div class="text-3xl font-bold text-slate-700">{{ o.totalVisits }}</div>
+                <div class="text-xs text-slate-600">Total Visits</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      }
+    }
+  }
+} @else if (loadFailed()) {
+  <dp-empty-state
+    icon="⚠️"
+    title="Couldn't load your dashboard"
+    message="Once the backend is connected, your clinic's live metrics will appear here."
+    actionLabel="Generate your first content"
+    (action)="goToContentGenerator()"
+  />
+}

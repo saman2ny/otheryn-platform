@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      CORS_ORIGINS: '["https://staging.dentalpilot.in"]'
+      APP_ENVIRONMENT: staging
+
+  frontend:
+    ports:
+      - "8080:80"
+
+  workers:
+    environment:
+      APP_ENVIRONMENT: staging

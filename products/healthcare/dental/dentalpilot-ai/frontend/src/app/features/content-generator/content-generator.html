@@ -1,0 +1,112 @@
+<dp-page-header
+  title="AI Content Generator"
+  subtitle="Generate ready-to-post marketing content tailored to your clinic."
+/>
+
+<div class="grid grid-cols-1 items-start gap-6 md:grid-cols-[360px_1fr]">
+  <form
+    class="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-6"
+    [formGroup]="form"
+    (ngSubmit)="generate()"
+  >
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="topic">Topic</label>
+      <input
+        id="topic"
+        type="text"
+        [class]="inputClass(form.controls.topic)"
+        formControlName="topic"
+        placeholder="e.g. Benefits of teeth whitening"
+      />
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="treatment"
+        >Treatment (optional)</label
+      >
+      <input
+        id="treatment"
+        type="text"
+        [class]="inputClass(form.controls.treatment)"
+        formControlName="treatment"
+        placeholder="e.g. Invisalign"
+      />
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="platform">Platform</label>
+      <select id="platform" [class]="inputClass(form.controls.platform)" formControlName="platform">
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="google-business">Google Business</option>
+        <option value="blog">Blog</option>
+        <option value="sms">SMS</option>
+      </select>
+    </div>
+
+    <div class="mb-4 flex flex-col gap-1">
+      <label class="text-sm font-semibold text-zinc-900" for="tone">Tone</label>
+      <select id="tone" [class]="inputClass(form.controls.tone)" formControlName="tone">
+        <option value="friendly">Friendly</option>
+        <option value="professional">Professional</option>
+        <option value="premium">Premium</option>
+        <option value="playful">Playful</option>
+        <option value="educational">Educational</option>
+      </select>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" class="accent-teal-700" formControlName="includeHashtags" />
+      Include hashtags
+    </label>
+
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" class="accent-teal-700" formControlName="includeCallToAction" />
+      Include call to action
+    </label>
+
+    <button
+      type="submit"
+      class="rounded-md bg-teal-700 px-[18px] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+      [disabled]="generating()"
+    >
+      {{ generating() ? 'Generating…' : 'Generate content' }}
+    </button>
+  </form>
+
+  <div class="flex min-w-0 flex-col gap-3">
+    @if (generatedItems().length) {
+      @for (item of generatedItems(); track item.id) {
+        <article class="rounded-lg border border-zinc-200 bg-white p-6">
+          <div class="mb-3 flex gap-2">
+            <span
+              class="inline-flex items-center rounded-md border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-500"
+            >
+              {{ item.platform }}
+            </span>
+            <span
+              class="inline-flex items-center rounded-md border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-500"
+            >
+              {{ item.tone }}
+            </span>
+          </div>
+          <h3 class="mb-1 text-base font-semibold text-zinc-900">{{ item.headline }}</h3>
+          <p>{{ item.body }}</p>
+          @if (item.hashtags.length) {
+            <p class="m-0 flex flex-wrap gap-2 text-sm text-teal-700">
+              @for (tag of item.hashtags; track tag) {
+                <span>#{{ tag }}</span>
+              }
+            </p>
+          }
+        </article>
+      }
+    } @else {
+      <dp-empty-state
+        icon="✨"
+        title="No content generated yet"
+        message="Fill out the form to generate your first AI marketing post."
+      />
+    }
+  </div>
+</div>

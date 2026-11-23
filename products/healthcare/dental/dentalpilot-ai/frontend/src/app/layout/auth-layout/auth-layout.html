@@ -1,0 +1,63 @@
+<div class="dp-auth-shell">
+  <aside class="dp-auth-aside">
+    <a class="flex items-center gap-3 text-inherit no-underline" routerLink="/auth/login">
+      <span class="dp-brand-mark" aria-hidden="true">DP</span>
+      <span class="flex flex-col">
+        <span class="text-base font-semibold tracking-[-0.03em] text-[#17213b]"
+          >DentalPilot AI</span
+        >
+        <span class="mt-0.5 text-[10px] font-medium tracking-[0.13em] text-slate-500 uppercase"
+          >A clearer practice</span
+        >
+      </span>
+    </a>
+
+    <div class="dp-auth-story">
+      <p class="dp-hero-kicker"><span class="dp-live-dot"></span> BUILT AROUND THE VISIT</p>
+      <h1>Care,<br /><span>without the chaos.</span></h1>
+      <p>
+        One clear view of the work that happens before, during, and after a patient walks through
+        your door.
+      </p>
+
+      <div class="dp-auth-art" aria-hidden="true">
+        <span class="dp-auth-art-note">A LITTLE MORE<br />ROOM TO CARE</span>
+        <svg viewBox="0 0 360 260" fill="none">
+          <path d="M22 188C92 52 146 55 191 152C237 249 292 231 340 95" />
+          <circle cx="65" cy="135" r="7" />
+          <circle cx="303" cy="160" r="7" />
+          <path
+            d="M185 67C163 54 139 62 126 83C107 113 124 151 137 185C148 212 160 228 171 220C181 213 178 181 188 179C198 177 200 215 212 221C225 228 237 204 247 178C261 143 270 105 251 81C236 61 211 56 185 67Z"
+          />
+          <path d="M185 85C181 115 185 143 189 169" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between border-t border-[#dedbd1] pt-5 text-[10px]">
+      <span class="text-slate-500">Built for better clinic workflows</span>
+      <span class="text-slate-400">DENTALPILOT · 01</span>
+    </div>
+  </aside>
+
+  <main class="dp-auth-main">
+    <div class="dp-auth-content">
+      <div class="mb-8 flex items-center justify-between">
+        <span class="text-[11px] font-semibold tracking-[0.12em] text-teal-900/45 uppercase"
+          >Your clinic workspace</span
+        >
+        <span class="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+          <span class="dp-live-dot !h-1.5 !w-1.5 !shadow-none"></span>
+          Secure sign in
+        </span>
+      </div>
+      <div class="dp-auth-card">
+        <router-outlet />
+      </div>
+      <p class="mt-6 text-center text-[10px] leading-5 text-slate-400">
+        By continuing, you agree to use this workspace responsibly.<br />
+        DentalPilot AI · Healthcare intelligence for dental teams
+      </p>
+    </div>
+  </main>
+</div>
