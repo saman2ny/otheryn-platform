@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { supabase } from './supabase';
 
-type RateLimitPolicy = 'contact' | 'booking';
+type RateLimitPolicy = 'contact' | 'booking' | 'walkthrough';
 
 type RateLimitConfig = {
   max: number;
@@ -45,10 +45,15 @@ const getConfig = (policy: RateLimitPolicy): RateLimitConfig => {
           process.env.RATE_LIMIT_CONTACT_MAX,
           isProduction ? 10 : 20,
         )
-      : positiveInteger(
-          process.env.RATE_LIMIT_BOOKING_MAX,
-          isProduction ? 5 : 10,
-        );
+      : policy === 'booking'
+        ? positiveInteger(
+            process.env.RATE_LIMIT_BOOKING_MAX,
+            isProduction ? 5 : 10,
+          )
+        : positiveInteger(
+            process.env.RATE_LIMIT_WALKTHROUGH_MAX,
+            isProduction ? 5 : 10,
+          );
 
   return {
     max,

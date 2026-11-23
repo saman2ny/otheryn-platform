@@ -194,6 +194,35 @@ test('contact and booking policies use isolated buckets', async () => {
   assert.notEqual(contactKey, bookingKey);
 });
 
+test('walkthrough policy uses an isolated bucket', async () => {
+  const supabase = createSupabase(async () => ({
+    data: [{ allowed: true, request_count: 1, retry_after: 0 }],
+    error: null,
+  }));
+
+  const contact = createRateLimitMiddleware('contact', {
+    supabase,
+    salt: 'test-salt',
+    config,
+  });
+  const walkthrough = createRateLimitMiddleware('walkthrough', {
+    supabase,
+    salt: 'test-salt',
+    config,
+  });
+
+  await contact(createRequest(), createResponse() as never, () => undefined);
+  await walkthrough(createRequest(), createResponse() as never, () => undefined);
+
+  const [contactKey, walkthroughKey] = supabase.calls.map(
+    (call) => call.args.p_bucket_key as string,
+  );
+
+  assert.ok(contactKey.startsWith('contact:'));
+  assert.ok(walkthroughKey.startsWith('walkthrough:'));
+  assert.notEqual(contactKey, walkthroughKey);
+});
+
 test('rate limiter returns 503 for ambiguous_column RPC failures', async () => {
   const supabase = createSupabase(async () => ({
     data: null,

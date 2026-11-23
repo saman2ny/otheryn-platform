@@ -94,6 +94,58 @@ export const bookingSchema = z.object({
   time: z.enum(bookingTimeSlots, { message: 'Choose an available time.' }),
 });
 
+const sanitizeText = (value: string) =>
+  Array.from(value)
+    .filter((character) => {
+      const code = character.charCodeAt(0);
+      return code > 0x1f && code !== 0x7f;
+    })
+    .join('');
+
+const cleanText = (schema: z.ZodType<string>) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' ? sanitizeText(value) : value),
+    schema,
+  );
+
+const isPastDate = (value: string) => {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return true;
+  return value < new Date().toISOString().slice(0, 10);
+};
+
+export const walkthroughSchema = z.object({
+  firstName: cleanText(
+    z.string().trim().min(1, 'Enter your first name.').max(80, 'First name is too long.'),
+  ),
+  lastName: cleanText(
+    z.string().trim().min(1, 'Enter your last name.').max(80, 'Last name is too long.'),
+  ),
+  email: cleanText(
+    z
+      .string()
+      .trim()
+      .min(1, 'Enter your work email.')
+      .email('Enter a valid email address.')
+      .max(254, 'Email is too long.'),
+  ),
+  practice: cleanText(
+    z.string().trim().min(1, 'Enter your practice name.').max(160, 'Practice name is too long.'),
+  ),
+  specialty: z.enum(['Dental'], {
+    message: 'Currently, walkthrough requests are available for dental practices only.',
+  }),
+  providers: z.enum(bookingProviderOptions, {
+    message: 'Select the number of providers.',
+  }),
+  date: z
+    .string()
+    .trim()
+    .min(1, 'Choose a date.')
+    .refine((value) => !isPastDate(value), 'Choose a date from today onward.'),
+  time: z.enum(bookingTimeSlots, { message: 'Choose an available time.' }),
+});
+
 export const contactSchema = z.object({
   name: z
     .string()
@@ -146,6 +198,7 @@ export const checkoutSchema = z.object({
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;
+export type WalkthroughInput = z.infer<typeof walkthroughSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 

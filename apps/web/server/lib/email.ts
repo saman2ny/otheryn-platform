@@ -55,7 +55,8 @@ const getFrom = () => {
 };
 
 const getNotificationEmail = () => {
-  const email = process.env.NOTIFICATION_EMAIL?.trim();
+  const email =
+    process.env.CONTACT_NOTIFICATION_EMAIL?.trim() || process.env.NOTIFICATION_EMAIL?.trim();
   if (!email) throw new Error('NOTIFICATION_EMAIL is not configured.');
   return email;
 };
@@ -170,6 +171,28 @@ export const sendBookingNotification = async (data: BookingNotificationData) => 
     to,
     replyTo: data.email,
     subject: `New Otheryn walkthrough — ${data.firstName} ${data.lastName}`,
+    html: businessShell('New walkthrough request', [
+      ['Name', `${data.firstName} ${data.lastName}`],
+      ['Email', data.email],
+      ['Practice', data.practice],
+      ['Specialty', data.specialty],
+      ['Providers', data.providers],
+      ['Preferred date', formatBookingDate(data.date)],
+      ['Preferred time', formatTime(data.time)],
+      ['Reference', data.reference],
+    ]),
+  });
+};
+
+export const sendWalkthroughNotification = async (data: BookingNotificationData) => {
+  const from = getFrom();
+  const to = getNotificationEmail();
+
+  return send({
+    from,
+    to,
+    replyTo: data.email,
+    subject: 'New Otheryn Walkthrough Request',
     html: businessShell('New walkthrough request', [
       ['Name', `${data.firstName} ${data.lastName}`],
       ['Email', data.email],

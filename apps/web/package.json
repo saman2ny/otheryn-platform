@@ -10,7 +10,7 @@
     "start": "tsx server/index.ts",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "tsx --test server/lib/contactSubmission.test.ts server/lib/rateLimits.test.ts",
+    "test": "tsx --test server/lib/contactSubmission.test.ts server/lib/rateLimits.test.ts server/lib/walkthroughSubmission.test.ts",
     "test:integration": "tsx --test server/lib/rateLimits.integration.test.ts",
     "preview": "vite preview"
   },

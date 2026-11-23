@@ -99,7 +99,7 @@ export default function Booking() {
     setSubmitting(true);
 
     try {
-      const response = await fetch('/api/booking', {
+      const response = await fetch('/api/walkthrough', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,12 +199,12 @@ export default function Booking() {
           <div>
             {booking ? (
               <div className="rounded-2xl border border-ink/10 bg-bone p-6 shadow-[0_30px_90px_-40px_rgba(23,37,31,0.4)] sm:p-8" aria-live="polite">
-                <p className="eyebrow">Booking confirmed</p>
+                <p className="eyebrow">Walkthrough request received</p>
                 <h2 className="mt-4 font-display text-[clamp(2.5rem,4vw,4.5rem)] leading-[0.95] tracking-[-0.05em] text-ink">
-                  You’re on the calendar.
+                  Your request is with the team.
                 </h2>
                 <p className="mt-4 max-w-xl text-ink/60">
-                  We’ve reserved a 30-minute walkthrough for {booking.firstName}. A calendar file is ready to download.
+                  Thanks, {booking.firstName}. We’ve saved your walkthrough request and the team will confirm a time by email. This is not a confirmed booking yet.
                 </p>
 
                 <div className="mt-8 grid gap-5 border-y border-ink/15 py-6 sm:grid-cols-2">
@@ -228,7 +228,7 @@ export default function Booking() {
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <button type="button" onClick={addToCalendar} className="btn-primary">
-                    Add to calendar
+                    Download calendar hold
                     <span aria-hidden="true">↓</span>
                   </button>
                   <button type="button" onClick={resetBooking} className="btn-secondary">
@@ -237,7 +237,7 @@ export default function Booking() {
                 </div>
 
                 <p className="mt-6 text-sm leading-6 text-ink/50">
-                  Confirmation details are prepared for {booking.email}. You can close this page or download the calendar invite.
+                  You can download a tentative calendar hold for {booking.email}. Your request is awaiting team confirmation.
                 </p>
               </div>
             ) : (

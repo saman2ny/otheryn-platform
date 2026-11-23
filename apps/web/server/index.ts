@@ -5,15 +5,22 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import { createRateLimitMiddleware } from './lib/rateLimits';
-import { bookingSchema, contactSchema, getFieldErrors } from '../src/lib/validation';
+import {
+  bookingSchema,
+  contactSchema,
+  getFieldErrors,
+  walkthroughSchema,
+} from '../src/lib/validation';
 import {
   sendBookingNotification,
   sendContactNotification,
   sendVisitorConfirmation,
+  sendWalkthroughNotification,
   serializeEmailError,
 } from './lib/email';
 import { supabase, supabaseConfigError, supabaseConfigured } from './lib/supabase';
 import { submitContactEmailFirst } from './lib/contactSubmission';
+import { submitWalkthrough } from './lib/walkthroughSubmission';
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -31,6 +38,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '16kb' }));
 app.use('/api/contact', createRateLimitMiddleware('contact'));
 app.use('/api/booking', createRateLimitMiddleware('booking'));
+app.use('/api/walkthrough', createRateLimitMiddleware('walkthrough'));
 
 const createReference = () => `OY-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
@@ -370,6 +378,48 @@ app.post('/api/booking', async (req, res) => {
     return res.status(200).json({ ok: true, id, reference });
   } catch (error) {
     console.error('Booking endpoint failed', error);
+    return res.status(500).json({ ok: false, error: 'Unexpected server error.' });
+  }
+});
+
+app.post('/api/walkthrough', async (req, res) => {
+  try {
+    if (isHoneypot(req.body ?? {})) {
+      return res.status(400).json({ ok: false, error: 'Unable to accept this submission.' });
+    }
+
+    const parsed = walkthroughSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validation failed.',
+        errors: getFieldErrors(parsed.error),
+      });
+    }
+
+    if (!supabase || !supabaseConfigured) {
+      return res.status(503).json({
+        ok: false,
+        error: 'The submission service is not configured.',
+        detail: supabaseConfigError,
+      });
+    }
+
+    const data = parsed.data;
+    const reference = createReference();
+    const submissionKey = createSubmissionKey('walkthrough', data);
+
+    const result = await submitWalkthrough({
+      data,
+      submissionKey,
+      reference,
+      supabase: supabase as never,
+      sendNotification: sendWalkthroughNotification,
+    });
+
+    return res.status(result.status).json(result.body);
+  } catch (error) {
+    console.error('Walkthrough endpoint failed', error);
     return res.status(500).json({ ok: false, error: 'Unexpected server error.' });
   }
 });
