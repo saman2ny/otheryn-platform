@@ -29,6 +29,7 @@ import {
   PatientCommunication,
   Patient,
   PatientCreate,
+  PatientDuplicate,
   PatientEnquiry,
   PatientEnquiryCreate,
   PatientPortalShare,
@@ -61,6 +62,25 @@ export class DentalPilotWorkflowsService {
 
   createPatient(payload: PatientCreate): Observable<Patient> {
     return this.http.post<Patient>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}`, payload);
+  }
+
+  getPatient(id: string): Observable<Patient> {
+    return this.http.get<Patient>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}/${id}`);
+  }
+
+  updatePatient(id: string, payload: Partial<Patient>): Observable<Patient> {
+    return this.http.patch<Patient>(
+      `${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}/${id}`,
+      payload,
+    );
+  }
+
+  findDuplicatePatients(email?: string, phone?: string): Observable<PatientDuplicate[]> {
+    const params = new HttpParams().set('email', email ?? '').set('phone', phone ?? '');
+    return this.http.get<PatientDuplicate[]>(
+      `${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}/duplicates`,
+      { params },
+    );
   }
 
   listEnquiries(): Observable<PatientEnquiry[]> {

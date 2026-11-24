@@ -32,6 +32,7 @@ from app.models.healthcare import (
     PatientEnquiry,
     PatientPortalAccount,
     PatientRecordShare,
+    PatientRevision,
     PatientVisit,
     PmsReconciliationRun,
     PmsReconciliationRow,
@@ -70,6 +71,9 @@ from app.schemas.healthcare import (
     PatientEnquiryResponse,
     PatientEnquiryUpdate,
     PatientResponse,
+    PatientUpdate,
+    PatientRevisionResponse,
+    PatientDuplicateResponse,
     PatientVisitCreate,
     PatientVisitResponse,
     PmsReconciliationRowResponse,
@@ -300,6 +304,44 @@ def list_patients(current_user: CurrentUser, db: DbSession) -> list[Patient]:
     return query.order_by(Patient.created_at.desc()).all()
 
 
+@router.get("/patients/duplicates", response_model=list[PatientDuplicateResponse])
+def find_duplicate_patients(
+    current_user: CurrentUser,
+    db: DbSession,
+    email: str | None = None,
+    phone: str | None = None,
+    exclude_patient_id: str | None = None,
+) -> list[PatientDuplicateResponse]:
+    query = db.query(Patient).filter(Patient.clinic_id == current_user.clinic_id)
+    if current_user.role == "staff" and current_user.branch_id:
+        query = query.filter(Patient.branch_id == current_user.branch_id)
+    if exclude_patient_id:
+        query = query.filter(Patient.id != exclude_patient_id)
+
+    normalized_email = email.strip().lower() if email else None
+    normalized_phone = phone.strip() if phone else None
+    matches: list[PatientDuplicateResponse] = []
+    seen: set[str] = set()
+    for patient in query.order_by(Patient.created_at.desc()).all():
+        matched_on: str | None = None
+        if normalized_email and patient.email and patient.email.strip().lower() == normalized_email:
+            matched_on = "email"
+        elif normalized_phone and patient.phone and patient.phone.strip() == normalized_phone:
+            matched_on = "phone"
+        if matched_on and patient.id not in seen:
+            seen.add(patient.id)
+            matches.append(
+                PatientDuplicateResponse(
+                    id=patient.id,
+                    full_name=patient.full_name,
+                    email=patient.email,
+                    phone=patient.phone,
+                    matched_on=matched_on,
+                )
+            )
+    return matches
+
+
 @router.post("/patients", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 def create_patient(request: PatientCreate, current_user: CurrentUser, db: DbSession) -> Patient:
     branch_id = request.branch_id or current_user.branch_id or primary_branch(db, current_user.clinic_id).id
@@ -322,6 +364,97 @@ def create_patient(request: PatientCreate, current_user: CurrentUser, db: DbSess
     db.commit()
     db.refresh(patient)
     return patient
+
+
+@router.get("/patients/{patient_id}", response_model=PatientResponse)
+def get_patient(patient_id: str, current_user: CurrentUser, db: DbSession) -> Patient:
+    patient = clinic_patient(db, current_user, patient_id)
+    if patient is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found.")
+    audit(db, current_user, "access", "patient", patient.id)
+    db.commit()
+    return patient
+
+
+@router.patch("/patients/{patient_id}", response_model=PatientResponse)
+def update_patient(
+    patient_id: str,
+    request: PatientUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> Patient:
+    patient = clinic_patient(db, current_user, patient_id)
+    if patient is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found.")
+
+    updates = request.model_dump(exclude_unset=True)
+    branch_id = updates.pop("branch_id", None)
+    if branch_id:
+        branch = (
+            db.query(ClinicBranch)
+            .filter(
+                ClinicBranch.id == branch_id,
+                ClinicBranch.clinic_id == current_user.clinic_id,
+            )
+            .first()
+        )
+        if branch is None or (
+            current_user.role == "staff" and current_user.branch_id != branch_id
+        ):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Patient branch access denied.")
+        patient.branch_id = branch_id
+
+    for field, value in updates.items():
+        setattr(patient, field, value)
+    patient.updated_by = current_user.id
+
+    version = (
+        db.query(PatientRevision)
+        .filter(PatientRevision.patient_id == patient.id)
+        .count()
+    ) + 1
+    db.add(
+        PatientRevision(
+            clinic_id=patient.clinic_id,
+            patient_id=patient.id,
+            version=version,
+            snapshot={
+                "fullName": patient.full_name,
+                "email": patient.email,
+                "phone": patient.phone,
+                "dateOfBirth": patient.date_of_birth,
+                "externalReference": patient.external_reference,
+                "branchId": patient.branch_id,
+                "consentChannel": patient.consent_channel,
+                "medicalHistory": patient.medical_history,
+                "dentalHistory": patient.dental_history,
+                "emergencyContacts": patient.emergency_contacts,
+            },
+            created_by=current_user.id,
+        )
+    )
+    db.flush()
+    audit(db, current_user, "update", "patient", patient.id, updates)
+    db.commit()
+    db.refresh(patient)
+    return patient
+
+
+@router.get("/patients/{patient_id}/revisions", response_model=list[PatientRevisionResponse])
+def list_patient_revisions(
+    patient_id: str,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> list[PatientRevision]:
+    patient = clinic_patient(db, current_user, patient_id)
+    if patient is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found.")
+    return (
+        db.query(PatientRevision)
+        .filter(PatientRevision.patient_id == patient.id)
+        .order_by(PatientRevision.version.desc())
+        .all()
+    )
 
 
 @router.get("/enquiries", response_model=list[PatientEnquiryResponse])

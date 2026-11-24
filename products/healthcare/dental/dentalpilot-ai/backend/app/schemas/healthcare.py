@@ -15,6 +15,22 @@ class PatientCreate(CamelModel):
     external_reference: str | None = None
     branch_id: str | None = None
     consent_channel: Literal["email", "sms", "whatsapp", "phone"] = "email"
+    medical_history: dict | None = None
+    dental_history: dict | None = None
+    emergency_contacts: list | None = None
+
+
+class PatientUpdate(CamelModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=150)
+    email: EmailStr | None = None
+    phone: str | None = None
+    date_of_birth: str | None = None
+    external_reference: str | None = None
+    branch_id: str | None = None
+    consent_channel: Literal["email", "sms", "whatsapp", "phone"] | None = None
+    medical_history: dict | None = None
+    dental_history: dict | None = None
+    emergency_contacts: list | None = None
 
 
 class PatientResponse(CamelModel):
@@ -26,7 +42,29 @@ class PatientResponse(CamelModel):
     external_reference: str | None = None
     branch_id: str | None = None
     consent_channel: str
+    medical_history: dict | None = None
+    dental_history: dict | None = None
+    emergency_contacts: list | None = None
     created_at: datetime
+    updated_at: datetime | None = None
+    updated_by: str | None = None
+
+
+class PatientRevisionResponse(CamelModel):
+    id: str
+    patient_id: str
+    version: int
+    snapshot: dict
+    created_by: str | None = None
+    created_at: datetime
+
+
+class PatientDuplicateResponse(CamelModel):
+    id: str
+    full_name: str
+    email: str | None = None
+    phone: str | None = None
+    matched_on: str
 
 
 class PatientEnquiryCreate(CamelModel):

@@ -1,3 +1,24 @@
+export interface MedicalHistory {
+  conditions?: string[];
+  allergies?: string[];
+  medications?: string[];
+  surgeries?: string[];
+  notes?: string;
+}
+
+export interface DentalHistory {
+  previousTreatments?: string[];
+  conditions?: string[];
+  procedures?: string[];
+  concerns?: string;
+}
+
+export interface EmergencyContact {
+  name: string;
+  relationship?: string;
+  phone: string;
+}
+
 export interface Patient {
   id: string;
   fullName: string;
@@ -7,7 +28,12 @@ export interface Patient {
   externalReference?: string;
   branchId?: string;
   consentChannel: 'email' | 'sms' | 'whatsapp' | 'phone';
+  medicalHistory?: MedicalHistory | null;
+  dentalHistory?: DentalHistory | null;
+  emergencyContacts?: EmergencyContact[] | null;
   createdAt: string;
+  updatedAt?: string | null;
+  updatedAtBy?: string | null;
 }
 
 export interface PatientCreate {
@@ -16,7 +42,19 @@ export interface PatientCreate {
   phone?: string;
   dateOfBirth?: string;
   externalReference?: string;
+  branchId?: string;
   consentChannel: 'email' | 'sms' | 'whatsapp' | 'phone';
+  medicalHistory?: MedicalHistory | null;
+  dentalHistory?: DentalHistory | null;
+  emergencyContacts?: EmergencyContact[] | null;
+}
+
+export interface PatientDuplicate {
+  id: string;
+  fullName: string;
+  email?: string | null;
+  phone?: string | null;
+  matchedOn: string;
 }
 
 export type PatientEnquiryStatus =

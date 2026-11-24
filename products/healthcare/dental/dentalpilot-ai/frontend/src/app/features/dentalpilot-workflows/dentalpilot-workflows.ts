@@ -21,6 +21,7 @@ import {
   OnboardingStatus,
   PatientCommunication,
   Patient,
+  PatientDuplicate,
   PatientVisit,
   PmsReconciliationRow,
   PmsReconciliationResult,
@@ -274,6 +275,98 @@ export class DentalPilotWorkflows {
         this.saving.set(false);
       },
       error: () => this.saving.set(false),
+    });
+  }
+
+  protected readonly editingPatientId = signal<string | null>(null);
+  protected readonly duplicateMatches = signal<PatientDuplicate[]>([]);
+  protected readonly editForm = {
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    consentChannel: 'email' as 'email' | 'sms' | 'whatsapp' | 'phone',
+    medicalConditions: '',
+    medicalAllergies: '',
+    medicalMedications: '',
+    medicalNotes: '',
+    dentalTreatments: '',
+    dentalConcerns: '',
+    emergencyName: '',
+    emergencyRelationship: '',
+    emergencyPhone: '',
+  };
+
+  protected editPatient(patient: Patient): void {
+    this.editingPatientId.set(patient.id);
+    this.editForm.fullName = patient.fullName;
+    this.editForm.email = patient.email ?? '';
+    this.editForm.phone = patient.phone ?? '';
+    this.editForm.dateOfBirth = patient.dateOfBirth ?? '';
+    this.editForm.consentChannel = patient.consentChannel;
+    const medical = patient.medicalHistory ?? {};
+    this.editForm.medicalConditions = (medical.conditions ?? []).join(', ');
+    this.editForm.medicalAllergies = (medical.allergies ?? []).join(', ');
+    this.editForm.medicalMedications = (medical.medications ?? []).join(', ');
+    this.editForm.medicalNotes = medical.notes ?? '';
+    const dental = patient.dentalHistory ?? {};
+    this.editForm.dentalTreatments = (dental.previousTreatments ?? []).join(', ');
+    this.editForm.dentalConcerns = dental.concerns ?? '';
+    const contact = patient.emergencyContacts?.[0];
+    this.editForm.emergencyName = contact?.name ?? '';
+    this.editForm.emergencyRelationship = contact?.relationship ?? '';
+    this.editForm.emergencyPhone = contact?.phone ?? '';
+  }
+
+  protected cancelEdit(): void {
+    this.editingPatientId.set(null);
+    this.duplicateMatches.set([]);
+  }
+
+  protected savePatient(): void {
+    const id = this.editingPatientId();
+    if (!id) return;
+    const payload: Partial<Patient> = {
+      fullName: this.editForm.fullName.trim(),
+      email: this.editForm.email.trim() || undefined,
+      phone: this.editForm.phone.trim() || undefined,
+      dateOfBirth: this.editForm.dateOfBirth || undefined,
+      consentChannel: this.editForm.consentChannel,
+      medicalHistory: {
+        conditions: this.editForm.medicalConditions.split(',').map((v) => v.trim()).filter(Boolean),
+        allergies: this.editForm.medicalAllergies.split(',').map((v) => v.trim()).filter(Boolean),
+        medications: this.editForm.medicalMedications.split(',').map((v) => v.trim()).filter(Boolean),
+        notes: this.editForm.medicalNotes.trim() || undefined,
+      },
+      dentalHistory: {
+        previousTreatments: this.editForm.dentalTreatments
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean),
+        concerns: this.editForm.dentalConcerns.trim() || undefined,
+      },
+      emergencyContacts: this.editForm.emergencyName.trim()
+        ? [
+            {
+              name: this.editForm.emergencyName.trim(),
+              relationship: this.editForm.emergencyRelationship.trim(),
+              phone: this.editForm.emergencyPhone.trim(),
+            },
+          ]
+        : [],
+    };
+    this.service.updatePatient(id, payload).subscribe({
+      next: (updated) => {
+        this.patients.update((items) => items.map((p) => (p.id === updated.id ? updated : p)));
+        this.notifications.success('Patient record updated.');
+        this.cancelEdit();
+      },
+    });
+  }
+
+  protected checkDuplicates(): void {
+    this.service.findDuplicatePatients(this.patientForm.email, this.patientForm.phone).subscribe({
+      next: (matches) => this.duplicateMatches.set(matches),
     });
   }
 
