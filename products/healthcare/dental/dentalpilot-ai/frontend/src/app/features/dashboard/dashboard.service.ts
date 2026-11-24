@@ -26,35 +26,51 @@ export class DashboardService {
     const params = new URLSearchParams();
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
-    return this.http.get<RevenueMetrics>(`${this.baseUrl}/${API_ENDPOINTS.dashboard.revenue}?${params}`);
+    return this.http.get<RevenueMetrics>(
+      `${this.baseUrl}/${API_ENDPOINTS.dashboard.revenue}?${params}`,
+    );
   }
 
   getFinancialSummary(fromDate?: string, toDate?: string): Observable<FinancialSummary> {
     const params = new URLSearchParams();
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
-    return this.http.get<FinancialSummary>(`${this.baseUrl}/${API_ENDPOINTS.dashboard.financialSummary}?${params}`);
+    return this.http.get<FinancialSummary>(
+      `${this.baseUrl}/${API_ENDPOINTS.dashboard.financialSummary}?${params}`,
+    );
   }
 
-  getTreatmentFollowupMetrics(fromDate?: string, toDate?: string): Observable<TreatmentFollowupMetrics> {
+  getTreatmentFollowupMetrics(
+    fromDate?: string,
+    toDate?: string,
+  ): Observable<TreatmentFollowupMetrics> {
     const params = new URLSearchParams();
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
-    return this.http.get<TreatmentFollowupMetrics>(`${this.baseUrl}/${API_ENDPOINTS.dashboard.treatmentFollowup}?${params}`);
+    return this.http.get<TreatmentFollowupMetrics>(
+      `${this.baseUrl}/${API_ENDPOINTS.dashboard.treatmentFollowup}?${params}`,
+    );
   }
 
-  getPatientRetentionMetrics(fromDate?: string, toDate?: string): Observable<PatientRetentionMetrics> {
+  getPatientRetentionMetrics(
+    fromDate?: string,
+    toDate?: string,
+  ): Observable<PatientRetentionMetrics> {
     const params = new URLSearchParams();
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
-    return this.http.get<PatientRetentionMetrics>(`${this.baseUrl}/${API_ENDPOINTS.dashboard.patientRetention}?${params}`);
+    return this.http.get<PatientRetentionMetrics>(
+      `${this.baseUrl}/${API_ENDPOINTS.dashboard.patientRetention}?${params}`,
+    );
   }
 
   getOperationalMetrics(fromDate?: string, toDate?: string): Observable<ClinicOperationalMetrics> {
     const params = new URLSearchParams();
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
-    return this.http.get<ClinicOperationalMetrics>(`${this.baseUrl}/${API_ENDPOINTS.dashboard.operational}?${params}`);
+    return this.http.get<ClinicOperationalMetrics>(
+      `${this.baseUrl}/${API_ENDPOINTS.dashboard.operational}?${params}`,
+    );
   }
 
   getOnboardingStatus(): Observable<OnboardingStatus> {

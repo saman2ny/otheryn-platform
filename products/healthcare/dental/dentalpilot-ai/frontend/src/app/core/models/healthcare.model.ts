@@ -375,7 +375,10 @@ export interface PmsReconciliationRow {
   details: string;
 }
 
-export interface PmsReconciliationResult extends Omit<PmsReconciliationRun, 'filename' | 'createdAt'> {}
+export interface PmsReconciliationResult extends Omit<
+  PmsReconciliationRun,
+  'filename' | 'createdAt'
+> {}
 
 export interface EmailOutbox {
   id: string;

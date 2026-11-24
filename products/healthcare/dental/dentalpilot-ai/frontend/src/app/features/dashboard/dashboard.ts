@@ -67,17 +67,27 @@ export class Dashboard {
     const { from, to } = this.dateRange();
     switch (this.activeTab()) {
       case 'revenue':
-        this.dashboardService.getRevenueMetrics(from, to).subscribe((data) => this.revenueMetrics.set(data));
-        this.dashboardService.getFinancialSummary(from, to).subscribe((data) => this.financialSummary.set(data));
+        this.dashboardService
+          .getRevenueMetrics(from, to)
+          .subscribe((data) => this.revenueMetrics.set(data));
+        this.dashboardService
+          .getFinancialSummary(from, to)
+          .subscribe((data) => this.financialSummary.set(data));
         break;
       case 'treatment':
-        this.dashboardService.getTreatmentFollowupMetrics(from, to).subscribe((data) => this.treatmentFollowup.set(data));
+        this.dashboardService
+          .getTreatmentFollowupMetrics(from, to)
+          .subscribe((data) => this.treatmentFollowup.set(data));
         break;
       case 'patients':
-        this.dashboardService.getPatientRetentionMetrics(from, to).subscribe((data) => this.patientRetention.set(data));
+        this.dashboardService
+          .getPatientRetentionMetrics(from, to)
+          .subscribe((data) => this.patientRetention.set(data));
         break;
       case 'operations':
-        this.dashboardService.getOperationalMetrics(from, to).subscribe((data) => this.operationalMetrics.set(data));
+        this.dashboardService
+          .getOperationalMetrics(from, to)
+          .subscribe((data) => this.operationalMetrics.set(data));
         break;
     }
   }
@@ -146,9 +156,21 @@ export class Dashboard {
     const r = this.revenueMetrics();
     if (!r) return [];
     return [
-      { label: 'Total Revenue', value: this.formatCurrency(r.totalRevenue, r.currency), icon: '💰' },
-      { label: 'Treatment Revenue', value: this.formatCurrency(r.treatmentRevenue, r.currency), icon: '🦷' },
-      { label: 'Subscription Revenue', value: this.formatCurrency(r.subscriptionRevenue, r.currency), icon: '📋' },
+      {
+        label: 'Total Revenue',
+        value: this.formatCurrency(r.totalRevenue, r.currency),
+        icon: '💰',
+      },
+      {
+        label: 'Treatment Revenue',
+        value: this.formatCurrency(r.treatmentRevenue, r.currency),
+        icon: '🦷',
+      },
+      {
+        label: 'Subscription Revenue',
+        value: this.formatCurrency(r.subscriptionRevenue, r.currency),
+        icon: '📋',
+      },
       { label: 'Net Revenue', value: this.formatCurrency(r.netRevenue, r.currency), icon: '📈' },
     ];
   });
@@ -157,10 +179,26 @@ export class Dashboard {
     const f = this.financialSummary();
     if (!f) return [];
     return [
-      { label: 'Total Charges', value: this.formatCurrency(f.totalCharges, f.currency), icon: '📊' },
-      { label: 'Total Payments', value: this.formatCurrency(f.totalPayments, f.currency), icon: '💵' },
-      { label: 'Outstanding', value: this.formatCurrency(f.outstandingBalance, f.currency), icon: '⏳' },
-      { label: 'Insurance Collection', value: this.formatPercent(f.insuranceClaims.collectionRate), icon: '🏥' },
+      {
+        label: 'Total Charges',
+        value: this.formatCurrency(f.totalCharges, f.currency),
+        icon: '📊',
+      },
+      {
+        label: 'Total Payments',
+        value: this.formatCurrency(f.totalPayments, f.currency),
+        icon: '💵',
+      },
+      {
+        label: 'Outstanding',
+        value: this.formatCurrency(f.outstandingBalance, f.currency),
+        icon: '⏳',
+      },
+      {
+        label: 'Insurance Collection',
+        value: this.formatPercent(f.insuranceClaims.collectionRate),
+        icon: '🏥',
+      },
     ];
   });
 
@@ -182,7 +220,11 @@ export class Dashboard {
       { label: 'New Patients', value: p.newPatients, icon: '👤' },
       { label: 'Returning', value: p.returningPatients, icon: '🔄' },
       { label: 'Retention Rate', value: this.formatPercent(p.retentionRate), icon: '📊' },
-      { label: 'Treatment Completion', value: this.formatPercent(p.treatmentCompletionRate), icon: '✅' },
+      {
+        label: 'Treatment Completion',
+        value: this.formatPercent(p.treatmentCompletionRate),
+        icon: '✅',
+      },
     ];
   });
 
@@ -193,7 +235,11 @@ export class Dashboard {
       { label: 'Total Visits', value: o.totalVisits, icon: '🏥' },
       { label: 'Completed', value: o.completedVisits, icon: '✅' },
       { label: 'No-Show Rate', value: this.formatPercent(o.noShowRate), icon: '📉' },
-      { label: 'Enquiry Conversion', value: this.formatPercent(o.enquiryConversionRate), icon: '📈' },
+      {
+        label: 'Enquiry Conversion',
+        value: this.formatPercent(o.enquiryConversionRate),
+        icon: '📈',
+      },
     ];
   });
 
@@ -229,14 +275,15 @@ export class Dashboard {
   protected readonly onboardingProgress = computed(() => {
     const o = this.onboardingStatus();
     if (!o) return null;
-    const completed = o.steps.filter(s => s.completed).length;
-    const requiredCompleted = o.steps.filter(s => s.required && s.completed).length;
-    const requiredTotal = o.steps.filter(s => s.required).length;
+    const completed = o.steps.filter((s) => s.completed).length;
+    const requiredCompleted = o.steps.filter((s) => s.required && s.completed).length;
+    const requiredTotal = o.steps.filter((s) => s.required).length;
     return {
       percent: Math.round((completed / o.totalSteps) * 100),
       completed,
       total: o.totalSteps,
-      requiredPercent: requiredTotal > 0 ? Math.round((requiredCompleted / requiredTotal) * 100) : 100,
+      requiredPercent:
+        requiredTotal > 0 ? Math.round((requiredCompleted / requiredTotal) * 100) : 100,
       canComplete: o.canComplete,
     };
   });

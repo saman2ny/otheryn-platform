@@ -142,18 +142,6 @@ export class DentalPilotWorkflows {
   protected readonly insuranceClaimEdits = new Map<string, InsuranceClaimEditForm>();
   protected readonly activeTab = signal<WorkflowTab>('overview');
   protected readonly pageTitle = computed(() => WORKFLOW_TITLES[this.activeTab()]);
-  protected readonly tabs: { key: WorkflowTab; label: string }[] = [
-    { key: 'overview', label: 'Patients & CRM' },
-    { key: 'journey', label: 'Treatment Journey' },
-    { key: 'revenue', label: 'Revenue Recovery' },
-    { key: 'analytics', label: 'Dental Analytics' },
-    { key: 'passport', label: 'Patient Passport' },
-    { key: 'consent', label: 'Consent & Audit' },
-    { key: 'governance', label: 'Security & Audit' },
-    { key: 'reminders', label: 'Recall & Follow-up' },
-    { key: 'integrations', label: 'PMS Integrations' },
-    { key: 'clinic', label: 'Staff & Branches' },
-  ];
   protected readonly saving = signal(false);
   protected readonly analyticsFromDate = signal('');
   protected readonly analyticsToDate = signal('');
@@ -271,14 +259,6 @@ export class DentalPilotWorkflows {
       this.activeTab.set(isWorkflowTab(tab) ? tab : 'overview');
     });
     this.load();
-  }
-
-  protected setTab(tab: WorkflowTab): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: tab === 'overview' ? null : tab },
-      queryParamsHandling: 'merge',
-    });
   }
 
   protected createPatient(): void {
@@ -697,8 +677,7 @@ export class DentalPilotWorkflows {
 
   protected availableLedgerCharges(): TreatmentLedgerEntry[] {
     return this.ledgerEntries().filter(
-      (entry) =>
-        entry.patientId === this.ledgerForm.patientId && entry.entryType === 'charge',
+      (entry) => entry.patientId === this.ledgerForm.patientId && entry.entryType === 'charge',
     );
   }
 
@@ -728,7 +707,9 @@ export class DentalPilotWorkflows {
   }
 
   protected patientName(patientId: string): string {
-    return this.patients().find((patient) => patient.id === patientId)?.fullName ?? 'Unknown patient';
+    return (
+      this.patients().find((patient) => patient.id === patientId)?.fullName ?? 'Unknown patient'
+    );
   }
 
   protected startPatientPayment(charge: TreatmentLedgerEntry): void {
@@ -737,7 +718,9 @@ export class DentalPilotWorkflows {
       next: (order) => this.openTreatmentPaymentCheckout(order),
       error: () => {
         this.creatingPaymentForCharge.set('');
-        this.notifications.error('Unable to start treatment payment. Check the balance and try again.');
+        this.notifications.error(
+          'Unable to start treatment payment. Check the balance and try again.',
+        );
       },
     });
   }
@@ -852,7 +835,9 @@ export class DentalPilotWorkflows {
   }
 
   protected availableClaimRecords(): HealthRecord[] {
-    return this.records().filter((record) => record.patientId === this.insuranceClaimForm.patientId);
+    return this.records().filter(
+      (record) => record.patientId === this.insuranceClaimForm.patientId,
+    );
   }
 
   protected insuranceClaimEdit(claim: InsuranceClaim): InsuranceClaimEditForm {
@@ -1197,8 +1182,7 @@ export class DentalPilotWorkflows {
         this.ledgerEntries.set(result.ledgerEntries);
         this.insuranceClaims.set(result.insuranceClaims);
         this.pmsReconciliationRuns.set(result.pmsRuns);
-        const selectedRunId =
-          this.selectedPmsRunId() || result.pmsRuns[0]?.id || '';
+        const selectedRunId = this.selectedPmsRunId() || result.pmsRuns[0]?.id || '';
         this.selectedPmsRunId.set(selectedRunId);
         if (selectedRunId) this.loadPmsReconciliationRows(selectedRunId);
         this.recallSettings.set(result.recallSettings);

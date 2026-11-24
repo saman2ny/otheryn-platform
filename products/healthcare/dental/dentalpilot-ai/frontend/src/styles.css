@@ -171,22 +171,6 @@ textarea {
   text-transform: uppercase;
 }
 
-.dp-workflow-tabs {
-  min-width: 0;
-  max-width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.dp-workflow-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.dp-workflow-tabs > button {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
 .dp-nav-link:hover {
   transform: translateX(2px);
   color: #28334a;
@@ -1063,7 +1047,10 @@ textarea:focus {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.03em;
-  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
 .dp-tab-btn:hover {
@@ -1106,7 +1093,9 @@ textarea:focus {
   border-radius: 3px;
   padding: 16px;
   background: #fff;
-  transition: box-shadow 180ms ease, transform 180ms ease;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .dp-stat-card:hover {
@@ -1156,7 +1145,7 @@ textarea:focus {
     padding: 0 12px;
     font-size: 11px;
   }
-  
+
   .dp-input {
     width: 140px;
   }

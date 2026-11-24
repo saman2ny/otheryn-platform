@@ -47,11 +47,6 @@ export class ClinicGrowthOs {
 
   protected readonly activeTab = signal<GrowthTab>('local-seo');
   protected readonly pageTitle = computed(() => GROWTH_TITLES[this.activeTab()]);
-  protected readonly tabs: { key: GrowthTab; label: string }[] = [
-    { key: 'local-seo', label: 'Local SEO' },
-    { key: 'campaigns', label: 'Campaigns' },
-    { key: 'reviews', label: 'Reviews' },
-  ];
   protected readonly branches = signal<ClinicBranch[]>([]);
   protected readonly listings = signal<LocalListingAudit[]>([]);
   protected readonly campaigns = signal<MarketingCampaign[]>([]);
@@ -94,14 +89,6 @@ export class ClinicGrowthOs {
       this.activeTab.set(isGrowthTab(tab) ? tab : 'local-seo');
     });
     this.load();
-  }
-
-  protected setTab(tab: GrowthTab): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab },
-      queryParamsHandling: 'merge',
-    });
   }
 
   protected saveListing(): void {

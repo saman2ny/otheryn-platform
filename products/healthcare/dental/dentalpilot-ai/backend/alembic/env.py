@@ -12,7 +12,14 @@ from app.models import *  # noqa: F401,F403  (registers all models on Base.metad
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# ConfigParser treats `%` as interpolation syntax. A URL-encoded password
+# (e.g. `%40` for `@`) would raise "invalid interpolation syntax". Escape `%`
+# only for the config value; ConfigParser unescapes it back before SQLAlchemy
+# reads it, so the password is not double-encoded.
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database_url.replace("%", "%%"),
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

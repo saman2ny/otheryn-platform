@@ -58,9 +58,7 @@ export const routes: Routes = [
       {
         path: 'dental-operations',
         loadComponent: () =>
-          import('./features/dental-operations/dental-operations').then(
-            (m) => m.DentalOperations,
-          ),
+          import('./features/dental-operations/dental-operations').then((m) => m.DentalOperations),
       },
       {
         path: 'organization-management',

@@ -3,22 +3,6 @@
   subtitle="Branch-scoped case, equipment, sterilisation, communication and documentation workflows. External devices and publishers are not connected."
 />
 
-<div class="dp-workflow-tabs mb-6 flex gap-2 overflow-x-auto border-b border-zinc-200">
-  @for (tab of tabs; track tab.key) {
-    <button
-      type="button"
-      (click)="setTab(tab.key)"
-      [class]="
-        activeTab() === tab.key
-          ? 'border-b-2 border-teal-700 px-4 py-3 text-sm font-semibold text-teal-700'
-          : 'border-b-2 border-transparent px-4 py-3 text-sm font-medium text-zinc-500'
-      "
-    >
-      {{ tab.label }}
-    </button>
-  }
-</div>
-
 @if (loading()) {
   <p class="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-500">
     Loading clinic operations…
@@ -33,19 +17,31 @@
           Files remain in the patient record workflow.
         </p>
         <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.patientId" name="casePatient">
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.patientId"
+            name="casePatient"
+          >
             <option value="">Select patient</option>
             @for (patient of patients(); track patient.id) {
               <option [value]="patient.id">{{ patient.fullName }}</option>
             }
           </select>
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.branchId" name="caseBranch">
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.branchId"
+            name="caseBranch"
+          >
             <option value="">Use patient's branch</option>
             @for (branch of branches(); track branch.id) {
               <option [value]="branch.id">{{ branch.name }}</option>
             }
           </select>
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.caseType" name="caseType">
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.caseType"
+            name="caseType"
+          >
             <option value="imaging">Imaging</option>
             <option value="intraoral-scan">Intraoral scan</option>
             <option value="lab">Dental lab</option>
@@ -54,14 +50,46 @@
             <option value="implant">Implant coordination</option>
             <option value="robotics">Robotics coordination</option>
           </select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.title" name="caseTitle" placeholder="Case title" />
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.providerName" name="caseProvider" placeholder="External provider (optional)" />
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.externalReference" name="caseReference" placeholder="Provider case reference (optional)" />
-          <label class="grid gap-1 text-xs text-zinc-500">Due date
-            <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900" [(ngModel)]="caseForm.dueAt" name="caseDueAt" type="datetime-local" />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.title"
+            name="caseTitle"
+            placeholder="Case title"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.providerName"
+            name="caseProvider"
+            placeholder="External provider (optional)"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.externalReference"
+            name="caseReference"
+            placeholder="Provider case reference (optional)"
+          />
+          <label class="grid gap-1 text-xs text-zinc-500"
+            >Due date
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              [(ngModel)]="caseForm.dueAt"
+              name="caseDueAt"
+              type="datetime-local"
+            />
           </label>
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="caseForm.details" name="caseDetails" placeholder='Optional details as JSON, e.g. {"tooth":"36"}' rows="3"></textarea>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" [disabled]="saving() || !patients().length" (click)="createCase()">
+          <textarea
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="caseForm.details"
+            name="caseDetails"
+            placeholder='Optional details as JSON, e.g. {"tooth":"36"}'
+            rows="3"
+          ></textarea>
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            [disabled]="saving() || !patients().length"
+            (click)="createCase()"
+          >
             {{ saving() ? 'Saving…' : 'Add case' }}
           </button>
         </div>
@@ -75,22 +103,41 @@
               <article class="rounded-md border border-zinc-200 p-4">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">{{ item.caseType }} · {{ patientName(item.patientId) }}</p>
+                    <p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">
+                      {{ item.caseType }} · {{ patientName(item.patientId) }}
+                    </p>
                     <h3 class="mt-1 font-medium text-zinc-900">{{ item.title }}</h3>
                     <p class="mt-1 text-xs text-zinc-500">
                       {{ branchName(item.branchId) }}
-                      @if (item.providerName) { · {{ item.providerName }} }
-                      @if (item.externalReference) { · Ref {{ item.externalReference }} }
+                      @if (item.providerName) {
+                        · {{ item.providerName }}
+                      }
+                      @if (item.externalReference) {
+                        · Ref {{ item.externalReference }}
+                      }
                     </p>
-                    @if (item.dueAt) { <p class="mt-1 text-xs text-zinc-500">Due {{ item.dueAt | date: 'medium' }}</p> }
+                    @if (item.dueAt) {
+                      <p class="mt-1 text-xs text-zinc-500">
+                        Due {{ item.dueAt | date: 'medium' }}
+                      </p>
+                    }
                   </div>
-                  <select class="rounded border border-zinc-300 px-2 py-1 text-xs" [ngModel]="item.status" [name]="'case-status-' + item.id" (ngModelChange)="updateCaseStatus(item.id, $event)">
+                  <select
+                    class="rounded border border-zinc-300 px-2 py-1 text-xs"
+                    [ngModel]="item.status"
+                    [name]="'case-status-' + item.id"
+                    (ngModelChange)="updateCaseStatus(item.id, $event)"
+                  >
                     @for (status of caseStatuses(item.status); track status) {
                       <option [value]="status">{{ status }}</option>
                     }
                   </select>
                 </div>
-                <button type="button" class="mt-3 text-xs font-semibold text-teal-800 underline" (click)="selectCase(item.id)">
+                <button
+                  type="button"
+                  class="mt-3 text-xs font-semibold text-teal-800 underline"
+                  (click)="selectCase(item.id)"
+                >
                   {{ selectedCaseId() === item.id ? 'Timeline selected' : 'Open case timeline' }}
                 </button>
                 @if (selectedCaseId() === item.id) {
@@ -98,25 +145,56 @@
                     <div class="space-y-2">
                       @for (event of caseEvents(); track event.id) {
                         <div class="text-xs text-zinc-600">
-                          <span class="font-medium">{{ event.title }}</span> · {{ event.eventType }} · {{ event.createdAt | date: 'short' }}
-                          @if (event.notes) { <p class="mt-0.5">{{ event.notes }}</p> }
+                          <span class="font-medium">{{ event.title }}</span> ·
+                          {{ event.eventType }} · {{ event.createdAt | date: 'short' }}
+                          @if (event.notes) {
+                            <p class="mt-0.5">{{ event.notes }}</p>
+                          }
                         </div>
-                      } @empty { <p class="text-xs text-zinc-500">No timeline events yet.</p> }
+                      } @empty {
+                        <p class="text-xs text-zinc-500">No timeline events yet.</p>
+                      }
                     </div>
                     <div class="mt-3 grid gap-2 sm:grid-cols-[130px_1fr]">
-                      <select class="rounded border border-zinc-300 px-2 py-2 text-xs" [(ngModel)]="eventForm.eventType" [name]="'event-type-' + item.id">
-                        <option value="milestone">Milestone</option><option value="handoff">Handoff</option><option value="approval">Approval</option><option value="note">Note</option>
+                      <select
+                        class="rounded border border-zinc-300 px-2 py-2 text-xs"
+                        [(ngModel)]="eventForm.eventType"
+                        [name]="'event-type-' + item.id"
+                      >
+                        <option value="milestone">Milestone</option>
+                        <option value="handoff">Handoff</option>
+                        <option value="approval">Approval</option>
+                        <option value="note">Note</option>
                       </select>
-                      <input class="rounded border border-zinc-300 px-2 py-2 text-xs" [(ngModel)]="eventForm.title" [name]="'event-title-' + item.id" placeholder="Timeline event" />
-                      <textarea class="rounded border border-zinc-300 px-2 py-2 text-xs sm:col-span-2" [(ngModel)]="eventForm.notes" [name]="'event-notes-' + item.id" placeholder="Notes (optional)" rows="2"></textarea>
-                      <button type="button" class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white sm:col-span-2" (click)="addCaseEvent()">Add timeline event</button>
+                      <input
+                        class="rounded border border-zinc-300 px-2 py-2 text-xs"
+                        [(ngModel)]="eventForm.title"
+                        [name]="'event-title-' + item.id"
+                        placeholder="Timeline event"
+                      />
+                      <textarea
+                        class="rounded border border-zinc-300 px-2 py-2 text-xs sm:col-span-2"
+                        [(ngModel)]="eventForm.notes"
+                        [name]="'event-notes-' + item.id"
+                        placeholder="Notes (optional)"
+                        rows="2"
+                      ></textarea>
+                      <button
+                        type="button"
+                        class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white sm:col-span-2"
+                        (click)="addCaseEvent()"
+                      >
+                        Add timeline event
+                      </button>
                     </div>
                   </div>
                 }
               </article>
             }
           </div>
-        } @else { <p class="text-sm text-zinc-500">No digital dentistry cases have been added.</p> }
+        } @else {
+          <p class="text-sm text-zinc-500">No digital dentistry cases have been added.</p>
+        }
       </section>
     </div>
   }
@@ -125,60 +203,194 @@
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 class="mb-1 font-semibold text-zinc-900">Register clinic equipment</h2>
-        <p class="mb-4 text-sm text-zinc-500">Manual asset and maintenance tracking; no equipment telemetry is connected.</p>
+        <p class="mb-4 text-sm text-zinc-500">
+          Manual asset and maintenance tracking; no equipment telemetry is connected.
+        </p>
         <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.branchId" name="assetBranch">
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.branchId"
+            name="assetBranch"
+          >
             <option value="">Select branch</option>
-            @for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.name }}</option>
+            }
           </select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.assetTag" name="assetTag" placeholder="Asset tag" />
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.assetType" name="assetType">
-            <option value="dental-chair">Dental chair</option><option value="autoclave">Autoclave</option><option value="intraoral-scanner">Intraoral scanner</option><option value="xray">X-ray</option><option value="cbct">CBCT</option><option value="3d-printer">3D printer</option><option value="surgical-robot">Surgical robot</option><option value="other">Other</option>
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.assetTag"
+            name="assetTag"
+            placeholder="Asset tag"
+          />
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.assetType"
+            name="assetType"
+          >
+            <option value="dental-chair">Dental chair</option>
+            <option value="autoclave">Autoclave</option>
+            <option value="intraoral-scanner">Intraoral scanner</option>
+            <option value="xray">X-ray</option>
+            <option value="cbct">CBCT</option>
+            <option value="3d-printer">3D printer</option>
+            <option value="surgical-robot">Surgical robot</option>
+            <option value="other">Other</option>
           </select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.displayName" name="assetName" placeholder="Equipment name" />
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.modelName" name="assetModel" placeholder="Model (optional)" />
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.serialNumber" name="assetSerial" placeholder="Serial number (optional)" />
-          <label class="grid gap-1 text-xs text-zinc-500">Next service
-            <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900" [(ngModel)]="assetForm.nextServiceAt" name="assetNextService" type="datetime-local" />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.displayName"
+            name="assetName"
+            placeholder="Equipment name"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.modelName"
+            name="assetModel"
+            placeholder="Model (optional)"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.serialNumber"
+            name="assetSerial"
+            placeholder="Serial number (optional)"
+          />
+          <label class="grid gap-1 text-xs text-zinc-500"
+            >Next service
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              [(ngModel)]="assetForm.nextServiceAt"
+              name="assetNextService"
+              type="datetime-local"
+            />
           </label>
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="assetForm.notes" name="assetNotes" placeholder="Notes" rows="2"></textarea>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" [disabled]="saving() || !branches().length" (click)="createAsset()">Register asset</button>
+          <textarea
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="assetForm.notes"
+            name="assetNotes"
+            placeholder="Notes"
+            rows="2"
+          ></textarea>
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+            [disabled]="saving() || !branches().length"
+            (click)="createAsset()"
+          >
+            Register asset
+          </button>
         </div>
       </section>
       <section class="space-y-4">
         @for (asset of assets(); track asset.id) {
           <article class="rounded-lg border border-zinc-200 bg-white p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
-              <div><p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">{{ asset.assetType }} · {{ asset.assetTag }}</p><h3 class="mt-1 font-semibold">{{ asset.displayName }}</h3><p class="text-xs text-zinc-500">{{ branchName(asset.branchId) }} @if (asset.modelName) { · {{ asset.modelName }} } @if (asset.serialNumber) { · {{ asset.serialNumber }} }</p>
-                @if (asset.nextServiceAt) { <p class="mt-1 text-xs text-zinc-500">Service due {{ asset.nextServiceAt | date: 'medium' }}</p> }
+              <div>
+                <p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">
+                  {{ asset.assetType }} · {{ asset.assetTag }}
+                </p>
+                <h3 class="mt-1 font-semibold">{{ asset.displayName }}</h3>
+                <p class="text-xs text-zinc-500">
+                  {{ branchName(asset.branchId) }}
+                  @if (asset.modelName) {
+                    · {{ asset.modelName }}
+                  }
+                  @if (asset.serialNumber) {
+                    · {{ asset.serialNumber }}
+                  }
+                </p>
+                @if (asset.nextServiceAt) {
+                  <p class="mt-1 text-xs text-zinc-500">
+                    Service due {{ asset.nextServiceAt | date: 'medium' }}
+                  </p>
+                }
               </div>
-              <select class="rounded border border-zinc-300 px-2 py-1 text-xs" [ngModel]="asset.status" [name]="'asset-status-' + asset.id" (ngModelChange)="updateAssetStatus(asset, $event)">
-                <option value="active">Active</option><option value="service-due">Service due</option><option value="unavailable">Unavailable</option><option value="retired">Retired</option>
+              <select
+                class="rounded border border-zinc-300 px-2 py-1 text-xs"
+                [ngModel]="asset.status"
+                [name]="'asset-status-' + asset.id"
+                (ngModelChange)="updateAssetStatus(asset, $event)"
+              >
+                <option value="active">Active</option>
+                <option value="service-due">Service due</option>
+                <option value="unavailable">Unavailable</option>
+                <option value="retired">Retired</option>
               </select>
             </div>
-            <button type="button" class="mt-3 text-xs font-semibold text-teal-800 underline" (click)="showMaintenance(asset.id)">View / schedule maintenance</button>
+            <button
+              type="button"
+              class="mt-3 text-xs font-semibold text-teal-800 underline"
+              (click)="showMaintenance(asset.id)"
+            >
+              View / schedule maintenance
+            </button>
             @if (selectedAssetId() === asset.id) {
               <div class="mt-3 border-t border-zinc-200 pt-3">
                 <div class="grid gap-2 sm:grid-cols-[150px_1fr]">
-                  <select class="rounded border border-zinc-300 px-2 py-2 text-xs" [(ngModel)]="maintenanceForm.workType" [name]="'maintenance-type-' + asset.id"><option value="maintenance">Maintenance</option><option value="breakdown">Breakdown</option><option value="repair">Repair</option><option value="calibration">Calibration</option></select>
-                  <input class="rounded border border-zinc-300 px-2 py-2 text-xs" [(ngModel)]="maintenanceForm.dueAt" [name]="'maintenance-due-' + asset.id" type="datetime-local" />
-                  <input class="rounded border border-zinc-300 px-2 py-2 text-xs sm:col-span-2" [(ngModel)]="maintenanceForm.notes" [name]="'maintenance-notes-' + asset.id" placeholder="Maintenance notes" />
-                  <button type="button" class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white sm:col-span-2" (click)="createMaintenance()">Schedule work</button>
+                  <select
+                    class="rounded border border-zinc-300 px-2 py-2 text-xs"
+                    [(ngModel)]="maintenanceForm.workType"
+                    [name]="'maintenance-type-' + asset.id"
+                  >
+                    <option value="maintenance">Maintenance</option>
+                    <option value="breakdown">Breakdown</option>
+                    <option value="repair">Repair</option>
+                    <option value="calibration">Calibration</option>
+                  </select>
+                  <input
+                    class="rounded border border-zinc-300 px-2 py-2 text-xs"
+                    [(ngModel)]="maintenanceForm.dueAt"
+                    [name]="'maintenance-due-' + asset.id"
+                    type="datetime-local"
+                  />
+                  <input
+                    class="rounded border border-zinc-300 px-2 py-2 text-xs sm:col-span-2"
+                    [(ngModel)]="maintenanceForm.notes"
+                    [name]="'maintenance-notes-' + asset.id"
+                    placeholder="Maintenance notes"
+                  />
+                  <button
+                    type="button"
+                    class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white sm:col-span-2"
+                    (click)="createMaintenance()"
+                  >
+                    Schedule work
+                  </button>
                 </div>
                 <div class="mt-3 space-y-2">
                   @for (work of maintenanceRows(asset.id); track work.id) {
-                    <div class="flex flex-wrap items-center justify-between gap-2 rounded bg-zinc-50 p-2 text-xs">
-                      <span>{{ work.workType }} · {{ work.status }} @if (work.dueAt) { · due {{ work.dueAt | date: 'short' }} }</span>
-                      <select class="rounded border border-zinc-300 px-2 py-1" [ngModel]="work.status" [name]="'work-status-' + work.id" (ngModelChange)="updateMaintenanceStatus(asset.id, work, $event)">
-                        @for (status of maintenanceStatuses(work.status); track status) { <option [value]="status">{{ status }}</option> }
+                    <div
+                      class="flex flex-wrap items-center justify-between gap-2 rounded bg-zinc-50 p-2 text-xs"
+                    >
+                      <span
+                        >{{ work.workType }} · {{ work.status }}
+                        @if (work.dueAt) {
+                          · due {{ work.dueAt | date: 'short' }}
+                        }
+                      </span>
+                      <select
+                        class="rounded border border-zinc-300 px-2 py-1"
+                        [ngModel]="work.status"
+                        [name]="'work-status-' + work.id"
+                        (ngModelChange)="updateMaintenanceStatus(asset.id, work, $event)"
+                      >
+                        @for (status of maintenanceStatuses(work.status); track status) {
+                          <option [value]="status">{{ status }}</option>
+                        }
                       </select>
                     </div>
-                  } @empty { <p class="text-xs text-zinc-500">No maintenance records.</p> }
+                  } @empty {
+                    <p class="text-xs text-zinc-500">No maintenance records.</p>
+                  }
                 </div>
               </div>
             }
           </article>
-        } @empty { <p class="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-500">No clinic assets registered.</p> }
+        } @empty {
+          <p class="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-500">
+            No clinic assets registered.
+          </p>
+        }
       </section>
     </div>
   }
@@ -187,22 +399,89 @@
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 class="mb-1 font-semibold">Record a sterilisation cycle</h2>
-        <p class="mb-4 text-sm text-zinc-500">Manual recordkeeping only; this does not certify or remotely verify an autoclave cycle.</p>
+        <p class="mb-4 text-sm text-zinc-500">
+          Manual recordkeeping only; this does not certify or remotely verify an autoclave cycle.
+        </p>
         <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.branchId" name="cycleBranch">
-            <option value="">Select branch</option>@for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.branchId"
+            name="cycleBranch"
+          >
+            <option value="">Select branch</option>
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.name }}</option>
+            }
           </select>
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.assetId" name="cycleAsset">
-            <option value="">Select autoclave</option>@for (asset of assets(); track asset.id) { @if (asset.assetType === 'autoclave') { <option [value]="asset.id">{{ asset.displayName }} · {{ branchName(asset.branchId) }}</option> } }
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.assetId"
+            name="cycleAsset"
+          >
+            <option value="">Select autoclave</option>
+            @for (asset of assets(); track asset.id) {
+              @if (asset.assetType === 'autoclave') {
+                <option [value]="asset.id">
+                  {{ asset.displayName }} · {{ branchName(asset.branchId) }}
+                </option>
+              }
+            }
           </select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.cycleReference" name="cycleReference" placeholder="Unique cycle reference" />
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.loadReference" name="loadReference" placeholder="Instrument load / batch reference" />
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.result" name="cycleResult"><option value="passed">Passed</option><option value="failed">Failed</option><option value="needs-review">Needs review</option></select>
-          <label class="grid gap-1 text-xs text-zinc-500">Started at<input class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900" [(ngModel)]="cycleForm.startedAt" name="cycleStarted" type="datetime-local" /></label>
-          <label class="grid gap-1 text-xs text-zinc-500">Completed at<input class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900" [(ngModel)]="cycleForm.completedAt" name="cycleCompleted" type="datetime-local" /></label>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.operatorName" name="cycleOperator" placeholder="Operator name" />
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="cycleForm.notes" name="cycleNotes" placeholder="Cycle notes" rows="2"></textarea>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" (click)="createCycle()">Save cycle</button>
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.cycleReference"
+            name="cycleReference"
+            placeholder="Unique cycle reference"
+          />
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.loadReference"
+            name="loadReference"
+            placeholder="Instrument load / batch reference"
+          />
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.result"
+            name="cycleResult"
+          >
+            <option value="passed">Passed</option>
+            <option value="failed">Failed</option>
+            <option value="needs-review">Needs review</option>
+          </select>
+          <label class="grid gap-1 text-xs text-zinc-500"
+            >Started at<input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              [(ngModel)]="cycleForm.startedAt"
+              name="cycleStarted"
+              type="datetime-local"
+          /></label>
+          <label class="grid gap-1 text-xs text-zinc-500"
+            >Completed at<input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              [(ngModel)]="cycleForm.completedAt"
+              name="cycleCompleted"
+              type="datetime-local"
+          /></label>
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.operatorName"
+            name="cycleOperator"
+            placeholder="Operator name"
+          />
+          <textarea
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="cycleForm.notes"
+            name="cycleNotes"
+            placeholder="Cycle notes"
+            rows="2"
+          ></textarea>
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+            (click)="createCycle()"
+          >
+            Save cycle
+          </button>
         </div>
       </section>
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -210,11 +489,31 @@
         <div class="space-y-3">
           @for (cycle of cycles(); track cycle.id) {
             <article class="rounded-md border border-zinc-200 p-4">
-              <div class="flex flex-wrap justify-between gap-2"><h3 class="font-medium">{{ cycle.cycleReference }} · {{ assetName(cycle.assetId) }}</h3><span class="text-xs font-semibold uppercase" [class.text-emerald-700]="cycle.result === 'passed'" [class.text-rose-700]="cycle.result === 'failed'" [class.text-amber-700]="cycle.result === 'needs-review'">{{ cycle.result }}</span></div>
-              <p class="mt-1 text-xs text-zinc-500">{{ cycle.startedAt | date: 'medium' }} · {{ cycle.operatorName }} @if (cycle.loadReference) { · Load {{ cycle.loadReference }} }</p>
-              @if (cycle.notes) { <p class="mt-2 text-sm text-zinc-600">{{ cycle.notes }}</p> }
+              <div class="flex flex-wrap justify-between gap-2">
+                <h3 class="font-medium">
+                  {{ cycle.cycleReference }} · {{ assetName(cycle.assetId) }}
+                </h3>
+                <span
+                  class="text-xs font-semibold uppercase"
+                  [class.text-emerald-700]="cycle.result === 'passed'"
+                  [class.text-rose-700]="cycle.result === 'failed'"
+                  [class.text-amber-700]="cycle.result === 'needs-review'"
+                  >{{ cycle.result }}</span
+                >
+              </div>
+              <p class="mt-1 text-xs text-zinc-500">
+                {{ cycle.startedAt | date: 'medium' }} · {{ cycle.operatorName }}
+                @if (cycle.loadReference) {
+                  · Load {{ cycle.loadReference }}
+                }
+              </p>
+              @if (cycle.notes) {
+                <p class="mt-2 text-sm text-zinc-600">{{ cycle.notes }}</p>
+              }
             </article>
-          } @empty { <p class="text-sm text-zinc-500">No sterilisation cycles recorded.</p> }
+          } @empty {
+            <p class="text-sm text-zinc-500">No sterilisation cycles recorded.</p>
+          }
         </div>
       </section>
     </div>
@@ -224,14 +523,58 @@
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 class="mb-1 font-semibold">Prepare a patient message</h2>
-        <p class="mb-4 text-sm text-zinc-500">Draft approval never sends an email, SMS or WhatsApp message.</p>
+        <p class="mb-4 text-sm text-zinc-500">
+          Draft approval never sends an email, SMS or WhatsApp message.
+        </p>
         <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="messageForm.patientId" name="messagePatient"><option value="">Select patient</option>@for (patient of patients(); track patient.id) { <option [value]="patient.id">{{ patient.fullName }}</option> }</select>
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="messageForm.channel" name="messageChannel"><option value="email">Email</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="messageForm.subject" name="messageSubject" placeholder="Subject (email)" />
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="messageForm.body" name="messageBody" placeholder="Message draft" rows="5"></textarea>
-          <label class="flex items-start gap-2 text-xs text-zinc-600"><input class="mt-0.5" type="checkbox" [(ngModel)]="messageForm.consentConfirmed" name="messageConsent" /> I verified current consent for this exact channel.</label>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" (click)="createMessageDraft()">Save draft</button>
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="messageForm.patientId"
+            name="messagePatient"
+          >
+            <option value="">Select patient</option>
+            @for (patient of patients(); track patient.id) {
+              <option [value]="patient.id">{{ patient.fullName }}</option>
+            }
+          </select>
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="messageForm.channel"
+            name="messageChannel"
+          >
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+            <option value="whatsapp">WhatsApp</option>
+          </select>
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="messageForm.subject"
+            name="messageSubject"
+            placeholder="Subject (email)"
+          />
+          <textarea
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="messageForm.body"
+            name="messageBody"
+            placeholder="Message draft"
+            rows="5"
+          ></textarea>
+          <label class="flex items-start gap-2 text-xs text-zinc-600"
+            ><input
+              class="mt-0.5"
+              type="checkbox"
+              [(ngModel)]="messageForm.consentConfirmed"
+              name="messageConsent"
+            />
+            I verified current consent for this exact channel.</label
+          >
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+            (click)="createMessageDraft()"
+          >
+            Save draft
+          </button>
         </div>
       </section>
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -239,13 +582,40 @@
         <div class="space-y-3">
           @for (draft of messageDrafts(); track draft.id) {
             <article class="rounded-md border border-zinc-200 p-4">
-              <div class="flex flex-wrap justify-between gap-2"><h3 class="font-medium">{{ patientName(draft.patientId) }} · {{ draft.channel }}</h3><span class="text-xs text-zinc-500">{{ draft.status }}</span></div>
-              @if (draft.subject) { <p class="mt-1 text-sm font-medium">{{ draft.subject }}</p> }
+              <div class="flex flex-wrap justify-between gap-2">
+                <h3 class="font-medium">
+                  {{ patientName(draft.patientId) }} · {{ draft.channel }}
+                </h3>
+                <span class="text-xs text-zinc-500">{{ draft.status }}</span>
+              </div>
+              @if (draft.subject) {
+                <p class="mt-1 text-sm font-medium">{{ draft.subject }}</p>
+              }
               <p class="mt-2 whitespace-pre-wrap text-sm text-zinc-600">{{ draft.body }}</p>
-              <p class="mt-2 text-xs text-zinc-500">Consent confirmed · {{ draft.createdAt | date: 'medium' }}</p>
-              @if (draft.status === 'draft') { <div class="mt-3 flex gap-2"><button type="button" class="rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white" (click)="updateMessageStatus(draft, 'approved')">Approve draft</button><button type="button" class="rounded border border-zinc-300 px-3 py-2 text-xs" (click)="updateMessageStatus(draft, 'cancelled')">Cancel</button></div> }
+              <p class="mt-2 text-xs text-zinc-500">
+                Consent confirmed · {{ draft.createdAt | date: 'medium' }}
+              </p>
+              @if (draft.status === 'draft') {
+                <div class="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    class="rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white"
+                    (click)="updateMessageStatus(draft, 'approved')"
+                  >
+                    Approve draft</button
+                  ><button
+                    type="button"
+                    class="rounded border border-zinc-300 px-3 py-2 text-xs"
+                    (click)="updateMessageStatus(draft, 'cancelled')"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              }
             </article>
-          } @empty { <p class="text-sm text-zinc-500">No communication drafts.</p> }
+          } @empty {
+            <p class="text-sm text-zinc-500">No communication drafts.</p>
+          }
         </div>
       </section>
     </div>
@@ -255,14 +625,56 @@
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 class="mb-1 font-semibold">Draft a clinic publication</h2>
-        <p class="mb-4 text-sm text-zinc-500">Approval, scheduling and published labels are manual records, not external publishing.</p>
+        <p class="mb-4 text-sm text-zinc-500">
+          Approval, scheduling and published labels are manual records, not external publishing.
+        </p>
         <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="publicationForm.branchId" name="publicationBranch"><option value="">Clinic-wide</option>@for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }</select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="publicationForm.title" name="publicationTitle" placeholder="Draft title" />
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="publicationForm.platform" name="publicationPlatform"><option value="google-business">Google Business Profile</option><option value="meta">Meta</option><option value="other">Other</option></select>
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="publicationForm.body" name="publicationBody" placeholder="Proposed content" rows="5"></textarea>
-          <label class="grid gap-1 text-xs text-zinc-500">Proposed publish time (optional)<input class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900" [(ngModel)]="publicationForm.scheduledAt" name="publicationScheduled" type="datetime-local" /></label>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" (click)="createPublication()">Save draft</button>
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="publicationForm.branchId"
+            name="publicationBranch"
+          >
+            <option value="">Clinic-wide</option>
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.name }}</option>
+            }
+          </select>
+          <input
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="publicationForm.title"
+            name="publicationTitle"
+            placeholder="Draft title"
+          />
+          <select
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="publicationForm.platform"
+            name="publicationPlatform"
+          >
+            <option value="google-business">Google Business Profile</option>
+            <option value="meta">Meta</option>
+            <option value="other">Other</option>
+          </select>
+          <textarea
+            class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            [(ngModel)]="publicationForm.body"
+            name="publicationBody"
+            placeholder="Proposed content"
+            rows="5"
+          ></textarea>
+          <label class="grid gap-1 text-xs text-zinc-500"
+            >Proposed publish time (optional)<input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              [(ngModel)]="publicationForm.scheduledAt"
+              name="publicationScheduled"
+              type="datetime-local"
+          /></label>
+          <button
+            type="button"
+            class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+            (click)="createPublication()"
+          >
+            Save draft
+          </button>
         </div>
       </section>
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -270,19 +682,60 @@
         <div class="space-y-3">
           @for (draft of publications(); track draft.id) {
             <article class="rounded-md border border-zinc-200 p-4">
-              <div class="flex flex-wrap justify-between gap-2"><div><p class="text-xs text-teal-800 uppercase">{{ draft.platform }} · {{ branchName(draft.branchId) }}</p><h3 class="mt-1 font-medium">{{ draft.title }}</h3></div><span class="text-xs text-zinc-500">{{ draft.status }}</span></div>
+              <div class="flex flex-wrap justify-between gap-2">
+                <div>
+                  <p class="text-xs text-teal-800 uppercase">
+                    {{ draft.platform }} · {{ branchName(draft.branchId) }}
+                  </p>
+                  <h3 class="mt-1 font-medium">{{ draft.title }}</h3>
+                </div>
+                <span class="text-xs text-zinc-500">{{ draft.status }}</span>
+              </div>
               <p class="mt-2 whitespace-pre-wrap text-sm text-zinc-600">{{ draft.body }}</p>
-              @if (draft.scheduledAt) { <p class="mt-2 text-xs text-zinc-500">Scheduled record: {{ draft.scheduledAt | date: 'medium' }}</p> }
-              @if (draft.status === 'draft') { <button type="button" class="mt-3 rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white" (click)="updatePublicationStatus(draft, 'approved')">Approve draft</button> }
+              @if (draft.scheduledAt) {
+                <p class="mt-2 text-xs text-zinc-500">
+                  Scheduled record: {{ draft.scheduledAt | date: 'medium' }}
+                </p>
+              }
+              @if (draft.status === 'draft') {
+                <button
+                  type="button"
+                  class="mt-3 rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white"
+                  (click)="updatePublicationStatus(draft, 'approved')"
+                >
+                  Approve draft
+                </button>
+              }
               @if (draft.status === 'approved' || draft.status === 'scheduled') {
                 <div class="mt-3 flex flex-wrap gap-2">
-                  <input class="rounded border border-zinc-300 px-2 py-2 text-xs" [ngModel]="publicationSchedules()[draft.id] ?? ''" (ngModelChange)="setPublicationSchedule(draft.id, $event)" [name]="'publication-time-' + draft.id" type="datetime-local" aria-label="Publication schedule time" />
-                  <button type="button" class="rounded border border-zinc-300 px-3 py-2 text-xs" (click)="schedulePublication(draft)">Mark scheduled</button>
-                  <button type="button" class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white" (click)="updatePublicationStatus(draft, 'published')">Mark manually published</button>
+                  <input
+                    class="rounded border border-zinc-300 px-2 py-2 text-xs"
+                    [ngModel]="publicationSchedules()[draft.id] ?? ''"
+                    (ngModelChange)="setPublicationSchedule(draft.id, $event)"
+                    [name]="'publication-time-' + draft.id"
+                    type="datetime-local"
+                    aria-label="Publication schedule time"
+                  />
+                  <button
+                    type="button"
+                    class="rounded border border-zinc-300 px-3 py-2 text-xs"
+                    (click)="schedulePublication(draft)"
+                  >
+                    Mark scheduled
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded bg-zinc-900 px-3 py-2 text-xs font-semibold text-white"
+                    (click)="updatePublicationStatus(draft, 'published')"
+                  >
+                    Mark manually published
+                  </button>
                 </div>
               }
             </article>
-          } @empty { <p class="text-sm text-zinc-500">No clinic publication drafts.</p> }
+          } @empty {
+            <p class="text-sm text-zinc-500">No clinic publication drafts.</p>
+          }
         </div>
       </section>
     </div>
@@ -291,56 +744,114 @@
   @if (activeTab() === 'documentation') {
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <div class="grid gap-5">
-      <section class="rounded-lg border border-zinc-200 bg-white p-5">
-        <h2 class="mb-1 font-semibold">Clinical AI safeguards</h2>
-        <p class="mb-4 text-sm text-zinc-600">
-          Optional xAI Grok note formatting uses clinician input only. It requires deployment approval,
-          clinic-owner opt-in, and patient consent for each draft. Every generated note remains unapproved
-          until a clinician reviews it. Imaging analysis and diagnosis are not available.
-        </p>
-        @if (clinicalAiSettings(); as aiSettings) {
-          <div class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-zinc-50 p-3">
-            <p class="text-sm">
-              Clinic status:
-              <span class="font-medium">{{ aiSettings.enabled ? 'Enabled' : 'Disabled' }}</span>
-            </p>
-            @if (canManageClinic()) {
-              <button
-                type="button"
-                class="rounded-md border border-zinc-300 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-                [disabled]="saving() || (!aiSettings.available && !aiSettings.enabled)"
-                (click)="setClinicClinicalAiEnabled(!aiSettings.enabled)"
-              >
-                {{ aiSettings.enabled ? 'Disable for clinic' : 'Enable for clinic' }}
-              </button>
+        <section class="rounded-lg border border-zinc-200 bg-white p-5">
+          <h2 class="mb-1 font-semibold">Clinical AI safeguards</h2>
+          <p class="mb-4 text-sm text-zinc-600">
+            Optional xAI Grok note formatting uses clinician input only. It requires deployment
+            approval, clinic-owner opt-in, and patient consent for each draft. Every generated note
+            remains unapproved until a clinician reviews it. Imaging analysis and diagnosis are not
+            available.
+          </p>
+          @if (clinicalAiSettings(); as aiSettings) {
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-zinc-50 p-3"
+            >
+              <p class="text-sm">
+                Clinic status:
+                <span class="font-medium">{{ aiSettings.enabled ? 'Enabled' : 'Disabled' }}</span>
+              </p>
+              @if (canManageClinic()) {
+                <button
+                  type="button"
+                  class="rounded-md border border-zinc-300 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                  [disabled]="saving() || (!aiSettings.available && !aiSettings.enabled)"
+                  (click)="setClinicClinicalAiEnabled(!aiSettings.enabled)"
+                >
+                  {{ aiSettings.enabled ? 'Disable for clinic' : 'Enable for clinic' }}
+                </button>
+              }
+            </div>
+            @if (!aiSettings.available) {
+              <p class="mt-3 text-xs text-amber-800">
+                Unavailable until deployment feature flags, the approved data-processing
+                arrangement, and the xAI API key are configured.
+              </p>
             }
-          </div>
-          @if (!aiSettings.available) {
-            <p class="mt-3 text-xs text-amber-800">
-              Unavailable until deployment feature flags, the approved data-processing arrangement,
-              and the xAI API key are configured.
-            </p>
           }
-        }
-      </section>
-      <section class="rounded-lg border border-zinc-200 bg-white p-5">
-        <h2 class="mb-1 font-semibold">Clinician-entered note draft</h2>
-        <p class="mb-4 text-sm text-zinc-500">Save clinician-authored notes for review. AI formatting is optional and never replaces clinical judgment.</p>
-        <div class="grid gap-3">
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="noteForm.patientId" name="notePatient"><option value="">Select patient</option>@for (patient of patients(); track patient.id) { <option [value]="patient.id">{{ patient.fullName }}</option> }</select>
-          <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="noteForm.visitId" name="noteVisit"><option value="">No linked visit</option>@for (visit of visits(); track visit.id) { @if (visit.patientId === noteForm.patientId) { <option [value]="visit.id">{{ visit.visitType }} · {{ visit.createdAt | date: 'short' }}</option> } }</select>
-          <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="noteForm.title" name="noteTitle" placeholder="Note title" />
-          <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="noteForm.clinicianInput" name="clinicianInput" placeholder="Clinician-authored content" rows="7"></textarea>
-          <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" (click)="createClinicalNote()">Save for review</button>
-        </div>
-      </section>
+        </section>
+        <section class="rounded-lg border border-zinc-200 bg-white p-5">
+          <h2 class="mb-1 font-semibold">Clinician-entered note draft</h2>
+          <p class="mb-4 text-sm text-zinc-500">
+            Save clinician-authored notes for review. AI formatting is optional and never replaces
+            clinical judgment.
+          </p>
+          <div class="grid gap-3">
+            <select
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [(ngModel)]="noteForm.patientId"
+              name="notePatient"
+            >
+              <option value="">Select patient</option>
+              @for (patient of patients(); track patient.id) {
+                <option [value]="patient.id">{{ patient.fullName }}</option>
+              }
+            </select>
+            <select
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [(ngModel)]="noteForm.visitId"
+              name="noteVisit"
+            >
+              <option value="">No linked visit</option>
+              @for (visit of visits(); track visit.id) {
+                @if (visit.patientId === noteForm.patientId) {
+                  <option [value]="visit.id">
+                    {{ visit.visitType }} · {{ visit.createdAt | date: 'short' }}
+                  </option>
+                }
+              }
+            </select>
+            <input
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [(ngModel)]="noteForm.title"
+              name="noteTitle"
+              placeholder="Note title"
+            />
+            <textarea
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              [(ngModel)]="noteForm.clinicianInput"
+              name="clinicianInput"
+              placeholder="Clinician-authored content"
+              rows="7"
+            ></textarea>
+            <button
+              type="button"
+              class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+              (click)="createClinicalNote()"
+            >
+              Save for review
+            </button>
+          </div>
+        </section>
       </div>
       <section class="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 class="mb-4 font-semibold">Documentation review queue</h2>
         <div class="space-y-3">
           @for (note of notes(); track note.id) {
             <article class="rounded-md border border-zinc-200 p-4">
-              <div class="flex flex-wrap justify-between gap-2"><div><h3 class="font-medium">{{ note.title }} · {{ patientName(note.patientId) }}</h3><p class="text-xs text-zinc-500">{{ note.createdAt | date: 'medium' }} · {{ note.generationSource === 'xai' ? 'AI-formatted draft' : 'Clinician-authored draft' }}</p></div><span class="text-xs text-zinc-500">{{ note.reviewStatus }}</span></div>
+              <div class="flex flex-wrap justify-between gap-2">
+                <div>
+                  <h3 class="font-medium">{{ note.title }} · {{ patientName(note.patientId) }}</h3>
+                  <p class="text-xs text-zinc-500">
+                    {{ note.createdAt | date: 'medium' }} ·
+                    {{
+                      note.generationSource === 'xai'
+                        ? 'AI-formatted draft'
+                        : 'Clinician-authored draft'
+                    }}
+                  </p>
+                </div>
+                <span class="text-xs text-zinc-500">{{ note.reviewStatus }}</span>
+              </div>
               <p class="mt-3 whitespace-pre-wrap text-sm text-zinc-700">{{ note.draftText }}</p>
               @if (note.reviewStatus === 'pending-review') {
                 <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -348,7 +859,7 @@
                     <label class="flex items-start gap-2 text-xs text-zinc-600">
                       <input
                         type="checkbox"
-                    [ngModel]="clinicalAiConsent()[note.id]"
+                        [ngModel]="clinicalAiConsent()[note.id]"
                         (ngModelChange)="updateClinicalAiConsent(note.id, $event)"
                         [name]="'aiConsent-' + note.id"
                       />
@@ -363,12 +874,26 @@
                       Generate draft
                     </button>
                   }
-                  <button type="button" class="rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white" (click)="reviewNote(note, 'approved')">Approve</button>
-                  <button type="button" class="rounded border border-zinc-300 px-3 py-2 text-xs" (click)="reviewNote(note, 'rejected')">Reject</button>
+                  <button
+                    type="button"
+                    class="rounded bg-teal-700 px-3 py-2 text-xs font-semibold text-white"
+                    (click)="reviewNote(note, 'approved')"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded border border-zinc-300 px-3 py-2 text-xs"
+                    (click)="reviewNote(note, 'rejected')"
+                  >
+                    Reject
+                  </button>
                 </div>
               }
             </article>
-          } @empty { <p class="text-sm text-zinc-500">No clinical note drafts awaiting review.</p> }
+          } @empty {
+            <p class="text-sm text-zinc-500">No clinical note drafts awaiting review.</p>
+          }
         </div>
       </section>
     </div>
@@ -378,14 +903,33 @@
     <section class="rounded-lg border border-zinc-200 bg-white p-5">
       <div class="mb-5">
         <h2 class="font-semibold">Integration availability</h2>
-        <p class="mt-1 text-sm text-zinc-500">Provider catalog is a roadmap, not a connected account. Only the provider-neutral CSV exchange is enabled in this workflow.</p>
+        <p class="mt-1 text-sm text-zinc-500">
+          Provider catalog is a roadmap, not a connected account. Only the provider-neutral CSV
+          exchange is enabled in this workflow.
+        </p>
       </div>
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         @for (provider of catalog(); track provider.providerId) {
           <article class="rounded-md border border-zinc-200 p-4">
-            <div class="flex items-start justify-between gap-3"><h3 class="font-medium text-zinc-900">{{ provider.name }}</h3><span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase" [class.bg-emerald-100]="provider.enabled" [class.text-emerald-800]="provider.enabled" [class.bg-zinc-100]="!provider.enabled" [class.text-zinc-600]="!provider.enabled">{{ provider.enabled ? 'Available' : provider.mode }}</span></div>
-            <p class="mt-2 text-xs text-zinc-500">{{ provider.integrationType }} · {{ provider.mode }}</p>
-            @if (provider.futureCandidates.length) { <p class="mt-2 text-xs text-zinc-500">Future areas: {{ provider.futureCandidates.join(', ') }}</p> }
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="font-medium text-zinc-900">{{ provider.name }}</h3>
+              <span
+                class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase"
+                [class.bg-emerald-100]="provider.enabled"
+                [class.text-emerald-800]="provider.enabled"
+                [class.bg-zinc-100]="!provider.enabled"
+                [class.text-zinc-600]="!provider.enabled"
+                >{{ provider.enabled ? 'Available' : provider.mode }}</span
+              >
+            </div>
+            <p class="mt-2 text-xs text-zinc-500">
+              {{ provider.integrationType }} · {{ provider.mode }}
+            </p>
+            @if (provider.futureCandidates.length) {
+              <p class="mt-2 text-xs text-zinc-500">
+                Future areas: {{ provider.futureCandidates.join(', ') }}
+              </p>
+            }
           </article>
         }
       </div>

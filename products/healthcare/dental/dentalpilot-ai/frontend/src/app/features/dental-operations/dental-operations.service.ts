@@ -36,7 +36,10 @@ export class DentalOperationsService {
     );
   }
 
-  updateCaseStatus(id: string, status: DentalWorkflowCase['status']): Observable<DentalWorkflowCase> {
+  updateCaseStatus(
+    id: string,
+    status: DentalWorkflowCase['status'],
+  ): Observable<DentalWorkflowCase> {
     return this.http.patch<DentalWorkflowCase>(
       `${this.baseUrl}/${API_ENDPOINTS.operations.dentalCaseById(id)}`,
       { status },

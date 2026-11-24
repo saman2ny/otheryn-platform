@@ -3,22 +3,6 @@
   subtitle="Connected tools for patient records, treatment decisions, clinic operations, and consent."
 />
 
-<div class="dp-workflow-tabs mb-6 flex gap-2 border-b border-zinc-200">
-  @for (tab of tabs; track tab.key) {
-    <button
-      type="button"
-      (click)="setTab(tab.key)"
-      [class]="
-        activeTab() === tab.key
-          ? 'border-b-2 border-teal-700 px-4 py-3 text-sm font-semibold text-teal-700'
-          : 'border-b-2 border-transparent px-4 py-3 text-sm font-medium text-zinc-500'
-      "
-    >
-      {{ tab.label }}
-    </button>
-  }
-</div>
-
 @if (activeTab() === 'overview') {
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <section class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -340,10 +324,14 @@
 }
 
 @if (activeTab() === 'revenue') {
-  <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white p-4">
+  <section
+    class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white p-4"
+  >
     <div>
       <h2 class="font-semibold text-zinc-900">Accounting exports</h2>
-      <p class="text-sm text-zinc-500">Provider-neutral CSV files for your accounting and claims reconciliation.</p>
+      <p class="text-sm text-zinc-500">
+        Provider-neutral CSV files for your accounting and claims reconciliation.
+      </p>
     </div>
     <div class="flex flex-wrap gap-2">
       <button
@@ -402,8 +390,8 @@
   <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
     <h2 class="mb-1 font-semibold text-zinc-900">Record treatment payment or adjustment</h2>
     <p class="mb-4 text-sm text-zinc-500">
-      Record offline adjustments or accept a Razorpay payment against an outstanding treatment charge.
-      Online checkout uses the server-calculated balance; the browser never sets the amount.
+      Record offline adjustments or accept a Razorpay payment against an outstanding treatment
+      charge. Online checkout uses the server-calculated balance; the browser never sets the amount.
     </p>
     <div class="grid gap-3 md:grid-cols-3">
       <select
@@ -452,7 +440,8 @@
           <option value="">Unlinked adjustment</option>
           @for (charge of availableLedgerCharges(); track charge.id) {
             <option [value]="charge.id">
-              {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }} {{ charge.amount }}
+              {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }}
+              {{ charge.amount }}
             </option>
           }
         </select>
@@ -524,7 +513,9 @@
     <div class="mt-4 space-y-2 border-t border-zinc-200 pt-4">
       @for (charge of ledgerEntries(); track charge.id) {
         @if (charge.entryType === 'charge' && chargeBalance(charge) > 0) {
-          <div class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-teal-50 px-3 py-3">
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-teal-50 px-3 py-3"
+          >
             <div class="text-sm">
               <span class="font-medium">{{ patientName(charge.patientId) }}</span>
               <span class="text-zinc-600">
@@ -537,7 +528,11 @@
               [disabled]="creatingPaymentForCharge() === charge.id"
               (click)="startPatientPayment(charge)"
             >
-              {{ creatingPaymentForCharge() === charge.id ? 'Starting checkout…' : 'Pay with Razorpay' }}
+              {{
+                creatingPaymentForCharge() === charge.id
+                  ? 'Starting checkout…'
+                  : 'Pay with Razorpay'
+              }}
             </button>
           </div>
         }
@@ -571,7 +566,8 @@
         <option value="">No linked treatment charge</option>
         @for (charge of availableClaimCharges(); track charge.id) {
           <option [value]="charge.id">
-            {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }} {{ charge.amount }}
+            {{ charge.reference || charge.id.slice(0, 8) }} · {{ charge.currency }}
+            {{ charge.amount }}
           </option>
         }
       </select>
@@ -629,8 +625,9 @@
             <span class="capitalize">{{ claim.status }}</span>
           </div>
           <p class="mt-1 text-xs text-zinc-500">
-            {{ claim.claimNumber || 'No claim number' }} · Billed {{ claim.currency }} {{ claim.billedAmount }}
-            · Approved {{ claim.approvedAmount ?? '—' }} · Paid {{ claim.paidAmount }}
+            {{ claim.claimNumber || 'No claim number' }} · Billed {{ claim.currency }}
+            {{ claim.billedAmount }} · Approved {{ claim.approvedAmount ?? '—' }} · Paid
+            {{ claim.paidAmount }}
           </p>
           <div class="mt-3 grid gap-2 md:grid-cols-2">
             <select
@@ -1524,8 +1521,8 @@
             <span class="block font-medium">{{ run.filename }}</span>
             <span class="text-zinc-500">
               {{ run.matchedRows }} matched · {{ run.mismatchRows }} mismatched ·
-              {{ run.missingLocalRows }} missing locally · {{ run.missingPmsRows }} missing in PMS
-              · {{ run.duplicateSourceRows }} duplicate · {{ run.invalidRows }} invalid
+              {{ run.missingLocalRows }} missing locally · {{ run.missingPmsRows }} missing in PMS ·
+              {{ run.duplicateSourceRows }} duplicate · {{ run.invalidRows }} invalid
             </span>
           </button>
         } @empty {
@@ -1543,8 +1540,8 @@
             <p class="mt-1 text-zinc-600">{{ row.details }}</p>
             @if (row.externalAmount !== undefined || row.localAmount !== undefined) {
               <p class="mt-1 text-zinc-500">
-                PMS {{ row.currency }} {{ row.externalAmount ?? '—' }} ·
-                Clinic {{ row.currency }} {{ row.localAmount ?? '—' }}
+                PMS {{ row.currency }} {{ row.externalAmount ?? '—' }} · Clinic {{ row.currency }}
+                {{ row.localAmount ?? '—' }}
               </p>
             }
           </div>
@@ -1627,7 +1624,8 @@
         <div>
           <h2 class="font-semibold text-zinc-900">Guided clinic setup</h2>
           <p class="mt-1 text-sm text-zinc-500">
-            Step {{ setup.currentStep }} of {{ setup.totalSteps }} · {{ setup.steps.filter(s => s.completed).length }} completed
+            Step {{ setup.currentStep }} of {{ setup.totalSteps }} ·
+            {{ setup.steps.filter((s) => s.completed).length }} completed
           </p>
         </div>
         @if (auth.canManageClinic() && !setup.onboardingCompletedAt && setup.canComplete) {
@@ -1644,21 +1642,25 @@
           </span>
         }
       </div>
-      
+
       <div class="space-y-3">
         @for (step of setup.steps; track step.id) {
-          <div class="flex items-center gap-4 p-4 rounded-lg border transition-colors"
-               [class.border-teal-200]="step.completed"
-               [class.bg-teal-50]="step.completed"
-               [class.border-zinc-200]="!step.completed"
-               [class.bg-white]="!step.completed">
-            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-semibold"
-                 [class.border-teal-500]="step.completed"
-                 [class.bg-teal-500]="step.completed"
-                 [class.text-white]="step.completed"
-                 [class.border-zinc-300]="!step.completed"
-                 [class.text-zinc-400]="!step.completed"
-                 [class.bg-zinc-100]="!step.completed">
+          <div
+            class="flex items-center gap-4 p-4 rounded-lg border transition-colors"
+            [class.border-teal-200]="step.completed"
+            [class.bg-teal-50]="step.completed"
+            [class.border-zinc-200]="!step.completed"
+            [class.bg-white]="!step.completed"
+          >
+            <div
+              class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-semibold"
+              [class.border-teal-500]="step.completed"
+              [class.bg-teal-500]="step.completed"
+              [class.text-white]="step.completed"
+              [class.border-zinc-300]="!step.completed"
+              [class.text-zinc-400]="!step.completed"
+              [class.bg-zinc-100]="!step.completed"
+            >
               @if (step.completed) {
                 ✓
               } @else {
@@ -1669,7 +1671,9 @@
               <div class="flex items-center gap-2">
                 <h3 class="font-medium text-zinc-900">{{ step.name }}</h3>
                 @if (step.required) {
-                  <span class="text-xs px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">Required</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-zinc-100 text-zinc-600"
+                    >Required</span
+                  >
                 } @else {
                   <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700">Optional</span>
                 }
@@ -1679,7 +1683,9 @@
             <div class="flex-shrink-0">
               @if (step.completed) {
                 <span class="text-sm font-medium text-teal-700">Completed</span>
-              } @else if (step.required && !setup.steps.slice(0, step.order - 1).every(s => s.completed)) {
+              } @else if (
+                step.required && !setup.steps.slice(0, step.order - 1).every((s) => s.completed)
+              ) {
                 <span class="text-sm text-zinc-400">Locked</span>
               }
             </div>

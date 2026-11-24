@@ -1,19 +1,8 @@
 export type DentalCaseType =
-  | 'imaging'
-  | 'intraoral-scan'
-  | 'lab'
-  | 'cad-cam'
-  | '3d-print'
-  | 'implant'
-  | 'robotics';
+  'imaging' | 'intraoral-scan' | 'lab' | 'cad-cam' | '3d-print' | 'implant' | 'robotics';
 
 export type DentalCaseStatus =
-  | 'requested'
-  | 'planning'
-  | 'in-progress'
-  | 'awaiting-clinician'
-  | 'completed'
-  | 'cancelled';
+  'requested' | 'planning' | 'in-progress' | 'awaiting-clinician' | 'completed' | 'cancelled';
 
 export interface DentalWorkflowCase {
   id: string;
@@ -187,10 +176,7 @@ export interface ClinicOrganization {
 }
 
 export type OrganizationMemberRole =
-  | 'organization-owner'
-  | 'organization-admin'
-  | 'reporting-only'
-  | 'clinic-owner';
+  'organization-owner' | 'organization-admin' | 'reporting-only' | 'clinic-owner';
 
 export type EditableOrganizationMemberRole = 'organization-admin' | 'reporting-only';
 

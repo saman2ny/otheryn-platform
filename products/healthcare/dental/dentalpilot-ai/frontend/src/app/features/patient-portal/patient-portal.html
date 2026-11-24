@@ -72,7 +72,9 @@
           </p>
           <div class="mt-4 grid gap-3">
             @for (charge of treatmentCharges(); track charge.chargeEntryId) {
-              <article class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-4">
+              <article
+                class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-4"
+              >
                 <div>
                   <h3 class="font-medium">Treatment charge</h3>
                   <p class="mt-1 text-sm text-zinc-600">
@@ -90,7 +92,11 @@
                     [disabled]="payingChargeId() !== ''"
                     (click)="startTreatmentPayment(charge)"
                   >
-                    {{ payingChargeId() === charge.chargeEntryId ? 'Opening checkout…' : 'Pay balance' }}
+                    {{
+                      payingChargeId() === charge.chargeEntryId
+                        ? 'Opening checkout…'
+                        : 'Pay balance'
+                    }}
                   </button>
                 } @else {
                   <span class="text-xs text-zinc-500">Online payment unavailable</span>

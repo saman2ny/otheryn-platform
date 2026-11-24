@@ -180,7 +180,9 @@ export class DentalPilotWorkflowsService {
   }
 
   listInsuranceClaims(): Observable<InsuranceClaim[]> {
-    return this.http.get<InsuranceClaim[]>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.insuranceClaims}`);
+    return this.http.get<InsuranceClaim[]>(
+      `${this.baseUrl}/${API_ENDPOINTS.healthcare.insuranceClaims}`,
+    );
   }
 
   createInsuranceClaim(payload: InsuranceClaimCreate): Observable<InsuranceClaim> {
@@ -190,10 +192,7 @@ export class DentalPilotWorkflowsService {
     );
   }
 
-  updateInsuranceClaim(
-    claimId: string,
-    payload: InsuranceClaimUpdate,
-  ): Observable<InsuranceClaim> {
+  updateInsuranceClaim(claimId: string, payload: InsuranceClaimUpdate): Observable<InsuranceClaim> {
     return this.http.patch<InsuranceClaim>(
       `${this.baseUrl}/${API_ENDPOINTS.healthcare.insuranceClaimById(claimId)}`,
       payload,
@@ -212,7 +211,10 @@ export class DentalPilotWorkflowsService {
     );
   }
 
-  reconcilePmsCsv(file: File, mapping: Record<string, string>): Observable<PmsReconciliationResult> {
+  reconcilePmsCsv(
+    file: File,
+    mapping: Record<string, string>,
+  ): Observable<PmsReconciliationResult> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('field_mapping', JSON.stringify(mapping));
@@ -464,7 +466,9 @@ export class DentalPilotWorkflowsService {
     );
   }
 
-  createCommunicationTemplate(payload: CommunicationTemplateCreate): Observable<CommunicationTemplate> {
+  createCommunicationTemplate(
+    payload: CommunicationTemplateCreate,
+  ): Observable<CommunicationTemplate> {
     return this.http.post<CommunicationTemplate>(
       `${this.baseUrl}/${API_ENDPOINTS.healthcare.communicationTemplates}`,
       payload,

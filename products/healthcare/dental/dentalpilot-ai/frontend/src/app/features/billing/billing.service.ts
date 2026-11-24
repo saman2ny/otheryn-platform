@@ -29,7 +29,9 @@ export class BillingService {
     return this.http.get<Invoice[]>(`${this.baseUrl}/${API_ENDPOINTS.billing.invoices}`);
   }
 
-  createSubscription(request: SubscriptionCheckoutRequest): Observable<SubscriptionCheckoutResponse> {
+  createSubscription(
+    request: SubscriptionCheckoutRequest,
+  ): Observable<SubscriptionCheckoutResponse> {
     return this.http.post<SubscriptionCheckoutResponse>(
       `${this.baseUrl}/${API_ENDPOINTS.billing.createSubscription}`,
       request,
@@ -51,10 +53,16 @@ export class BillingService {
   }
 
   pauseSubscription(): Observable<Subscription> {
-    return this.http.post<Subscription>(`${this.baseUrl}/${API_ENDPOINTS.billing.pauseSubscription}`, {});
+    return this.http.post<Subscription>(
+      `${this.baseUrl}/${API_ENDPOINTS.billing.pauseSubscription}`,
+      {},
+    );
   }
 
   resumeSubscription(): Observable<Subscription> {
-    return this.http.post<Subscription>(`${this.baseUrl}/${API_ENDPOINTS.billing.resumeSubscription}`, {});
+    return this.http.post<Subscription>(
+      `${this.baseUrl}/${API_ENDPOINTS.billing.resumeSubscription}`,
+      {},
+    );
   }
 }

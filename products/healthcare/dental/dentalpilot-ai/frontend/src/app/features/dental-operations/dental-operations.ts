@@ -3,11 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import {
-  ClinicBranch,
-  Patient,
-  PatientVisit,
-} from '../../core/models/healthcare.model';
+import { ClinicBranch, Patient, PatientVisit } from '../../core/models/healthcare.model';
 import {
   AssetMaintenanceRecord,
   ClinicAsset,
@@ -82,15 +78,6 @@ export class DentalOperations {
 
   protected readonly activeTab = signal<OperationsTab>('digital');
   protected readonly title = computed(() => TITLES[this.activeTab()]);
-  protected readonly tabs: { key: OperationsTab; label: string }[] = [
-    { key: 'digital', label: 'Case coordination' },
-    { key: 'equipment', label: 'Equipment' },
-    { key: 'sterilization', label: 'Sterilisation' },
-    { key: 'communication', label: 'Communication drafts' },
-    { key: 'publishing', label: 'Publishing' },
-    { key: 'documentation', label: 'Clinical notes' },
-    { key: 'providers', label: 'Integrations' },
-  ];
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly patients = signal<Patient[]>([]);
@@ -180,14 +167,6 @@ export class DentalOperations {
       this.activeTab.set(TABS.find((item) => item === tab) ?? 'digital');
     });
     this.load();
-  }
-
-  protected setTab(tab: OperationsTab): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab },
-      queryParamsHandling: 'merge',
-    });
   }
 
   protected patientName(id: string): string {
@@ -325,7 +304,9 @@ export class DentalOperations {
   protected updateAssetStatus(asset: ClinicAsset, status: ClinicAsset['status']): void {
     this.service.updateAsset(asset.id, { status }).subscribe({
       next: (updated) => {
-        this.assets.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+        this.assets.update((items) =>
+          items.map((item) => (item.id === updated.id ? updated : item)),
+        );
       },
     });
   }
@@ -443,7 +424,10 @@ export class DentalOperations {
       });
   }
 
-  protected updateMessageStatus(draft: PatientMessageDraft, status: 'approved' | 'cancelled'): void {
+  protected updateMessageStatus(
+    draft: PatientMessageDraft,
+    status: 'approved' | 'cancelled',
+  ): void {
     this.service.updateMessageDraft(draft.id, status).subscribe({
       next: (updated) =>
         this.messageDrafts.update((items) =>
@@ -547,7 +531,9 @@ export class DentalOperations {
         this.clinicalAiSettings.set(settings);
         this.saving.set(false);
         this.notifications.success(
-          enabled ? 'Clinical note drafting enabled for this clinic.' : 'Clinical note drafting disabled.',
+          enabled
+            ? 'Clinical note drafting enabled for this clinic.'
+            : 'Clinical note drafting disabled.',
         );
       },
       error: () => this.saving.set(false),
@@ -562,10 +548,14 @@ export class DentalOperations {
     this.saving.set(true);
     this.service.generateClinicalNoteDraft(note.id, true).subscribe({
       next: (updated) => {
-        this.notes.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+        this.notes.update((items) =>
+          items.map((item) => (item.id === updated.id ? updated : item)),
+        );
         this.updateClinicalAiConsent(note.id, false);
         this.saving.set(false);
-        this.notifications.success('AI-assisted draft saved for clinician review; it is not a diagnosis.');
+        this.notifications.success(
+          'AI-assisted draft saved for clinician review; it is not a diagnosis.',
+        );
       },
       error: () => this.saving.set(false),
     });

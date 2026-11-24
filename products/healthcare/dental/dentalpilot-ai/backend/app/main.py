@@ -13,6 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.deps import DbSession
+from app.core.rate_limit import RateLimitMiddleware
 from app.routers import (
     admin,
     auth,
@@ -89,6 +90,7 @@ class CatchAllExceptionMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(CatchAllExceptionMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

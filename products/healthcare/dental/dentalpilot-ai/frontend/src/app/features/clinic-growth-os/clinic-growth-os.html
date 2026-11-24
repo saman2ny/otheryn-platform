@@ -3,22 +3,6 @@
   subtitle="Plan and review clinic growth work. Records are manual and are not synced or published externally."
 />
 
-<div class="dp-workflow-tabs mb-6 flex gap-2 border-b border-zinc-200">
-  @for (tab of tabs; track tab.key) {
-    <button
-      type="button"
-      (click)="setTab(tab.key)"
-      [class]="
-        activeTab() === tab.key
-          ? 'border-b-2 border-teal-700 px-4 py-3 text-sm font-semibold text-teal-700'
-          : 'border-b-2 border-transparent px-4 py-3 text-sm font-medium text-zinc-500'
-      "
-    >
-      {{ tab.label }}
-    </button>
-  }
-</div>
-
 @if (activeTab() === 'local-seo') {
   <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
     <section class="rounded-lg border border-zinc-200 bg-white p-5">

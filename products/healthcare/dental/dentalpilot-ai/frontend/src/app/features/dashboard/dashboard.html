@@ -143,7 +143,9 @@
                 Complete your onboarding
               </h2>
             </div>
-            <span class="text-[11px] text-slate-400">{{ onboarding.completed }} of {{ onboarding.total }} steps done</span>
+            <span class="text-[11px] text-slate-400"
+              >{{ onboarding.completed }} of {{ onboarding.total }} steps done</span
+            >
           </div>
           <div class="dp-surface-card p-5 sm:p-6">
             <div class="mb-4">
@@ -152,7 +154,10 @@
                 <strong class="text-slate-800">{{ onboarding.percent }}%</strong>
               </div>
               <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full bg-teal-700 transition-all duration-500" [style.width.%]="onboarding.percent"></div>
+                <div
+                  class="h-full bg-teal-700 transition-all duration-500"
+                  [style.width.%]="onboarding.percent"
+                ></div>
               </div>
             </div>
             <div class="mb-4">
@@ -161,21 +166,24 @@
                 <strong class="text-slate-800">{{ onboarding.requiredPercent }}%</strong>
               </div>
               <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full bg-teal-500 transition-all duration-500" [style.width.%]="onboarding.requiredPercent"></div>
+                <div
+                  class="h-full bg-teal-500 transition-all duration-500"
+                  [style.width.%]="onboarding.requiredPercent"
+                ></div>
               </div>
             </div>
             @if (!onboarding.canComplete && onboarding.percent < 100) {
               <p class="text-sm text-slate-500 mb-4">Complete required steps to finish setup.</p>
             } @else if (onboarding.canComplete && onboarding.percent < 100) {
-              <p class="text-sm text-teal-700 mb-4">All required steps done! You can complete onboarding now.</p>
+              <p class="text-sm text-teal-700 mb-4">
+                All required steps done! You can complete onboarding now.
+              </p>
             } @else if (onboarding.percent >= 100) {
-              <p class="text-sm text-teal-700 mb-4">Onboarding complete! Your clinic is fully set up.</p>
+              <p class="text-sm text-teal-700 mb-4">
+                Onboarding complete! Your clinic is fully set up.
+              </p>
             }
-            <button
-              type="button"
-              class="dp-button-primary"
-              (click)="setTab('treatment')"
-            >
+            <button type="button" class="dp-button-primary" (click)="setTab('treatment')">
               Continue setup <span aria-hidden="true">→</span>
             </button>
           </div>
@@ -216,7 +224,9 @@
                     <span class="block truncate text-sm font-semibold text-slate-800">{{
                       item.headline
                     }}</span>
-                    <span class="mt-1 block text-[11px] text-slate-400">Created for your practice</span>
+                    <span class="mt-1 block text-[11px] text-slate-400"
+                      >Created for your practice</span
+                    >
                   </span>
                   <span
                     class="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500"
@@ -301,15 +311,27 @@
     }
 
     @case ('revenue') {
-      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      >
         <div class="flex flex-col gap-2 sm:flex-row">
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">From</span>
-            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().from || thirtyDaysAgo"
+              (change)="updateDateRange($any($event.target).value, dateRange().to)"
+            />
           </label>
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">To</span>
-            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().to || today"
+              (change)="updateDateRange(dateRange().from, $any($event.target).value)"
+            />
           </label>
         </div>
       </div>
@@ -346,7 +368,9 @@
               @for (point of r.monthlyTrend; track point.month) {
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-slate-600">{{ point.month }}</span>
-                  <strong class="text-slate-800">{{ formatCurrency(point.revenue, r.currency) }}</strong>
+                  <strong class="text-slate-800">{{
+                    formatCurrency(point.revenue, r.currency)
+                  }}</strong>
                 </div>
               }
             </div>
@@ -363,19 +387,27 @@
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Approval Rate</span>
-                <strong class="text-slate-800">{{ formatPercent(f.insuranceClaims.approvalRate) }}</strong>
+                <strong class="text-slate-800">{{
+                  formatPercent(f.insuranceClaims.approvalRate)
+                }}</strong>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Collection Rate</span>
-                <strong class="text-slate-800">{{ formatPercent(f.insuranceClaims.collectionRate) }}</strong>
+                <strong class="text-slate-800">{{
+                  formatPercent(f.insuranceClaims.collectionRate)
+                }}</strong>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Total Billed</span>
-                <strong class="text-slate-800">{{ formatCurrency(f.insuranceClaims.totalBilled, f.currency) }}</strong>
+                <strong class="text-slate-800">{{
+                  formatCurrency(f.insuranceClaims.totalBilled, f.currency)
+                }}</strong>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Total Paid</span>
-                <strong class="text-slate-800">{{ formatCurrency(f.insuranceClaims.totalPaid, f.currency) }}</strong>
+                <strong class="text-slate-800">{{
+                  formatCurrency(f.insuranceClaims.totalPaid, f.currency)
+                }}</strong>
               </div>
             </div>
           </article>
@@ -396,15 +428,27 @@
     }
 
     @case ('treatment') {
-      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      >
         <div class="flex flex-col gap-2 sm:flex-row">
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">From</span>
-            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().from || thirtyDaysAgo"
+              (change)="updateDateRange($any($event.target).value, dateRange().to)"
+            />
           </label>
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">To</span>
-            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().to || today"
+              (change)="updateDateRange(dateRange().from, $any($event.target).value)"
+            />
           </label>
         </div>
       </div>
@@ -430,11 +474,15 @@
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Completion Rate</span>
-                <strong class="text-slate-800">{{ formatPercent(t.followupCompletionRate) }}</strong>
+                <strong class="text-slate-800">{{
+                  formatPercent(t.followupCompletionRate)
+                }}</strong>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-600">Avg Days to Completion</span>
-                <strong class="text-slate-800">{{ t.avgDaysToCompletion ? t.avgDaysToCompletion + ' days' : 'N/A' }}</strong>
+                <strong class="text-slate-800">{{
+                  t.avgDaysToCompletion ? t.avgDaysToCompletion + ' days' : 'N/A'
+                }}</strong>
               </div>
             </div>
           </article>
@@ -473,7 +521,9 @@
                 <div class="text-xs text-yellow-600">Overdue</div>
               </div>
               <div class="p-3 bg-red-50 rounded-lg text-center">
-                <div class="text-2xl font-bold text-red-700">{{ t.declinedStages + t.deferredStages }}</div>
+                <div class="text-2xl font-bold text-red-700">
+                  {{ t.declinedStages + t.deferredStages }}
+                </div>
                 <div class="text-xs text-red-600">Declined/Deferred</div>
               </div>
             </div>
@@ -483,15 +533,27 @@
     }
 
     @case ('patients') {
-      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      >
         <div class="flex flex-col gap-2 sm:flex-row">
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">From</span>
-            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().from || thirtyDaysAgo"
+              (change)="updateDateRange($any($event.target).value, dateRange().to)"
+            />
           </label>
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">To</span>
-            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().to || today"
+              (change)="updateDateRange(dateRange().from, $any($event.target).value)"
+            />
           </label>
         </div>
       </div>
@@ -526,11 +588,15 @@
             <h3 class="dp-section-heading mb-4">Retention Breakdown</h3>
             <div class="grid grid-cols-2 gap-4">
               <div class="p-4 bg-green-50 rounded-lg text-center">
-                <div class="text-3xl font-bold text-green-700">{{ formatPercent(p.retentionRate) }}</div>
+                <div class="text-3xl font-bold text-green-700">
+                  {{ formatPercent(p.retentionRate) }}
+                </div>
                 <div class="text-xs text-green-600">Retention Rate</div>
               </div>
               <div class="p-4 bg-blue-50 rounded-lg text-center">
-                <div class="text-3xl font-bold text-blue-700">{{ formatPercent(p.treatmentCompletionRate) }}</div>
+                <div class="text-3xl font-bold text-blue-700">
+                  {{ formatPercent(p.treatmentCompletionRate) }}
+                </div>
                 <div class="text-xs text-blue-600">Treatment Completion</div>
               </div>
               <div class="p-4 bg-slate-50 rounded-lg text-center">
@@ -548,15 +614,27 @@
     }
 
     @case ('operations') {
-      <div class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        class="dp-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      >
         <div class="flex flex-col gap-2 sm:flex-row">
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">From</span>
-            <input type="date" class="dp-input" [value]="dateRange().from || thirtyDaysAgo" (change)="updateDateRange($any($event.target).value, dateRange().to)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().from || thirtyDaysAgo"
+              (change)="updateDateRange($any($event.target).value, dateRange().to)"
+            />
           </label>
           <label class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">To</span>
-            <input type="date" class="dp-input" [value]="dateRange().to || today" (change)="updateDateRange(dateRange().from, $any($event.target).value)" />
+            <input
+              type="date"
+              class="dp-input"
+              [value]="dateRange().to || today"
+              (change)="updateDateRange(dateRange().from, $any($event.target).value)"
+            />
           </label>
         </div>
       </div>
@@ -617,7 +695,9 @@
                 <div class="text-xs text-red-600">No-Shows</div>
               </div>
               <div class="p-4 bg-orange-50 rounded-lg text-center">
-                <div class="text-3xl font-bold text-orange-700">{{ formatPercent(o.noShowRate) }}</div>
+                <div class="text-3xl font-bold text-orange-700">
+                  {{ formatPercent(o.noShowRate) }}
+                </div>
                 <div class="text-xs text-orange-600">No-Show Rate</div>
               </div>
               <div class="p-4 bg-green-50 rounded-lg text-center">

@@ -52,7 +52,7 @@ const operationsLink = (tab: OperationsTab, label: string, icon: string): NavLin
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Practice management',
+    label: 'Workspace',
     links: [
       { path: '/dashboard', label: 'Overview', icon: '◫' },
       { path: '/clinic-profile', label: 'Clinic profile', icon: '⌂' },
@@ -61,7 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Dental intelligence',
+    label: 'Dental Intelligence',
     links: [
       workflowLink('journey', 'Treatment journey', '◎'),
       workflowLink('revenue', 'Revenue recovery', '◈'),
@@ -69,20 +69,21 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Patient experience',
+    label: 'Patient Experience',
     links: [
       workflowLink('passport', 'Patient passport', '◉'),
       workflowLink('consent', 'Consent & audit', '⛨'),
       workflowLink('reminders', 'Recall & follow-up', '↻'),
       operationsLink('communication', 'Patient communication', '✉'),
+      operationsLink('documentation', 'Clinical notes', '✎'),
     ],
   },
   {
-    label: 'Digital dentistry',
+    label: 'Digital Dentistry',
     links: [operationsLink('digital', 'Case coordination', '◈')],
   },
   {
-    label: 'Connected dentistry',
+    label: 'Connected Dentistry',
     links: [
       operationsLink('equipment', 'Equipment & maintenance', '⚙'),
       operationsLink('sterilization', 'Sterilisation monitoring', '◌'),
@@ -91,7 +92,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Clinic growth',
+    label: 'Clinic Growth',
     links: [
       { path: '/content-generator', label: 'AI content studio', icon: '✦' },
       { path: '/content-calendar', label: 'Content calendar', icon: '▦' },

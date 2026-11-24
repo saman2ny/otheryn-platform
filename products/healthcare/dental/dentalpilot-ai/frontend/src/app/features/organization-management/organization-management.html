@@ -11,7 +11,9 @@
   <section class="rounded-lg border border-zinc-200 bg-white p-5">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">Clinic organization</p>
+        <p class="text-xs font-semibold tracking-wide text-teal-800 uppercase">
+          Clinic organization
+        </p>
         <h2 class="mt-1 text-xl font-semibold text-zinc-900">{{ group.name }}</h2>
         <p class="mt-1 text-sm text-zinc-500">
           {{ group.clinicCount }} connected clinic{{ group.clinicCount === 1 ? '' : 's' }} · Created
@@ -26,18 +28,34 @@
 
   @if (analytics(); as data) {
     <section class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <article class="rounded-lg border border-zinc-200 bg-white p-4"><p class="text-xs text-zinc-500">Clinics</p><p class="mt-2 text-2xl font-semibold">{{ data.clinicCount }}</p></article>
-      <article class="rounded-lg border border-zinc-200 bg-white p-4"><p class="text-xs text-zinc-500">Branches</p><p class="mt-2 text-2xl font-semibold">{{ data.branchCount }}</p></article>
-      <article class="rounded-lg border border-zinc-200 bg-white p-4"><p class="text-xs text-zinc-500">Patient records</p><p class="mt-2 text-2xl font-semibold">{{ data.patientCount }}</p></article>
-      <article class="rounded-lg border border-zinc-200 bg-white p-4"><p class="text-xs text-zinc-500">Open treatment stages</p><p class="mt-2 text-2xl font-semibold">{{ data.openTreatmentStageCount }}</p></article>
-      <article class="rounded-lg border border-zinc-200 bg-white p-4"><p class="text-xs text-zinc-500">Completed visits</p><p class="mt-2 text-2xl font-semibold">{{ data.completedVisitCount }}</p></article>
+      <article class="rounded-lg border border-zinc-200 bg-white p-4">
+        <p class="text-xs text-zinc-500">Clinics</p>
+        <p class="mt-2 text-2xl font-semibold">{{ data.clinicCount }}</p>
+      </article>
+      <article class="rounded-lg border border-zinc-200 bg-white p-4">
+        <p class="text-xs text-zinc-500">Branches</p>
+        <p class="mt-2 text-2xl font-semibold">{{ data.branchCount }}</p>
+      </article>
+      <article class="rounded-lg border border-zinc-200 bg-white p-4">
+        <p class="text-xs text-zinc-500">Patient records</p>
+        <p class="mt-2 text-2xl font-semibold">{{ data.patientCount }}</p>
+      </article>
+      <article class="rounded-lg border border-zinc-200 bg-white p-4">
+        <p class="text-xs text-zinc-500">Open treatment stages</p>
+        <p class="mt-2 text-2xl font-semibold">{{ data.openTreatmentStageCount }}</p>
+      </article>
+      <article class="rounded-lg border border-zinc-200 bg-white p-4">
+        <p class="text-xs text-zinc-500">Completed visits</p>
+        <p class="mt-2 text-2xl font-semibold">{{ data.completedVisitCount }}</p>
+      </article>
     </section>
 
     <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
       <div class="mb-4">
         <h2 class="font-semibold text-zinc-900">Financial totals by native currency</h2>
         <p class="mt-1 text-sm text-zinc-500">
-          Currencies are kept separate; no foreign-exchange conversion is applied. Outstanding balances use charge-linked payments and refunds.
+          Currencies are kept separate; no foreign-exchange conversion is applied. Outstanding
+          balances use charge-linked payments and refunds.
         </p>
       </div>
       @if (data.financials.length) {
@@ -46,20 +64,49 @@
             <article class="rounded-md border border-zinc-200 bg-zinc-50 p-4">
               <div class="flex items-center justify-between gap-3">
                 <h3 class="font-semibold text-zinc-900">{{ summary.currency }}</h3>
-                <span class="text-xs text-zinc-500">{{ summary.clinicCount }} clinic{{ summary.clinicCount === 1 ? '' : 's' }}</span>
+                <span class="text-xs text-zinc-500"
+                  >{{ summary.clinicCount }} clinic{{ summary.clinicCount === 1 ? '' : 's' }}</span
+                >
               </div>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
-                <div><dt class="text-xs text-zinc-500">Charges</dt><dd class="mt-1 font-medium">{{ summary.chargesValue | currency: summary.currency : 'code' : '1.2-2' }}</dd></div>
-                <div><dt class="text-xs text-zinc-500">Payments received</dt><dd class="mt-1 font-medium">{{ summary.paymentsReceived | currency: summary.currency : 'code' : '1.2-2' }}</dd></div>
-                <div><dt class="text-xs text-zinc-500">Refunds</dt><dd class="mt-1 font-medium">{{ summary.refundsValue | currency: summary.currency : 'code' : '1.2-2' }}</dd></div>
-                <div><dt class="text-xs text-zinc-500">Net collected</dt><dd class="mt-1 font-medium">{{ summary.netCollected | currency: summary.currency : 'code' : '1.2-2' }}</dd></div>
-                <div><dt class="text-xs text-zinc-500">Outstanding</dt><dd class="mt-1 font-medium">{{ summary.outstandingBalance | currency: summary.currency : 'code' : '1.2-2' }}</dd></div>
+                <div>
+                  <dt class="text-xs text-zinc-500">Charges</dt>
+                  <dd class="mt-1 font-medium">
+                    {{ summary.chargesValue | currency: summary.currency : 'code' : '1.2-2' }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-zinc-500">Payments received</dt>
+                  <dd class="mt-1 font-medium">
+                    {{ summary.paymentsReceived | currency: summary.currency : 'code' : '1.2-2' }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-zinc-500">Refunds</dt>
+                  <dd class="mt-1 font-medium">
+                    {{ summary.refundsValue | currency: summary.currency : 'code' : '1.2-2' }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-zinc-500">Net collected</dt>
+                  <dd class="mt-1 font-medium">
+                    {{ summary.netCollected | currency: summary.currency : 'code' : '1.2-2' }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-zinc-500">Outstanding</dt>
+                  <dd class="mt-1 font-medium">
+                    {{ summary.outstandingBalance | currency: summary.currency : 'code' : '1.2-2' }}
+                  </dd>
+                </div>
               </dl>
             </article>
           }
         </div>
       } @else {
-        <p class="text-sm text-zinc-500">No treatment ledger totals have been recorded for this group.</p>
+        <p class="text-sm text-zinc-500">
+          No treatment ledger totals have been recorded for this group.
+        </p>
       }
     </section>
   }
@@ -70,14 +117,25 @@
       @if (analytics()?.clinics?.length) {
         <div class="space-y-2">
           @for (clinic of analytics()!.clinics; track clinic.clinicId) {
-            <article class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-zinc-50 p-3">
-              <div><h3 class="font-medium">{{ clinic.clinicName }}</h3><p class="text-xs text-zinc-500">{{ clinic.branchCount }} branches · {{ clinic.patientCount }} patients</p></div>
+            <article
+              class="flex flex-wrap items-center justify-between gap-3 rounded-md bg-zinc-50 p-3"
+            >
+              <div>
+                <h3 class="font-medium">{{ clinic.clinicName }}</h3>
+                <p class="text-xs text-zinc-500">
+                  {{ clinic.branchCount }} branches · {{ clinic.patientCount }} patients
+                </p>
+              </div>
               @if (clinic.financials.length) {
                 <div class="w-full space-y-1 border-t border-zinc-200 pt-2">
                   @for (summary of clinic.financials; track summary.currency) {
                     <p class="text-xs text-zinc-600">
-                      {{ summary.currency }} · net {{ summary.netCollected | currency: summary.currency : 'code' : '1.2-2' }}
-                      · outstanding {{ summary.outstandingBalance | currency: summary.currency : 'code' : '1.2-2' }}
+                      {{ summary.currency }} · net
+                      {{ summary.netCollected | currency: summary.currency : 'code' : '1.2-2' }} ·
+                      outstanding
+                      {{
+                        summary.outstandingBalance | currency: summary.currency : 'code' : '1.2-2'
+                      }}
                     </p>
                   }
                 </div>
@@ -85,60 +143,102 @@
             </article>
           }
         </div>
-      } @else { <p class="text-sm text-zinc-500">No clinic analytics are available.</p> }
+      } @else {
+        <p class="text-sm text-zinc-500">No clinic analytics are available.</p>
+      }
     </section>
 
     @if (canManageMembers()) {
-    <section class="rounded-lg border border-zinc-200 bg-white p-5">
-      <h2 class="mb-4 font-semibold text-zinc-900">Organization members</h2>
-      <div class="space-y-2">
-        @for (member of members(); track member.userId) {
-          <article class="rounded-md bg-zinc-50 p-3">
-            <div class="flex flex-wrap justify-between gap-2"><p class="font-medium">{{ member.fullName }}</p><span class="text-xs text-zinc-500">{{ roleLabel(member.role) }}</span></div>
-            <p class="text-xs text-zinc-500">{{ member.email }}</p>
-            @if (canManageRoles() && member.role !== 'organization-owner') {
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <select
-                  class="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs"
-                  [ngModel]="roleFor(member)"
-                  (ngModelChange)="setMemberRole(member.userId, $event)"
-                  [name]="'memberRole-' + member.userId"
-                >
-                  <option value="reporting-only">Reporting only</option>
-                  <option value="organization-admin">Organization admin</option>
-                </select>
-                <button type="button" class="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 disabled:opacity-60" [disabled]="saving()" (click)="saveMemberRole(member)">Save role</button>
-                <button type="button" class="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-60" [disabled]="saving()" (click)="removeMember(member)">Remove clinic</button>
+      <section class="rounded-lg border border-zinc-200 bg-white p-5">
+        <h2 class="mb-4 font-semibold text-zinc-900">Organization members</h2>
+        <div class="space-y-2">
+          @for (member of members(); track member.userId) {
+            <article class="rounded-md bg-zinc-50 p-3">
+              <div class="flex flex-wrap justify-between gap-2">
+                <p class="font-medium">{{ member.fullName }}</p>
+                <span class="text-xs text-zinc-500">{{ roleLabel(member.role) }}</span>
               </div>
-            }
-          </article>
-        } @empty { <p class="text-sm text-zinc-500">No members found.</p> }
-      </div>
-    </section>
+              <p class="text-xs text-zinc-500">{{ member.email }}</p>
+              @if (canManageRoles() && member.role !== 'organization-owner') {
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <select
+                    class="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs"
+                    [ngModel]="roleFor(member)"
+                    (ngModelChange)="setMemberRole(member.userId, $event)"
+                    [name]="'memberRole-' + member.userId"
+                  >
+                    <option value="reporting-only">Reporting only</option>
+                    <option value="organization-admin">Organization admin</option>
+                  </select>
+                  <button
+                    type="button"
+                    class="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 disabled:opacity-60"
+                    [disabled]="saving()"
+                    (click)="saveMemberRole(member)"
+                  >
+                    Save role
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-60"
+                    [disabled]="saving()"
+                    (click)="removeMember(member)"
+                  >
+                    Remove clinic
+                  </button>
+                </div>
+              }
+            </article>
+          } @empty {
+            <p class="text-sm text-zinc-500">No members found.</p>
+          }
+        </div>
+      </section>
     }
   </div>
 
   @if (canInviteClinics()) {
-  <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
-    <h2 class="font-semibold text-zinc-900">Invite another clinic owner</h2>
-    <p class="mb-4 mt-1 text-sm text-zinc-500">
-      The invitation is a one-time token. Share it directly and securely; it is not emailed.
-    </p>
-    <div class="flex flex-col gap-3 sm:flex-row">
-      <input class="min-w-0 flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm" [ngModel]="invitedEmail()" (ngModelChange)="invitedEmail.set($event)" name="clinicOwnerEmail" type="email" placeholder="Clinic owner's email" />
-      <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" [disabled]="saving()" (click)="inviteClinic()">Create invitation</button>
-    </div>
-    @if (invitation(); as invite) {
-      <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
-        <p class="text-sm font-semibold text-amber-900">One-time invitation for {{ invite.email }}</p>
-        <code class="mt-2 block break-all text-xs text-amber-900">{{ invite.invitationToken }}</code>
-        <p class="mt-2 text-xs text-amber-800">Expires {{ invite.expiresAt | date: 'medium' }}. This token is only shown here.</p>
+    <section class="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="font-semibold text-zinc-900">Invite another clinic owner</h2>
+      <p class="mb-4 mt-1 text-sm text-zinc-500">
+        The invitation is a one-time token. Share it directly and securely; it is not emailed.
+      </p>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <input
+          class="min-w-0 flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="invitedEmail()"
+          (ngModelChange)="invitedEmail.set($event)"
+          name="clinicOwnerEmail"
+          type="email"
+          placeholder="Clinic owner's email"
+        />
+        <button
+          type="button"
+          class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          [disabled]="saving()"
+          (click)="inviteClinic()"
+        >
+          Create invitation
+        </button>
       </div>
-    }
-  </section>
+      @if (invitation(); as invite) {
+        <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+          <p class="text-sm font-semibold text-amber-900">
+            One-time invitation for {{ invite.email }}
+          </p>
+          <code class="mt-2 block break-all text-xs text-amber-900">{{
+            invite.invitationToken
+          }}</code>
+          <p class="mt-2 text-xs text-amber-800">
+            Expires {{ invite.expiresAt | date: 'medium' }}. This token is only shown here.
+          </p>
+        </div>
+      }
+    </section>
   } @else {
     <p class="mt-5 rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
-      Your reporting-only access includes aggregate clinic and financial totals. Ask an organization owner or admin to manage members or invitations.
+      Your reporting-only access includes aggregate clinic and financial totals. Ask an organization
+      owner or admin to manage members or invitations.
     </p>
   }
 } @else {
@@ -146,21 +246,50 @@
     <section class="rounded-lg border border-zinc-200 bg-white p-5">
       <h2 class="font-semibold text-zinc-900">Keep this clinic independent</h2>
       <p class="mt-2 text-sm leading-6 text-zinc-600">
-        Organization membership is optional. This clinic's staff, patient data and reporting continue to work independently.
+        Organization membership is optional. This clinic's staff, patient data and reporting
+        continue to work independently.
       </p>
       <div class="mt-5 grid gap-3">
-        <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [ngModel]="organizationName()" (ngModelChange)="organizationName.set($event)" name="organizationName" placeholder="New organization name" />
-        <button type="button" class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" [disabled]="saving()" (click)="createOrganization()">Create a clinic group</button>
+        <input
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="organizationName()"
+          (ngModelChange)="organizationName.set($event)"
+          name="organizationName"
+          placeholder="New organization name"
+        />
+        <button
+          type="button"
+          class="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          [disabled]="saving()"
+          (click)="createOrganization()"
+        >
+          Create a clinic group
+        </button>
       </div>
     </section>
     <section class="rounded-lg border border-zinc-200 bg-white p-5">
       <h2 class="font-semibold text-zinc-900">Join an existing clinic group</h2>
       <p class="mt-2 text-sm leading-6 text-zinc-600">
-        Accept a secure invitation issued by the organization owner. The signed-in account must own this clinic and match the invited email.
+        Accept a secure invitation issued by the organization owner. The signed-in account must own
+        this clinic and match the invited email.
       </p>
       <div class="mt-5 grid gap-3">
-        <textarea class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [ngModel]="invitationToken()" (ngModelChange)="invitationToken.set($event)" name="organizationInvitationToken" placeholder="Paste organization invitation token" rows="3"></textarea>
-        <button type="button" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-800 disabled:opacity-60" [disabled]="saving()" (click)="acceptInvitation()">Accept invitation</button>
+        <textarea
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          [ngModel]="invitationToken()"
+          (ngModelChange)="invitationToken.set($event)"
+          name="organizationInvitationToken"
+          placeholder="Paste organization invitation token"
+          rows="3"
+        ></textarea>
+        <button
+          type="button"
+          class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-800 disabled:opacity-60"
+          [disabled]="saving()"
+          (click)="acceptInvitation()"
+        >
+          Accept invitation
+        </button>
       </div>
     </section>
   </div>

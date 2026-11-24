@@ -30,7 +30,9 @@ export class Billing {
   protected readonly billingCycle = signal<'monthly' | 'annual'>('monthly');
   protected readonly checkingOutTier = signal<string | null>(null);
   protected readonly managingSubscription = signal(false);
-  protected readonly activeTab = signal<'plans' | 'usage' | 'invoices' | 'payment-methods'>('plans');
+  protected readonly activeTab = signal<'plans' | 'usage' | 'invoices' | 'payment-methods'>(
+    'plans',
+  );
 
   protected readonly creditsUsagePercent = computed(() => {
     const sub = this.subscription();
@@ -43,21 +45,42 @@ export class Billing {
   protected readonly daysUntilRenewal = computed(() => {
     const sub = this.subscription();
     if (!sub?.currentPeriodEnd) return 0;
-    return Math.max(0, Math.ceil((new Date(sub.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    return Math.max(
+      0,
+      Math.ceil((new Date(sub.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+    );
   });
 
   protected readonly daysUntilReset = computed(() => {
     const sub = this.subscription();
     if (!sub?.currentPeriodEnd) return 0;
-    return Math.max(0, Math.ceil((new Date(sub.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    return Math.max(
+      0,
+      Math.ceil((new Date(sub.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+    );
   });
 
   protected readonly subscriptionStats = computed(() => {
     const sub = this.subscription();
     if (!sub) return [];
     return [
-      { label: 'Plan', value: sub.planTier.charAt(0).toUpperCase() + sub.planTier.slice(1), icon: '💎' },
-      { label: 'Status', value: sub.status, icon: sub.status === 'active' ? '✅' : sub.status === 'trialing' ? '⏳' : sub.status === 'past_due' ? '⚠️' : '❌' },
+      {
+        label: 'Plan',
+        value: sub.planTier.charAt(0).toUpperCase() + sub.planTier.slice(1),
+        icon: '💎',
+      },
+      {
+        label: 'Status',
+        value: sub.status,
+        icon:
+          sub.status === 'active'
+            ? '✅'
+            : sub.status === 'trialing'
+              ? '⏳'
+              : sub.status === 'past_due'
+                ? '⚠️'
+                : '❌',
+      },
       { label: 'Billing Cycle', value: sub.billingCycle, icon: '🔄' },
       { label: 'Renews In', value: `${this.daysUntilRenewal()} days`, icon: '📅' },
     ];
@@ -76,7 +99,7 @@ export class Billing {
   });
 
   protected readonly planComparison = computed(() => {
-    return this.plans().map(plan => ({
+    return this.plans().map((plan) => ({
       ...plan,
       annualSavingsPercent: Math.round((1 - plan.annualPrice / (plan.monthlyPrice * 12)) * 100),
     }));

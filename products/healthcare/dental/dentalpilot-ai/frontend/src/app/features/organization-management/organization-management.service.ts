@@ -65,9 +65,8 @@ export class OrganizationManagementService {
   }
 
   acceptInvitation(invitationToken: string): Observable<void> {
-    return this.http.post<void>(
-      `${this.baseUrl}/${API_ENDPOINTS.organizations.acceptInvitation}`,
-      { invitationToken },
-    );
+    return this.http.post<void>(`${this.baseUrl}/${API_ENDPOINTS.organizations.acceptInvitation}`, {
+      invitationToken,
+    });
   }
 }

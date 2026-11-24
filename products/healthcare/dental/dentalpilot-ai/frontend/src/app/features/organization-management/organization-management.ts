@@ -77,7 +77,9 @@ export class OrganizationManagement {
         this.invitation.set(invitation);
         this.invitedEmail.set('');
         this.saving.set(false);
-        this.notifications.success('One-time invitation created. Deliver it securely to the clinic owner.');
+        this.notifications.success(
+          'One-time invitation created. Deliver it securely to the clinic owner.',
+        );
       },
       error: () => this.saving.set(false),
     });
@@ -139,7 +141,9 @@ export class OrganizationManagement {
       next: () => {
         this.members.update((members) => members.filter((item) => item.userId !== member.userId));
         this.saving.set(false);
-        this.notifications.success('Clinic removed from the organization. Its clinic data was retained.');
+        this.notifications.success(
+          'Clinic removed from the organization. Its clinic data was retained.',
+        );
         this.loadGroup();
       },
       error: () => this.saving.set(false),
