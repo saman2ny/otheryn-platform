@@ -146,7 +146,7 @@ export class Shell {
   }
 
   protected startTour(): void {
-    this.tour.start();
+    this.tour.restart();
   }
 
   protected logout(): void {

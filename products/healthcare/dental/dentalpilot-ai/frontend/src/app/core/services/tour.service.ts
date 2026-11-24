@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import Shepherd, { Tour } from 'shepherd.js';
+import type { StepOptions } from 'shepherd.js';
 import { AuthService } from './auth.service';
 
 export type TourRole = 'super_admin' | 'owner';
@@ -49,7 +50,7 @@ const SUPER_ADMIN_TOUR: TourStep[] = [
     title: 'Edit patient information',
     text: 'Select a patient and choose Edit to update demographics and contact details.',
     route: '/dentalpilot-workflows',
-    selector: '.dp-page-header',
+    selector: 'dp-page-header',
   },
   {
     id: 'sa-medical',
@@ -77,24 +78,77 @@ const SUPER_ADMIN_TOUR: TourStep[] = [
     title: 'Duplicate detection',
     text: 'Use Check duplicates before registering to spot possible matches. No automatic merge is performed.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'sa-revisions',
     title: 'Revision history',
     text: 'Choose History on a patient to review previous versions and who changed them.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'sa-filters',
     title: 'Clinic and branch filters',
     text: 'Use the clinic and branch selectors to scope the directory to the area you manage.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'sa-audit',
     title: 'Patient audit information',
     text: 'Open Dental Analytics or the audit views to review patient-related activity and exports.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-organizations',
+    title: 'Clinic group',
+    text: 'Manage multi-clinic organizations, members and invitations.',
+    route: '/organization-management',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-content',
+    title: 'AI content studio',
+    text: 'Generate marketing content with Groq and review drafts.',
+    route: '/content-generator',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-calendar',
+    title: 'Content calendar',
+    text: 'Schedule and review upcoming content.',
+    route: '/content-calendar',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-growth',
+    title: 'Growth OS',
+    text: 'Review local listings, campaigns and reviews.',
+    route: '/growth-os',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-export',
+    title: 'Export library',
+    text: 'Create and download CSV/PDF/PNG exports.',
+    route: '/export-content',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-billing',
+    title: 'Plan and billing',
+    text: 'Manage the clinic subscription and invoices.',
+    route: '/billing',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'sa-operations',
+    title: 'Dental operations',
+    text: 'Coordinate cases, equipment, sterilisation and clinical notes.',
+    route: '/dental-operations',
+    selector: 'dp-page-header',
   },
 ];
 
@@ -132,7 +186,7 @@ const OWNER_TOUR: TourStep[] = [
     title: 'Edit patient information',
     text: 'Choose Edit on a patient to update demographics and contact details.',
     route: '/dentalpilot-workflows',
-    selector: '.dp-page-header',
+    selector: 'dp-page-header',
   },
   {
     id: 'owner-medical',
@@ -160,24 +214,77 @@ const OWNER_TOUR: TourStep[] = [
     title: 'Duplicate detection',
     text: 'Check for possible duplicates before registering. No automatic merge is performed.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'owner-revisions',
     title: 'Revision history',
     text: 'Choose History on a patient to review previous versions.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'owner-associations',
     title: 'Treatment and clinical records',
     text: 'Use the Treatment Journey and Clinical Records modules to coordinate care for the same patient.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
   },
   {
     id: 'owner-consent',
     title: 'Consent and Patient Passport',
     text: 'Review consent and share records through the Patient Passport and consent tools.',
     route: '/dentalpilot-workflows',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-organizations',
+    title: 'Clinic group',
+    text: 'Manage multi-clinic organizations, members and invitations.',
+    route: '/organization-management',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-content',
+    title: 'AI content studio',
+    text: 'Generate marketing content with Groq and review drafts.',
+    route: '/content-generator',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-calendar',
+    title: 'Content calendar',
+    text: 'Schedule and review upcoming content.',
+    route: '/content-calendar',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-growth',
+    title: 'Growth OS',
+    text: 'Review local listings, campaigns and reviews.',
+    route: '/growth-os',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-export',
+    title: 'Export library',
+    text: 'Create and download CSV/PDF/PNG exports.',
+    route: '/export-content',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-billing',
+    title: 'Plan and billing',
+    text: 'Manage the clinic subscription and invoices.',
+    route: '/billing',
+    selector: 'dp-page-header',
+  },
+  {
+    id: 'owner-operations',
+    title: 'Dental operations',
+    text: 'Coordinate cases, equipment, sterilisation and clinical notes.',
+    route: '/dental-operations',
+    selector: 'dp-page-header',
   },
 ];
 
@@ -191,6 +298,12 @@ export class TourService {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private tour: Tour | null = null;
+  private readonly onViewportChange = () => {
+    const step = this.tour?.getCurrentStep();
+    if (step) {
+      step.updateStepOptions({});
+    }
+  };
 
   private currentUser(): { id: string; role: string } | null {
     const user = this.auth.currentUser();
@@ -235,53 +348,174 @@ export class TourService {
     this.start(role);
   }
 
+  private async ensurePatientForEditForm(): Promise<boolean> {
+    const existingEdit = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Edit',
+    );
+    if (existingEdit instanceof HTMLButtonElement) return true;
+
+    const fullName = document.querySelector('input[name="fullName"]') as HTMLInputElement | null;
+    const email = document.querySelector('input[name="email"]') as HTMLInputElement | null;
+    const addButton = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Add patient',
+    );
+    if (!fullName || !addButton) return false;
+
+    fullName.value = 'Tour Demo Patient';
+    fullName.dispatchEvent(new Event('input', { bubbles: true }));
+    if (email) {
+      email.value = `tour.demo+${Date.now()}@example.com`;
+      email.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    (addButton as HTMLButtonElement).click();
+    await new Promise<void>((resolve) => setTimeout(resolve, 800));
+    return Array.from(document.querySelectorAll('button')).some(
+      (button) => button.textContent?.trim() === 'Edit',
+    );
+  }
+
+  private isEditFormSelector(selector: string): boolean {
+    return ['medConditions', 'dentalTreatments', 'ecName'].some((name) =>
+      selector.includes(`name="${name}"`),
+    );
+  }
+
+  private openFirstPatientEdit(): void {
+    const editButton = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Edit',
+    );
+    if (editButton instanceof HTMLButtonElement) {
+      editButton.click();
+    }
+  }
+
+  private placementFor(selector?: string): 'top' | 'bottom' | 'left' | 'right' {
+    if (!selector) return 'bottom';
+    const element = document.querySelector(selector);
+    if (!(element instanceof HTMLElement)) return 'bottom';
+    const rect = element.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const space = {
+      top: rect.top,
+      bottom: viewportHeight - rect.bottom,
+      left: rect.left,
+      right: viewportWidth - rect.right,
+    };
+    const placements: Array<'bottom' | 'top' | 'right' | 'left'> = ['bottom', 'top', 'right', 'left'];
+    return placements.reduce((best, placement) =>
+      space[placement] > space[best] ? placement : best,
+    );
+  }
+
+  private async waitForSelector(selector: string, timeoutMs = 3000): Promise<HTMLElement | null> {
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      const element = document.querySelector(selector);
+      if (element instanceof HTMLElement) return element;
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    }
+    const element = document.querySelector(selector);
+    return element instanceof HTMLElement ? element : null;
+  }
+
+  private addViewportListeners(): void {
+    window.addEventListener('resize', this.onViewportChange);
+    window.addEventListener('orientationchange', this.onViewportChange);
+  }
+
+  private removeViewportListeners(): void {
+    window.removeEventListener('resize', this.onViewportChange);
+    window.removeEventListener('orientationchange', this.onViewportChange);
+  }
+
   start(role?: TourRole): void {
     const user = this.currentUser();
     const resolved = this.resolveRole(role);
     if (!user || !resolved) return;
-    if (this.tour) this.tour.cancel();
+    if (this.tour) {
+      this.removeViewportListeners();
+      this.tour.cancel();
+    }
 
     const tour = new Shepherd.Tour({
       useModalOverlay: true,
       exitOnEsc: true,
       defaultStepOptions: {
         classes: 'dp-tour',
-        scrollTo: true,
+        scrollTo: { behavior: 'smooth', block: 'center' },
         cancelIcon: { enabled: true },
       },
     });
 
-    for (const step of TOURS[resolved]) {
-      if (step.selector) {
-        const element = document.querySelector(step.selector);
-        if (!element) {
-          // The target may live on another route or behind an open form.
-          // Log it and show the step centered instead of failing silently.
-          console.warn(
-            `[DentalPilot tour] Missing target for step "${step.id}": ${step.selector}`,
-          );
-        }
-      }
-      tour.addStep({
-        id: step.id,
-        title: step.title,
-        text: step.text,
-        attachTo: step.selector ? { element: step.selector, on: 'bottom' } : undefined,
-      });
-    }
+    const steps = TOURS[resolved];
+    steps.forEach((step, index) => {
+      const isLast = index === steps.length - 1;
+      const buttons = [
+        ...(index > 0
+          ? [{ text: 'Previous', action: tour.back, classes: 'shepherd-button-secondary' }]
+          : []),
+        {
+          text: isLast ? 'Finish' : 'Next',
+          action: isLast ? tour.complete : tour.next,
+          classes: 'shepherd-button-primary',
+        },
+        { text: 'Skip tour', action: tour.cancel, classes: 'shepherd-button-secondary' },
+      ];
 
-    tour.on('step-change', (step: unknown) => {
-      const id = (step as { id?: string })?.id ?? '';
-      const target = id.endsWith('dashboard') ? '/dashboard' : '/dentalpilot-workflows';
-      if (this.router.url !== target) {
-        void this.router.navigateByUrl(target);
-      }
+      const config: StepOptions & { beforeShowPromise?: () => Promise<void> } = {
+        id: step.id,
+        title: `Step ${index + 1} of ${steps.length} — ${step.title}`,
+        text: step.text,
+        attachTo: step.selector
+          ? { element: step.selector, on: this.placementFor(step.selector) }
+          : undefined,
+        buttons,
+        beforeShowPromise: async () => {
+          if (step.route && this.router.url !== step.route) {
+            await this.router.navigateByUrl(step.route);
+            await new Promise<void>((resolve) => setTimeout(resolve, 150));
+          }
+          if (!step.selector) return;
+
+          let target = await this.waitForSelector(step.selector, 3000);
+          if (!target && this.isEditFormSelector(step.selector)) {
+            await this.ensurePatientForEditForm();
+            this.openFirstPatientEdit();
+            target = await this.waitForSelector(step.selector, 3000);
+          }
+
+          const current = tour.getCurrentStep();
+          if (!target) {
+            console.warn(
+              `[DentalPilot tour] Missing target for step "${step.id}": ${step.selector}`,
+            );
+            if (current) current.updateStepOptions({ attachTo: undefined });
+            return;
+          }
+
+          if (current) {
+            current.updateStepOptions({
+              attachTo: { element: step.selector, on: this.placementFor(step.selector) },
+            });
+          }
+        },
+      };
+
+      tour.addStep(config);
     });
 
-    tour.on('complete', () => this.markCompleted(user.id, resolved));
-    tour.on('cancel', () => this.markSkipped(user.id, resolved));
+    tour.on('complete', () => {
+      this.removeViewportListeners();
+      this.markCompleted(user.id, resolved);
+    });
+    tour.on('cancel', () => {
+      this.removeViewportListeners();
+      this.markSkipped(user.id, resolved);
+    });
 
     this.tour = tour;
+    this.addViewportListeners();
     void tour.start();
   }
 

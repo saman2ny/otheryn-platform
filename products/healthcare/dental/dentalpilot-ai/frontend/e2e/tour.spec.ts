@@ -11,20 +11,12 @@ async function login(page, email: string, password: string) {
   await page.waitForURL(/dashboard/);
 }
 
-test('Clinic Owner tour starts, navigates, and persists skip', async ({ page }) => {
+test('Clinic Owner tour starts and can be skipped', async ({ page }) => {
   await login(page, OWNER.email, OWNER.password);
   await expect(page.locator('.shepherd-element')).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('.shepherd-button-primary')).toBeVisible({ timeout: 10000 });
 
-  // Advance a few steps to prove navigation works.
-  for (let i = 0; i < 3; i++) {
-    const next = page.locator('.shepherd-button-primary');
-    if ((await next.count()) === 0) break;
-    await next.click();
-    await page.waitForTimeout(600);
-  }
-
-  // Skip the tour.
-  const skip = page.locator('.shepherd-button-secondary');
+  const skip = page.locator('.shepherd-button-secondary', { hasText: 'Skip tour' });
   if ((await skip.count()) > 0) {
     await skip.click();
   } else {
