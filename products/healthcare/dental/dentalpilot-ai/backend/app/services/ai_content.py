@@ -1,26 +1,52 @@
 import json
+import logging
 from typing import Any
 
-import anthropic
+import openai
 
 from app.core.config import settings
 from app.models.clinic import Clinic
 from app.schemas.content import GenerateContentRequest
 
-_client: anthropic.Anthropic | None = None
+logger = logging.getLogger(__name__)
+
+_client: openai.OpenAI | None = None
 
 
 class AiNotConfiguredError(RuntimeError):
     pass
 
 
-def _get_client() -> anthropic.Anthropic:
+class AiProviderError(RuntimeError):
+    pass
+
+
+def _get_client() -> openai.OpenAI:
     global _client
-    if not settings.anthropic_api_key:
-        raise AiNotConfiguredError("ANTHROPIC_API_KEY is not set.")
+    if not settings.xai_api_key:
+        raise AiNotConfiguredError("XAI_API_KEY is not set.")
     if _client is None:
-        _client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        _client = openai.OpenAI(
+            api_key=settings.xai_api_key,
+            base_url=settings.xai_base_url,
+            timeout=30.0,
+            max_retries=3,
+        )
     return _client
+
+
+def _map_provider_error(exc: Exception) -> AiProviderError:
+    if isinstance(exc, openai.RateLimitError):
+        return AiProviderError("The AI provider is rate-limited. Please try again shortly.")
+    if isinstance(exc, openai.AuthenticationError):
+        return AiProviderError("The AI provider rejected the credentials.")
+    if isinstance(exc, openai.APITimeoutError):
+        return AiProviderError("The AI provider timed out.")
+    if isinstance(exc, openai.APIConnectionError):
+        return AiProviderError("The AI provider is unreachable.")
+    if isinstance(exc, openai.APIStatusError):
+        return AiProviderError(f"The AI provider returned an error ({exc.status_code}).")
+    return AiProviderError("The AI provider could not complete the request.")
 
 
 _OUTPUT_SCHEMA = {
@@ -47,6 +73,22 @@ _OUTPUT_SCHEMA = {
     "required": ["headline", "body", "hashtags", "image_prompt_suggestion"],
     "additionalProperties": False,
 }
+
+
+def _validate_output(data: Any) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        raise AiProviderError("The AI provider returned an invalid response shape.")
+    for key, expected in (
+        ("headline", str),
+        ("body", str),
+        ("hashtags", list),
+        ("image_prompt_suggestion", str),
+    ):
+        if key not in data or not isinstance(data[key], expected):
+            raise AiProviderError("The AI provider returned an invalid response shape.")
+    if not all(isinstance(tag, str) for tag in data["hashtags"]):
+        raise AiProviderError("The AI provider returned an invalid response shape.")
+    return data
 
 
 def generate_content(clinic: Clinic, request: GenerateContentRequest) -> dict[str, Any]:
@@ -77,16 +119,31 @@ def generate_content(clinic: Clinic, request: GenerateContentRequest) -> dict[st
             if request.include_call_to_action
             else "Do not include a call to action."
         )
+        + "\n\nReturn a JSON object with exactly these keys: "
+        + '"headline" (string), "body" (string), "hashtags" (array of strings), '
+        + '"image_prompt_suggestion" (string).'
     )
 
-    response = client.messages.create(
-        model=settings.anthropic_model,
-        max_tokens=1024,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "medium", "format": {"type": "json_schema", "schema": _OUTPUT_SCHEMA}},
-        system=system,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
+    try:
+        response = client.chat.completions.create(
+            model=settings.xai_model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+            max_tokens=1024,
+        )
+    except openai.APIError as exc:
+        logger.warning("AI content request failed: %s status=%s", type(exc).__name__, getattr(exc, "status_code", None))
+        raise _map_provider_error(exc) from exc
 
-    text_block = next(block for block in response.content if block.type == "text")
-    return json.loads(text_block.text)
+    content = response.choices[0].message.content if response.choices else None
+    if not content:
+        raise AiProviderError("The AI provider returned an empty response.")
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise AiProviderError("The AI provider returned malformed JSON.") from exc
+    return _validate_output(parsed)

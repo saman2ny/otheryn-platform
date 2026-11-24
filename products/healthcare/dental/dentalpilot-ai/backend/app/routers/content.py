@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.core.deps import CurrentUser, DbSession
 from app.models.content import GeneratedContent as GeneratedContentModel
 from app.schemas.content import GenerateContentRequest, GeneratedContent
-from app.services.ai_content import AiNotConfiguredError, generate_content
+from app.services.ai_content import AiNotConfiguredError, AiProviderError, generate_content
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -38,7 +38,12 @@ def generate(request: GenerateContentRequest, current_user: CurrentUser, db: DbS
     except AiNotConfiguredError as exc:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            "AI content generation is not configured. Set ANTHROPIC_API_KEY on the backend.",
+            "AI content generation is not configured. Set XAI_API_KEY on the backend.",
+        ) from exc
+    except AiProviderError as exc:
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY,
+            "The AI provider could not generate content. Please try again shortly.",
         ) from exc
 
     record = GeneratedContentModel(

@@ -6,7 +6,7 @@ It documents every backend/worker variable, Compose-only variables, build-time v
 
 ## Quick reference
 
-- **Backend + worker (runtime):** `DATABASE_URL` (`postgresql+psycopg://`), `JWT_SECRET`, `APP_ENVIRONMENT`, `CORS_ORIGINS`, plus optional `ANTHROPIC_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`.
+- **Backend + worker (runtime):** `DATABASE_URL` (`postgresql+psycopg://`), `JWT_SECRET`, `APP_ENVIRONMENT`, `CORS_ORIGINS`, plus optional `XAI_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`.
 - **Frontend (build-time):** `src/environments/environment.prod.ts` → `apiBaseUrl`.
 - **Compose-only:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, `REDIS_PORT`, `BACKEND_PORT`, `REGISTRY`, `IMAGE_NAME`, `IMAGE_TAG`.
 

@@ -156,7 +156,7 @@ export interface ClinicalNoteDraft {
   title: string;
   clinicianInput: string;
   draftText: string;
-  generationSource: 'clinician' | 'anthropic';
+  generationSource: 'clinician' | 'xai';
   reviewStatus: 'pending-review' | 'approved' | 'rejected';
   createdBy: string;
   reviewedBy?: string;

@@ -41,7 +41,7 @@ flowchart LR
     NGX --> API[FastAPI 0.139]
     API --> DB[(PostgreSQL 16)]
     API --> S3[(S3-compatible storage)]
-    API --> AN[Anthropic Claude]
+    API --> AN[xAI Grok]
     API --> RZP[Razorpay]
     API --> SMTP[SMTP]
     W[Workers\npython -m app.workers.run_workers] --> DB
@@ -53,7 +53,7 @@ flowchart LR
 - **Backend:** FastAPI (Python 3.12) exposing a versioned REST API under `/api/v1`. SQLAlchemy 2.0 ORM + Alembic migrations.
 - **Database:** PostgreSQL 16 in production and in the local Docker stack; SQLite is the zero-setup native default.
 - **Workers:** a separate process that polls database-backed outboxes (email, patient communication) and reconciles subscriptions. **Redis is provisioned in Docker Compose but is not consumed by application code** — the queues are database-backed.
-- **Integrations:** Anthropic (AI content/notes), Razorpay (subscriptions + treatment payments), SMTP (email), S3-compatible storage with optional AWS KMS, WhatsApp Cloud API adapter.
+- **Integrations:** xAI Grok (AI content/notes), Razorpay (subscriptions + treatment payments), SMTP (email), S3-compatible storage with optional AWS KMS, WhatsApp Cloud API adapter.
 
 ---
 
@@ -75,7 +75,7 @@ flowchart LR
 | Server | Uvicorn | `0.51.0` |
 | Passwords | bcrypt | `5.0.0` |
 | JWT | PyJWT | `2.13.0` |
-| AI | Anthropic SDK | `0.117.0` |
+| AI | xAI Grok (OpenAI-compatible) | `grok-4.7` |
 | Payments | Razorpay SDK | `2.0.1` |
 | Storage | boto3 | `>=1.35,<2.0` |
 | Database | PostgreSQL | **16** (production/local Docker); SQLite (native default) |
@@ -200,7 +200,7 @@ products/healthcare/dental/dentalpilot-ai/
 | Persistence | ❌ | ✅ SQLAlchemy + Alembic |
 | Background work | ❌ | ✅ DB-backed outbox workers |
 | File storage | Requests upload/download | ✅ S3-compatible, presigned, audited |
-| AI / payments | Opens Razorpay checkout, calls API | ✅ Anthropic, Razorpay verification, SMTP |
+| AI / payments | Opens Razorpay checkout, calls API | ✅ xAI Grok, Razorpay verification, SMTP |
 
 ## Appendix C — Frontend/backend communication
 

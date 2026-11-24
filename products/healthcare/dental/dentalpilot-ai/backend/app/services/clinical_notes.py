@@ -1,8 +1,8 @@
-import anthropic
+import openai
 
 from app.core.config import settings
 
-_client: anthropic.Anthropic | None = None
+_client: openai.OpenAI | None = None
 
 _SYSTEM_PROMPT = (
     "Format only the clinician-provided text as a concise dental clinical-note draft. "
@@ -16,12 +16,17 @@ class ClinicalNoteGenerationError(RuntimeError):
     pass
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> openai.OpenAI:
     global _client
-    if not settings.anthropic_api_key:
+    if not settings.xai_api_key:
         raise ClinicalNoteGenerationError("The clinical note provider is not configured.")
     if _client is None:
-        _client = anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=30.0)
+        _client = openai.OpenAI(
+            api_key=settings.xai_api_key,
+            base_url=settings.xai_base_url,
+            timeout=30.0,
+            max_retries=3,
+        )
     return _client
 
 
@@ -29,17 +34,22 @@ def generate_clinical_note(clinician_input: str) -> str:
     if not settings.clinical_note_drafting_enabled or not settings.clinical_ai_data_processing_approved:
         raise ClinicalNoteGenerationError("Clinical note drafting is not enabled for this deployment.")
     try:
-        response = _get_client().messages.create(
-            model=settings.anthropic_model,
+        response = _get_client().chat.completions.create(
+            model=settings.xai_model,
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": clinician_input},
+            ],
+            temperature=0,
             max_tokens=1200,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": clinician_input}],
         )
-    except anthropic.APIError as exc:
-        raise ClinicalNoteGenerationError("The clinical note provider could not complete the request.") from exc
+    except openai.APIError:
+        raise ClinicalNoteGenerationError(
+            "The clinical note provider could not complete the request."
+        ) from None
 
-    text_blocks = [block.text.strip() for block in response.content if block.type == "text" and block.text.strip()]
-    draft = "\n".join(text_blocks).strip()
+    content = response.choices[0].message.content if response.choices else None
+    draft = (content or "").strip()
     if not draft:
         raise ClinicalNoteGenerationError("The clinical note provider returned an empty draft.")
     return draft

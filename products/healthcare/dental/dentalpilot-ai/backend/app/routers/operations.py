@@ -780,7 +780,7 @@ def generate_clinical_note_draft(
     if not (
         settings.clinical_note_drafting_enabled
         and settings.clinical_ai_data_processing_approved
-        and settings.anthropic_api_key
+        and settings.xai_api_key
     ):
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -821,7 +821,7 @@ def generate_clinical_note_draft(
             status.HTTP_502_BAD_GATEWAY,
             "The clinical note draft could not be generated. The saved clinician input was not changed.",
         ) from exc
-    note.generation_source = "anthropic"
+    note.generation_source = "xai"
     db.add(
         AuditEvent(
             clinic_id=current_user.clinic_id,
@@ -832,8 +832,8 @@ def generate_clinical_note_draft(
             resource_type="clinical-note-ai-draft",
             resource_id=note.id,
             detail={
-                "provider": "anthropic",
-                "model": settings.anthropic_model,
+                "provider": "xai",
+                "model": settings.xai_model,
                 "patientConsentConfirmed": True,
             },
         )

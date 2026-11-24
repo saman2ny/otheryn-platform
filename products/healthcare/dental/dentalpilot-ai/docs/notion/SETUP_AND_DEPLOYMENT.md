@@ -461,8 +461,9 @@ cp .env.production.example .env.production
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | optional | Access token lifetime | both | runtime |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | backend | optional | Refresh token lifetime | both | runtime |
 | `CORS_ORIGINS` | backend | ✅ prod | Allowed origins (JSON array) | both | runtime |
-| `ANTHROPIC_API_KEY` | backend, worker | optional | Anthropic AI | both | runtime |
-| `ANTHROPIC_MODEL` | backend, worker | optional | Model | both | runtime |
+| `XAI_API_KEY` | backend, worker | optional | xAI Grok API key | both | runtime |
+| `XAI_MODEL` | backend, worker | optional | Grok model | both | runtime |
+| `XAI_BASE_URL` | backend, worker | optional | xAI API base URL | both | runtime |
 | `CLINICAL_NOTE_DRAFTING_ENABLED` | backend | optional | AI note drafting | both | runtime |
 | `CLINICAL_AI_DATA_PROCESSING_APPROVED` | backend | optional | Consent gate | both | runtime |
 | `RAZORPAY_KEY_ID` | backend, worker | optional | Razorpay key | both | runtime |

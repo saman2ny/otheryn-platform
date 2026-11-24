@@ -8,7 +8,7 @@ FastAPI REST API with background workers. This is a **concise component guide**;
 - SQLAlchemy `2.0.51`, Alembic `1.18.5`.
 - Python **3.12** (Docker); Railway Nixpacks uses `python311` (mismatch — see architecture doc).
 - PostgreSQL 16 (production) / SQLite (native default); `postgresql+psycopg://` for Postgres.
-- bcrypt `5.0.0`, PyJWT `2.13.0`, Anthropic `0.117.0`, Razorpay `2.0.1`, boto3.
+- bcrypt `5.0.0`, PyJWT `2.13.0`, OpenAI SDK (xAI-compatible), Razorpay `2.0.1`, boto3.
 - Tested locally on Python 3.12 (Docker `python:3.12-slim`). Railway deploys with Nixpacks `python311` (3.11) — a known mismatch; recommended to align on 3.12.
 
 ## Commands

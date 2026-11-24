@@ -15,7 +15,7 @@ DentalPilot AI is a modular monorepo containing:
 - **A FastAPI REST API** (`backend/`) with 16 routers and ~156 endpoints under `/api/v1`.
 - **A PostgreSQL/SQLite database** accessed through SQLAlchemy 2.0 with Alembic migrations.
 - **Background workers** (`backend/app/workers/`) that poll database-backed outboxes.
-- **External integrations**: Anthropic, Razorpay, SMTP, S3-compatible storage, WhatsApp Cloud API.
+- **External integrations**: xAI Grok, Razorpay, SMTP, S3-compatible storage, WhatsApp Cloud API.
 - **Infrastructure**: Dockerfiles, Docker Compose (local/production/staging), Nginx, Railway configuration, `deploy.sh`.
 
 The system is a **multi-tenant SaaS**: each clinic's data is scoped by `clinic_id`; staff may be further scoped by `branch_id`. A separate patient portal provides patient-scoped access to records, shares and payments.
@@ -45,7 +45,7 @@ flowchart LR
     NGX --> API[FastAPI]
     API --> DB[(PostgreSQL 16)]
     API --> S3[(S3-compatible storage)]
-    API --> AN[Anthropic Claude]
+    API --> AN[xAI Grok]
     API --> RZP[Razorpay]
     API --> SMTP[SMTP]
     W[Workers\npython -m app.workers.run_workers] --> DB
@@ -71,7 +71,7 @@ flowchart LR
 | Validation | Pydantic | `2.13.4` |
 | Server | Uvicorn | `0.51.0` |
 | Auth | bcrypt / PyJWT | `5.0.0` / `2.13.0` |
-| AI | Anthropic SDK | `0.117.0` |
+| AI | xAI Grok (OpenAI-compatible) | `grok-4.7` |
 | Payments | Razorpay SDK | `2.0.1` |
 | Storage | boto3 | `>=1.35,<2.0` |
 | Database | PostgreSQL | **16**; SQLite default |
@@ -332,7 +332,7 @@ flowchart TB
 
 | Integration | Status | Configuration | Failure behaviour |
 |---|---|---|---|
-| Anthropic Claude | Implemented | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | 503 when unset |
+| xAI Grok | Implemented | `XAI_API_KEY`, `XAI_MODEL`, `XAI_BASE_URL` | 503 when unset |
 | Razorpay subscriptions | Implemented | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_IDS` | 503 when unconfigured; signed webhooks |
 | Razorpay treatment payments | Implemented | same keys + `PATIENT_PAYMENT_CURRENCY` | 503 when unconfigured |
 | SMTP | Implemented | `SMTP_*` | Outbox retries; 503 when unconfigured |
@@ -353,7 +353,7 @@ flowchart TB
 
 ## 16. AI Integration Architecture
 
-- **Marketing content:** `POST /content/generate` calls Anthropic (`claude-opus-4-8`) with clinic profile context; returns 503 if `ANTHROPIC_API_KEY` is unset.
+- **Marketing content:** `POST /content/generate` calls xAI Grok (`grok-4.7`) with clinic profile context; returns 503 if `XAI_API_KEY` is unset.
 - **Clinical note drafting:** gated by `CLINICAL_NOTE_DRAFTING_ENABLED` + `CLINICAL_AI_DATA_PROCESSING_APPROVED`; clinician-entered notes require review; AI is assistive only.
 - **Not implemented:** AI image analysis, autonomous clinical decisions, AI agents, evidence/verification.
 

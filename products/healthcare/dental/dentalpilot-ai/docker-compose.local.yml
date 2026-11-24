@@ -1,17 +1,16 @@
-# DentalPilot AI — Local development stack
+# DentalPilot AI — Local development stack (Docker only)
 #
-# Brings up PostgreSQL 16, Redis 7, a one-shot Alembic migration, the FastAPI
-# backend (hot reload) and the background workers. Images are built locally from
-# the real Dockerfiles — no registry pulls and no placeholder images.
+# This is the ONLY supported local development workflow. It builds images from
+# the real Dockerfiles and runs:
+#   postgres 16 → migrate (one-shot) → backend (uvicorn --reload) → workers
+#   frontend (Angular dev server with HMR)
 #
-# The Angular frontend is intentionally NOT containerised here: use Angular's
-# native dev server (`cd frontend && npm start`) which is faster and gives
-# proper HMR. See README.md for the full local workflow.
+# No host Node.js, npm, Python, pip, PostgreSQL or Redis installation is needed.
 #
 # Usage:
 #   cp .env.local.example .env.local   # then edit secrets
 #   docker compose -f docker-compose.local.yml up -d --build
-#   docker compose -f docker-compose.local.yml logs -f backend workers
+#   docker compose -f docker-compose.local.yml logs -f backend frontend workers
 
 name: dentalpilot-local
 
@@ -29,23 +28,6 @@ services:
       - postgres_local_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dentalpilot} -d ${POSTGRES_DB:-dentalpilot}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-    networks:
-      - dentalpilot-local
-
-  redis:
-    image: redis:7-alpine
-    container_name: dentalpilot-local-redis
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_local_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -82,7 +64,7 @@ services:
     container_name: dentalpilot-local-backend
     # No `alembic upgrade head` here — migrations are handled by the `migrate`
     # service so they are not executed by every backend/worker start.
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "app"]
     env_file:
       - .env.local
     environment:
@@ -92,8 +74,6 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
@@ -128,19 +108,49 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     volumes:
       - ./backend/app:/app/app
+    # The backend image defines an HTTP HEALTHCHECK; workers do not serve HTTP.
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+    networks:
+      - dentalpilot-local
+
+  # Angular development server with HMR. The source is bind-mounted; a named
+  # volume caches node_modules. `--poll 1000` makes file watching reliable on
+  # macOS Docker Desktop.
+  frontend:
+    image: node:22-alpine
+    container_name: dentalpilot-local-frontend
+    working_dir: /app
+    command: sh -c "[ -x node_modules/.bin/ng ] || npm ci --no-audit --no-fund; npm start -- --host 0.0.0.0 --port 4200 --poll 1000"
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:4200 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
     networks:
       - dentalpilot-local
 
 volumes:
   postgres_local_data:
-  redis_local_data:
+  frontend_node_modules:
 
 networks:
   dentalpilot-local:
