@@ -32,21 +32,6 @@ services:
     networks:
       - dentalpilot-net
 
-  redis:
-    image: redis:7-alpine
-    container_name: dentalpilot-redis
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - dentalpilot-net
-
   # One-shot migration runner. Backend and workers wait for successful
   # completion, so migrations are applied exactly once and before traffic.
   migrate:
@@ -71,7 +56,6 @@ services:
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-CHANGE_ME}@postgres:5432/${POSTGRES_DB:-dentalpilot}
-      REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
@@ -113,8 +97,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     volumes:
@@ -135,7 +117,6 @@ services:
     command: ["python", "-m", "app.workers.run_workers"]
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-CHANGE_ME}@postgres:5432/${POSTGRES_DB:-dentalpilot}
-      REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME}
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-production}
       XAI_API_KEY: ${XAI_API_KEY:-}
@@ -167,8 +148,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     volumes:
@@ -193,7 +172,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--output-document", "/dev/null", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -203,7 +182,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   dentalpilot-net:

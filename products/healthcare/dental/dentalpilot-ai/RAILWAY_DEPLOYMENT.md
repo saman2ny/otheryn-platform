@@ -1,10 +1,8 @@
 # Railway Deployment
 
-> **Consolidated.** The authoritative production deployment guide is [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md).
+> **Moved.** The complete production deployment guide — Railway **and** Docker Compose VPS — is now in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
-It covers Railway frontend, backend, worker and PostgreSQL services, domains, TLS, migrations, backups, rollbacks and troubleshooting.
-
-## Railway services (summary)
+Quick reference:
 
 | Service | Root | Build | Start |
 |---|---|---|---|
@@ -13,6 +11,6 @@ It covers Railway frontend, backend, worker and PostgreSQL services, domains, TL
 | Frontend | `products/healthcare/dental/dentalpilot-ai/frontend` | Dockerfile (`node:20-alpine` → `nginx:alpine`) | Nginx |
 | PostgreSQL | Railway-managed | — | — |
 
-**Critical:** `DATABASE_URL` must use `postgresql+psycopg://`. **No Uvicorn `--reload` in production.**
+**Critical:** `DATABASE_URL` must use `postgresql+psycopg://`. **No Uvicorn `--reload` in production.** **Redis is not used.**
 
-See [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) for the full procedure.
+See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the full procedure: domains, TLS, migrations, backups, health checks, rollback, security and troubleshooting.

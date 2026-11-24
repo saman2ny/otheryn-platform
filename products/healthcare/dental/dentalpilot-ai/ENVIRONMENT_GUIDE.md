@@ -1,13 +1,11 @@
 # Environment Variables
 
-> **Consolidated.** The authoritative environment-variable reference is in [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md).
+> **Moved.** The complete environment-variable reference is now in [`ENVIRONMENT.md`](ENVIRONMENT.md).
 
-It documents every backend/worker variable, Compose-only variables, build-time vs runtime classification, local/staging/production separation and secret-handling safety.
+Quick reference:
 
-## Quick reference
+- **Backend + worker (runtime):** `DATABASE_URL` (`postgresql+psycopg://`), `JWT_SECRET`, `APP_ENVIRONMENT`, `CORS_ORIGINS`; optional `XAI_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`.
+- **Frontend (build-time):** `src/environments/environment.prod.ts` → `apiBaseUrl` (`https://api.dentalpilot.in/api/v1`).
+- **Compose-only:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, `BACKEND_PORT`, `FRONTEND_PORT`, `REGISTRY`, `IMAGE_NAME`, `IMAGE_TAG`.
 
-- **Backend + worker (runtime):** `DATABASE_URL` (`postgresql+psycopg://`), `JWT_SECRET`, `APP_ENVIRONMENT`, `CORS_ORIGINS`, plus optional `XAI_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`.
-- **Frontend (build-time):** `src/environments/environment.prod.ts` → `apiBaseUrl`.
-- **Compose-only:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, `REDIS_PORT`, `BACKEND_PORT`, `REGISTRY`, `IMAGE_NAME`, `IMAGE_TAG`.
-
-See [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) for the full table.
+See [`ENVIRONMENT.md`](ENVIRONMENT.md) for the full table, build-time vs runtime classification, local vs production values and security guidance.
