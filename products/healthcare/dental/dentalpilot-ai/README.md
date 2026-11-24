@@ -1,12 +1,19 @@
 # DentalPilot AI
 
-DentalPilot AI is the first specialty product in the **Otheryn** healthcare intelligence and infrastructure ecosystem. It is an AI-assisted SaaS platform for dental clinics: treatment workflows, a patient portal, clinic operations, marketing content, and subscription billing in one application.
+DentalPilot AI is the first specialty product in the **Otheryn** healthcare intelligence and infrastructure ecosystem. It is an AI-assisted SaaS platform for dental clinics: treatment workflows, a patient portal, clinic operations, marketing content and subscription billing in one application.
 
-> **Status:** v1.2.0 — a working MVP. It is not medical-device certified, not HIPAA/GDPR-certified, and not a live PMS/EHR integration. See [Release boundaries](#release-boundaries).
+> **Status:** v1.2.0 — a working MVP. It is not medical-device certified, not HIPAA/GDPR-certified, and not a live PMS/EHR integration. See [Release boundaries](#release-boundaries) and [`RELEASE_NOTES.md`](RELEASE_NOTES.md).
 
-**Quick links:** [Local Development](#4-local-development) · [Production](#5-production-deployment) · [Documentation](#6-documentation-links)
+**Quick links:** [Local Development](#4-local-development) · [Production](#5-production-deployment) · [Documentation](#6-documentation)
 
-**Detailed guides:** [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md) (all local setup + hot reload) · [`ENVIRONMENT_GUIDE.md`](ENVIRONMENT_GUIDE.md) (environment variables) · [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md) (production) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`frontend/README.md`](frontend/README.md) · [`backend/README.md`](backend/README.md)
+**Four authoritative documents:**
+
+1. [`docs/notion/BUSINESS_PROPOSAL.md`](docs/notion/BUSINESS_PROPOSAL.md) — business strategy, market, model and roadmap.
+2. [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) — local development, hot reload and production deployment.
+3. [`docs/notion/TECHNICAL_ARCHITECTURE.md`](docs/notion/TECHNICAL_ARCHITECTURE.md) — engineering architecture, API, data, security and testing.
+4. [`RELEASE_NOTES.md`](RELEASE_NOTES.md) — version history and release management.
+
+Component guides: [`frontend/README.md`](frontend/README.md) · [`backend/README.md`](backend/README.md). Audit: [`AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md`](AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md).
 
 ---
 
@@ -14,10 +21,10 @@ DentalPilot AI is the first specialty product in the **Otheryn** healthcare inte
 
 Dentists are clinicians first; administration, patient communication, records, billing and marketing are usually done in the gaps between appointments. DentalPilot AI digitises those workflows:
 
-- **Clinical & practice workflows** — patients, enquiries, visits, treatment plans/stages, a clinic-entered treatment ledger, insurance-claim tracking, records with provenance, consent, recall reminders, and audit history.
-- **Patient portal** — patients can view their records, download documents, and pay their own outstanding treatment charges.
-- **Operations** — digital-dentistry case coordination, equipment/maintenance/sterilisation logs, message drafts, marketing publications, and clinician note review.
-- **Growth & content** — AI-generated marketing content, a content calendar, exports (CSV/PDF/PNG), local-listing audits, campaigns, and review drafts.
+- **Clinical & practice workflows** — patients, enquiries, visits, treatment plans/stages, a clinic-entered treatment ledger, insurance-claim tracking, records with provenance, consent, recall reminders and audit history.
+- **Patient portal** — patients can view their records, download documents and pay their own outstanding treatment charges.
+- **Operations** — digital-dentistry case coordination, equipment/maintenance/sterilisation logs, message drafts, marketing publications and clinician note review.
+- **Growth & content** — AI-generated marketing content, a content calendar, exports (CSV/PDF/PNG), local-listing audits, campaigns and review drafts.
 - **Commerce** — Razorpay subscriptions (Free/Starter/Professional/Enterprise) and Razorpay treatment payments.
 
 ### Release boundaries
@@ -89,7 +96,7 @@ flowchart LR
 
 ## 4. Local Development
 
-Docker Compose runs PostgreSQL, Redis, migrations, the FastAPI backend and the workers. The Angular frontend runs natively with `ng serve` (not in Docker).
+Docker Compose runs PostgreSQL, Redis, migrations, the FastAPI backend and the workers. The Angular frontend runs natively with `ng serve` (or in a Node container).
 
 ```bash
 cd products/healthcare/dental/dentalpilot-ai
@@ -103,8 +110,6 @@ npm ci
 npm start
 ```
 
-Open **<http://localhost:4200>**.
-
 | Service | URL / port |
 |---|---|
 | Angular dev server | <http://localhost:4200> |
@@ -115,7 +120,7 @@ Open **<http://localhost:4200>**.
 | PostgreSQL | `localhost:5432` (container `dentalpilot-local-postgres`) |
 | Redis | `localhost:6379` (provisioned but **not used by app code**) |
 
-> **Full local instructions** — native setup, hot reload for Angular/FastAPI/workers, PostgreSQL/SQLite/Redis, startup/shutdown, logs, rebuilds and troubleshooting: [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md).
+> **Full local instructions** — Docker/native setup, hot reload for Angular/FastAPI/workers, PostgreSQL/SQLite/Redis, startup/shutdown, logs, rebuilds and troubleshooting: [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md).
 
 ---
 
@@ -138,23 +143,21 @@ Key rules:
 - **`DATABASE_URL` must use `postgresql+psycopg://`** (not Railway's `postgresql://`).
 - **No development secrets in production.**
 
-> **Full production instructions** — service-by-service Railway setup, domains, TLS, migrations, backups, rollbacks and security: [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md). Environment variable reference: [`ENVIRONMENT_GUIDE.md`](ENVIRONMENT_GUIDE.md).
+> **Full production instructions** — service-by-service Railway setup, domains, TLS, migrations, backups, rollbacks and security: [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md).
 
 ---
 
-## 6. Documentation Links
+## 6. Documentation
 
 | Document | Responsibility |
 |---|---|
-| [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md) | Complete local setup and hot reload (frontend, backend, workers, database) |
-| [`ENVIRONMENT_GUIDE.md`](ENVIRONMENT_GUIDE.md) | Environment variable reference and local/staging/production separation |
-| [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md) | Detailed production deployment for all services |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution workflow and standards |
-| [`frontend/README.md`](frontend/README.md) | Angular architecture, commands and frontend deployment |
-| [`backend/README.md`](backend/README.md) | FastAPI architecture, API, workers and backend deployment |
-| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Docker Compose / VPS deployment |
-| [`RELEASE_NOTES.md`](RELEASE_NOTES.md) | 1.2.0 scope and boundaries |
-| [`AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md`](AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md) | Architecture/QA audit |
+| [`docs/notion/BUSINESS_PROPOSAL.md`](docs/notion/BUSINESS_PROPOSAL.md) | Business strategy, market, business model, roadmap |
+| [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) | Local development, hot reload, production deployment, environment variables |
+| [`docs/notion/TECHNICAL_ARCHITECTURE.md`](docs/notion/TECHNICAL_ARCHITECTURE.md) | Engineering architecture, API, database, security, testing |
+| [`RELEASE_NOTES.md`](RELEASE_NOTES.md) | Version history and release management |
+| [`frontend/README.md`](frontend/README.md) | Frontend component guide |
+| [`backend/README.md`](backend/README.md) | Backend component guide |
+| [`AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md`](AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md) | Evidence-based product audit |
 
 ---
 
@@ -162,28 +165,25 @@ Key rules:
 
 ```
 products/healthcare/dental/dentalpilot-ai/
-├── README.md                  # this file — overview and quick start
-├── LOCAL_DEVELOPMENT.md       # all local setup + hot reload
-├── ENVIRONMENT_GUIDE.md       # environment variables and separation
-├── RAILWAY_DEPLOYMENT.md      # production deployment
-├── CONTRIBUTING.md            # contribution workflow
-├── DEPLOYMENT.md              # Docker Compose / VPS
-├── RELEASE_NOTES.md           # 1.2.0 scope and boundaries
-├── docker-compose.yml         # production stack (GHCR images)
-├── docker-compose.local.yml   # local Postgres + Redis + backend + workers
-├── docker-compose.staging.yml # staging overrides
-├── deploy.sh                  # production/staging helper
-├── .env.local.example         # local env template
-├── .env.staging.example       # staging env template
-├── .env.production.example    # production env template
+├── README.md
+├── RELEASE_NOTES.md
+├── docker-compose.yml
+├── docker-compose.local.yml
+├── docker-compose.staging.yml
+├── deploy.sh
+├── .env.local.example
+├── .env.staging.example
+├── .env.production.example
 ├── .gitignore
 ├── nginx/
-│   ├── conf.d/default.conf    # production HTTPS + API proxy
-│   └── staging/default.conf   # staging HTTP-only
 ├── frontend/                  # Angular 21 application
-├── backend/                   # FastAPI application
+├── backend/                   # FastAPI application + workers
 ├── AUDIT/                     # product implementation audit
-└── docs/                      # Notion exports / internal notes
+└── docs/notion/
+    ├── BUSINESS_PROPOSAL.md
+    ├── SETUP_AND_DEPLOYMENT.md
+    ├── TECHNICAL_ARCHITECTURE.md
+    └── archive/               # original 01–03 (historical)
 ```
 
 ## Appendix B — Frontend and backend responsibilities
