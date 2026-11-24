@@ -439,7 +439,7 @@ def test_ai_note_drafting_is_gated_and_requires_patient_consent(workspace, monke
 
     monkeypatch.setattr(settings, "clinical_note_drafting_enabled", True)
     monkeypatch.setattr(settings, "clinical_ai_data_processing_approved", True)
-    monkeypatch.setattr(settings, "xai_api_key", "test-xai-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-groq-key")
     enabled = client.patch("/api/v1/clinic/clinical-ai-settings", json={"enabled": True})
     assert enabled.status_code == 200
     assert enabled.json() == {"enabled": True, "available": True}
@@ -463,7 +463,7 @@ def test_ai_note_drafting_is_gated_and_requires_patient_consent(workspace, monke
         json={"patientConsentConfirmed": True},
     )
     assert generated.status_code == 200
-    assert generated.json()["generationSource"] == "xai"
+    assert generated.json()["generationSource"] == "groq"
     assert generated.json()["reviewStatus"] == "pending-review"
     assert "Jane Example" not in submitted_inputs[0]
     assert "jane@example.com" not in submitted_inputs[0]

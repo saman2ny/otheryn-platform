@@ -30,7 +30,7 @@ flowchart LR
     NGX --> API[FastAPI 0.139]
     API --> DB[(PostgreSQL 16)]
     API --> S3[(S3-compatible storage)]
-    API --> AN[xAI Grok]
+    API --> AN[Groq]
     API --> RZP[Razorpay]
     API --> SMTP[SMTP]
     W[Workers] --> DB
@@ -127,7 +127,7 @@ See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) for the 1.2.0 implemented scope, rema
 | Frontend | Angular 21, TypeScript 5.9, Tailwind CSS 4, Vitest |
 | Backend | FastAPI 0.139, Python 3.12, SQLAlchemy 2.0, Alembic, Pydantic 2 |
 | Database | PostgreSQL 16 (SQLite for native only) |
-| AI | xAI Grok (OpenAI-compatible, `grok-4.7`) |
+| AI | Groq (OpenAI-compatible, `llama-3.3-70b-versatile`) |
 | Payments | Razorpay |
 | Storage | S3-compatible + optional AWS KMS |
 | Containers | Docker, Docker Compose, Nginx |

@@ -38,7 +38,7 @@ def generate(request: GenerateContentRequest, current_user: CurrentUser, db: DbS
     except AiNotConfiguredError as exc:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            "AI content generation is not configured. Set XAI_API_KEY on the backend.",
+            "AI content generation is not configured. Set GROQ_API_KEY on the backend.",
         ) from exc
     except AiProviderError as exc:
         raise HTTPException(

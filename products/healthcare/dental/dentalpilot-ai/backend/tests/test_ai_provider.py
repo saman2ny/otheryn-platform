@@ -55,9 +55,9 @@ def _request():
     )
 
 
-def test_generate_content_uses_configured_xai_model(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
-    monkeypatch.setattr(settings, "xai_model", "grok-4.7")
+def test_generate_content_uses_configured_groq_model(monkeypatch):
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_model", "llama-3.3-70b-versatile")
     fake = _FakeClient(
         [_response(json.dumps({"headline": "H", "body": "B", "hashtags": ["dental"], "image_prompt_suggestion": "P"}))]
     )
@@ -66,18 +66,18 @@ def test_generate_content_uses_configured_xai_model(monkeypatch):
     result = generate_content(_clinic(), _request())
 
     assert result["headline"] == "H"
-    assert fake.chat.completions.calls[0]["model"] == "grok-4.7"
+    assert fake.chat.completions.calls[0]["model"] == "llama-3.3-70b-versatile"
 
 
 def test_generate_content_missing_key(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", None)
+    monkeypatch.setattr(settings, "groq_api_key", None)
 
     with pytest.raises(AiNotConfiguredError):
         generate_content(_clinic(), _request())
 
 
 def test_generate_content_malformed_json(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     monkeypatch.setattr(ai_content, "_get_client", lambda: _FakeClient([_response("not json")]))
 
     with pytest.raises(AiProviderError):
@@ -85,7 +85,7 @@ def test_generate_content_malformed_json(monkeypatch):
 
 
 def test_generate_content_invalid_shape(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     monkeypatch.setattr(ai_content, "_get_client", lambda: _FakeClient([_response(json.dumps({"headline": "H"}))]))
 
     with pytest.raises(AiProviderError):
@@ -93,7 +93,7 @@ def test_generate_content_invalid_shape(monkeypatch):
 
 
 def test_generate_content_rate_limit(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     request = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
     exc = openai.RateLimitError("rate limited", response=httpx.Response(429, request=request), body=None)
     monkeypatch.setattr(ai_content, "_get_client", lambda: _FakeClient([exc]))
@@ -103,7 +103,7 @@ def test_generate_content_rate_limit(monkeypatch):
 
 
 def test_generate_content_timeout(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     request = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
     monkeypatch.setattr(ai_content, "_get_client", lambda: _FakeClient([openai.APITimeoutError(request=request)]))
 
@@ -112,7 +112,7 @@ def test_generate_content_timeout(monkeypatch):
 
 
 def test_generate_content_server_error(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     request = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
     exc = openai.InternalServerError("server error", response=httpx.Response(500, request=request), body=None)
     monkeypatch.setattr(ai_content, "_get_client", lambda: _FakeClient([exc]))
@@ -122,14 +122,14 @@ def test_generate_content_server_error(monkeypatch):
 
 
 def test_clinical_note_success(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
     monkeypatch.setattr(settings, "clinical_note_drafting_enabled", True)
     monkeypatch.setattr(settings, "clinical_ai_data_processing_approved", True)
     fake = _FakeClient([_response("Draft note")])
     monkeypatch.setattr(clinical_notes, "_get_client", lambda: fake)
 
     assert generate_clinical_note("Patient reports sensitivity") == "Draft note"
-    assert fake.chat.completions.calls[0]["model"] == settings.xai_model
+    assert fake.chat.completions.calls[0]["model"] == settings.groq_model
 
 
 def test_clinical_note_gate(monkeypatch):
@@ -141,7 +141,7 @@ def test_clinical_note_gate(monkeypatch):
 
 
 def test_clinical_note_missing_key(monkeypatch):
-    monkeypatch.setattr(settings, "xai_api_key", None)
+    monkeypatch.setattr(settings, "groq_api_key", None)
     monkeypatch.setattr(settings, "clinical_note_drafting_enabled", True)
     monkeypatch.setattr(settings, "clinical_ai_data_processing_approved", True)
 

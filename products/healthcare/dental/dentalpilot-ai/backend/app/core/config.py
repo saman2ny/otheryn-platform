@@ -14,9 +14,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 30
     cors_origins: list[str] = ["http://localhost:4200"]
-    xai_api_key: str | None = None
-    xai_model: str = "grok-4.7"
-    xai_base_url: str = "https://api.x.ai/v1"
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
+    groq_base_url: str = "https://api.groq.com/openai/v1"
     clinical_note_drafting_enabled: bool = False
     clinical_ai_data_processing_approved: bool = False
 

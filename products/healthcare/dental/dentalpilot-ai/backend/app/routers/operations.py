@@ -780,7 +780,7 @@ def generate_clinical_note_draft(
     if not (
         settings.clinical_note_drafting_enabled
         and settings.clinical_ai_data_processing_approved
-        and settings.xai_api_key
+        and settings.groq_api_key
     ):
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -821,7 +821,7 @@ def generate_clinical_note_draft(
             status.HTTP_502_BAD_GATEWAY,
             "The clinical note draft could not be generated. The saved clinician input was not changed.",
         ) from exc
-    note.generation_source = "xai"
+    note.generation_source = "groq"
     db.add(
         AuditEvent(
             clinic_id=current_user.clinic_id,
@@ -832,8 +832,8 @@ def generate_clinical_note_draft(
             resource_type="clinical-note-ai-draft",
             resource_id=note.id,
             detail={
-                "provider": "xai",
-                "model": settings.xai_model,
+                "provider": "groq",
+                "model": settings.groq_model,
                 "patientConsentConfirmed": True,
             },
         )

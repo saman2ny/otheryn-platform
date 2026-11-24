@@ -18,12 +18,12 @@ class ClinicalNoteGenerationError(RuntimeError):
 
 def _get_client() -> openai.OpenAI:
     global _client
-    if not settings.xai_api_key:
+    if not settings.groq_api_key:
         raise ClinicalNoteGenerationError("The clinical note provider is not configured.")
     if _client is None:
         _client = openai.OpenAI(
-            api_key=settings.xai_api_key,
-            base_url=settings.xai_base_url,
+            api_key=settings.groq_api_key,
+            base_url=settings.groq_base_url,
             timeout=30.0,
             max_retries=3,
         )
@@ -35,7 +35,7 @@ def generate_clinical_note(clinician_input: str) -> str:
         raise ClinicalNoteGenerationError("Clinical note drafting is not enabled for this deployment.")
     try:
         response = _get_client().chat.completions.create(
-            model=settings.xai_model,
+            model=settings.groq_model,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": clinician_input},

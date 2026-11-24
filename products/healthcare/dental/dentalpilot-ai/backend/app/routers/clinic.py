@@ -56,7 +56,7 @@ def _clinical_ai_settings(clinic: Clinic) -> ClinicClinicalAiSettingsResponse:
         available=(
             settings.clinical_note_drafting_enabled
             and settings.clinical_ai_data_processing_approved
-            and bool(settings.xai_api_key)
+            and bool(settings.groq_api_key)
         ),
     )
 
@@ -76,7 +76,7 @@ def update_clinical_ai_settings(
     available = (
         settings.clinical_note_drafting_enabled
         and settings.clinical_ai_data_processing_approved
-        and bool(settings.xai_api_key)
+        and bool(settings.groq_api_key)
     )
     if request.enabled and not available:
         raise HTTPException(

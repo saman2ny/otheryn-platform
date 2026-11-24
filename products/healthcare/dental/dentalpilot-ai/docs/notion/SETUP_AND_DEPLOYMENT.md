@@ -72,7 +72,7 @@ DATABASE_URL=postgresql+psycopg://dentalpilot:<the same POSTGRES_PASSWORD>@postg
 ```
 
 - `.env.local` is **gitignored**; never commit it.
-- Optional integrations (`XAI_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`) may be left empty; the app starts and those features return `503`.
+- Optional integrations (`GROQ_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`) may be left empty; the app starts and those features return `503`.
 - The full variable reference is in §O.
 
 ---
@@ -318,7 +318,7 @@ alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 4. Health check path: `/health`.
 5. Generate a domain (`api.dentalpilot.in`), attach TLS.
 6. Required variables: `DATABASE_URL`, `JWT_SECRET`, `APP_ENVIRONMENT=production`, `CORS_ORIGINS`.
-7. Optional: `XAI_*`, `RAZORPAY_*`, `S3_*`, `AWS_REGION`, `SMTP_*`, `WHATSAPP_*`.
+7. Optional: `GROQ_*`, `RAZORPAY_*`, `S3_*`, `AWS_REGION`, `SMTP_*`, `WHATSAPP_*`.
 
 > **No `--reload` in production.**
 
@@ -499,9 +499,9 @@ Disabled integrations fail gracefully (`503`) — the app still starts.
 
 | Variable | Service | Purpose | Local | Production |
 |---|---|---|---|---|
-| `XAI_API_KEY` | backend, worker | xAI Grok API key | optional | optional |
-| `XAI_MODEL` | backend, worker | Grok model (`grok-4.7`) | optional | optional |
-| `XAI_BASE_URL` | backend, worker | xAI API base (`https://api.x.ai/v1`) | optional | optional |
+| `GROQ_API_KEY` | backend, worker | Groq API key | optional | optional |
+| `GROQ_MODEL` | backend, worker | Groq model (`llama-3.3-70b-versatile`) | optional | optional |
+| `GROQ_BASE_URL` | backend, worker | Groq API base (`https://api.groq.com/openai/v1`) | optional | optional |
 | `CLINICAL_NOTE_DRAFTING_ENABLED` | backend | Enable AI note drafting | optional | optional |
 | `CLINICAL_AI_DATA_PROCESSING_APPROVED` | backend | Consent gate for AI notes | optional | optional |
 | `RAZORPAY_KEY_ID` | backend, worker | Razorpay key | optional | optional |
@@ -556,7 +556,7 @@ Disabled integrations fail gracefully (`503`) — the app still starts.
 | `DATABASE_URL` | `postgresql+psycopg://...@postgres:5432/...` | `postgresql+psycopg://...` (Railway Postgres) |
 | `JWT_SECRET` | local-only random | 32+ random |
 | `CORS_ORIGINS` | `["http://localhost:4200"]` | `["https://dentalpilot.in"]` |
-| `XAI_*` / `RAZORPAY_*` / `S3_*` / `SMTP_*` | optional/empty | production values |
+| `GROQ_*` / `RAZORPAY_*` / `S3_*` / `SMTP_*` | optional/empty | production values |
 | `POSTGRES_*` | local Compose | not used (Railway Postgres) |
 | `REGISTRY` / `IMAGE_NAME` / `IMAGE_TAG` | not used | production Compose |
 

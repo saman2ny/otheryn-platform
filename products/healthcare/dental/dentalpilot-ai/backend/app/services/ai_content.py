@@ -23,12 +23,12 @@ class AiProviderError(RuntimeError):
 
 def _get_client() -> openai.OpenAI:
     global _client
-    if not settings.xai_api_key:
-        raise AiNotConfiguredError("XAI_API_KEY is not set.")
+    if not settings.groq_api_key:
+        raise AiNotConfiguredError("GROQ_API_KEY is not set.")
     if _client is None:
         _client = openai.OpenAI(
-            api_key=settings.xai_api_key,
-            base_url=settings.xai_base_url,
+            api_key=settings.groq_api_key,
+            base_url=settings.groq_base_url,
             timeout=30.0,
             max_retries=3,
         )
@@ -126,7 +126,7 @@ def generate_content(clinic: Clinic, request: GenerateContentRequest) -> dict[st
 
     try:
         response = client.chat.completions.create(
-            model=settings.xai_model,
+            model=settings.groq_model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_prompt},

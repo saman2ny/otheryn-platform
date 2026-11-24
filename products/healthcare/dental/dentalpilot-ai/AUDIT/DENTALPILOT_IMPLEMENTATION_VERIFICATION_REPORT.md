@@ -318,6 +318,63 @@ No data was lost, no migration history was rewritten, and no production configur
 
 ---
 
+## 18. Groq migration (2026-11-24)
+
+### 18.1 Provider state discovered
+
+- **Anthropic/Claude:** already removed from active code in a prior migration. Remaining references are **historical only**:
+  - `AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md` (historical baseline)
+  - `docs/notion/archive/01-project-overview.md`, `02-frontend.md`, `03-backend.md`
+  - `.env.local` (gitignored local file; stale `ANTHROPIC_*` placeholders)
+- **Active provider before this task:** **xAI Grok** (`XAI_*`, `grok-4.7`, `https://api.x.ai/v1`) — not Anthropic.
+- **No active Anthropic SDK import, API call or environment dependency existed.**
+
+### 18.2 Groq implementation
+
+- **Client:** existing `openai` SDK pointed at Groq's OpenAI-compatible endpoint `https://api.groq.com/openai/v1` (no new dependency).
+- **Model:** `llama-3.3-70b-versatile` (verified against Groq's supported production models).
+- **Configuration:** `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` in `app/core/config.py`.
+- **Services migrated:** `ai_content.py` (marketing content), `clinical_notes.py` (gated note drafting). API contracts, validation, consent gates, audit logging and error handling preserved.
+- **Routers:** `content.py`, `operations.py`, `clinic.py` use `settings.groq_*`; `generation_source`/`provider` now `"groq"`.
+- **Frontend:** `generationSource` type now `'clinician' | 'groq'`; the UI treats any non-`clinician` value as an AI-formatted draft (backward compatible with historical `"xai"` rows).
+- **Env templates:** `.env.local.example`, `.env.staging.example`, `.env.production.example`, `backend/.env.example` now use `GROQ_*`.
+- **Compose:** `docker-compose.yml` backend/workers pass `GROQ_*`.
+
+### 18.3 Dependencies
+
+- **Removed:** none this task (`anthropic` was already removed in a prior migration).
+- **Added:** none — Groq is OpenAI-compatible and the `openai` SDK is already a dependency.
+- **Unchanged:** `requirements.txt`, `package-lock.json` (except the previously added Playwright).
+
+### 18.7 Tests
+
+| Suite | Result |
+|---|---|
+| Backend `pytest tests/ -q` | ✅ **49 passed** (includes AI provider success/missing-key/malformed/rate-limit/timeout/server-error/clinical-gate) |
+| Frontend `npm run build` | ✅ PASS |
+| Frontend `npm test` | ✅ 1/1 PASS |
+| Active `xai`/`grok` references | ✅ **0** (excluding historical AUDIT/archive and lockfiles) |
+
+### 18.8 Remaining historical references (intentionally retained)
+
+- `AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md` — historical baseline.
+- `AUDIT/2026-11-24-xai-migration-followup.md` — historical xAI migration record.
+- `docs/notion/archive/*` — archived original docs.
+- `.env.local` — gitignored local file with stale `ANTHROPIC_*` placeholders (not used by the app).
+
+### 18.9 Remaining blockers
+
+- **Live Groq API not tested** (no `GROQ_API_KEY`); all AI tests use mocks.
+- **Playwright E2E not executed** (browsers not installed).
+- **Railway deployment not executed.**
+- **SQLite migration defect remains** (Postgres path verified).
+
+### 18.10 Updated recommendation
+
+The Groq migration is code-complete and all executable checks pass. Before production: set `GROQ_API_KEY` in Railway, make one live content-generation call to verify the model/response shape, and run the E2E suite against staging.
+
+---
+
 ## Appendix — Commands executed
 
 ```bash
