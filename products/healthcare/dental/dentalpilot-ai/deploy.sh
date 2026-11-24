@@ -9,8 +9,10 @@ COMPOSE_FILE="docker-compose.yml"
 
 if [[ "$ENVIRONMENT" == "staging" ]]; then
     COMPOSE_FILE="docker-compose.yml -f docker-compose.staging.yml"
+    FRONTEND_PORT=8080
     echo "🚀 Deploying to STAGING environment..."
 elif [[ "$ENVIRONMENT" == "production" ]]; then
+    FRONTEND_PORT=80
     echo "🚀 Deploying to PRODUCTION environment..."
 else
     echo "Usage: $0 [staging|production]"
@@ -57,9 +59,9 @@ echo "✅ Environment variables validated"
 echo "📦 Pulling latest Docker images..."
 docker compose -f $COMPOSE_FILE pull
 
-# Run database migrations
-echo "🗄️  Running database migrations..."
-docker compose -f $COMPOSE_FILE run --rm backend alembic upgrade head
+# Database migrations run automatically via the one-shot `migrate` service
+# when `docker compose up` starts; backend and workers wait for it to complete.
+echo "🗄️  Migrations will run via the 'migrate' service during startup..."
 
 # Start services
 echo "🔄 Starting services..."
@@ -72,7 +74,7 @@ sleep 10
 # Verify deployments
 echo "🔍 Verifying deployments..."
 for i in {1..30}; do
-    if curl -sf http://localhost/health > /dev/null 2>&1; then
+    if curl -sf http://localhost:${FRONTEND_PORT}/health > /dev/null 2>&1; then
         echo "✅ Frontend is healthy"
         break
     fi
@@ -85,7 +87,7 @@ for i in {1..30}; do
 done
 
 for i in {1..30}; do
-    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+    if docker compose -f $COMPOSE_FILE exec -T backend curl -sf http://localhost:8000/health > /dev/null 2>&1; then
         echo "✅ Backend is healthy"
         break
     fi

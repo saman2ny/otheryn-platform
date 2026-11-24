@@ -30,6 +30,15 @@ class DashboardSummary(CamelModel):
     upcoming_events: list[DashboardEventItem]
 
 
+class MonthlyRevenuePoint(CamelModel):
+    month: str
+    revenue: float
+    treatment_revenue: float
+    subscription_revenue: float
+    patient_payments: float
+    insurance_payments: float
+
+
 class RevenueMetrics(CamelModel):
     period_start: datetime
     period_end: datetime
@@ -47,13 +56,15 @@ class RevenueMetrics(CamelModel):
     monthly_trend: list[MonthlyRevenuePoint]
 
 
-class MonthlyRevenuePoint(CamelModel):
-    month: str
-    revenue: float
-    treatment_revenue: float
-    subscription_revenue: float
-    patient_payments: float
-    insurance_payments: float
+class InsuranceClaimsSummary(CamelModel):
+    total_claims: int
+    total_billed: float
+    total_approved: float
+    total_paid: float
+    pending_claims: int
+    denied_claims: int
+    approval_rate: float
+    collection_rate: float
 
 
 class FinancialSummary(CamelModel):
@@ -72,15 +83,10 @@ class FinancialSummary(CamelModel):
     insurance_claims: InsuranceClaimsSummary
 
 
-class InsuranceClaimsSummary(CamelModel):
-    total_claims: int
-    total_billed: float
-    total_approved: float
-    total_paid: float
-    pending_claims: int
-    denied_claims: int
-    approval_rate: float
-    collection_rate: float
+class FollowupTypeMetrics(CamelModel):
+    sent: int
+    completed: int
+    completion_rate: float
 
 
 class TreatmentFollowupMetrics(CamelModel):
@@ -99,12 +105,6 @@ class TreatmentFollowupMetrics(CamelModel):
     followup_completion_rate: float
     avg_days_to_completion: float | None = None
     followup_by_type: dict[str, FollowupTypeMetrics]
-
-
-class FollowupTypeMetrics(CamelModel):
-    sent: int
-    completed: int
-    completion_rate: float
 
 
 class PatientRetentionMetrics(CamelModel):

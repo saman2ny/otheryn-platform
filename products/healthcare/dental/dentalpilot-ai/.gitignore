@@ -1,0 +1,59 @@
+# ─────────────────────────────────────────────────────────────
+# DentalPilot AI — root .gitignore
+# ─────────────────────────────────────────────────────────────
+
+# Environment / secrets (examples are preserved)
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.local.example
+!.env.production.example
+!.env.staging.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local databases / exports
+*.db
+*.sqlite
+*.sqlite3
+exports/
+
+# Nginx SSL certificates / private keys (never commit)
+nginx/ssl/
+
+# Logs
+*.log
+logs/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.history/

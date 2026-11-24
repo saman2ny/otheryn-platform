@@ -1,15 +1,33 @@
-version: '3.8'
+# DentalPilot AI — Staging overrides
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#
+# Staging reuses the production GHCR images but:
+#   - serves HTTP only (no SSL) on host port 8080
+#   - mounts nginx/staging/default.conf instead of the production SSL config
+#   - uses staging CORS origins and APP_ENVIRONMENT=staging
+#
+# Requires Docker Compose 2.24+ for `!override` (Compose v5 is recommended).
+
+name: dentalpilot-staging
 
 services:
-  backend:
+  migrate:
     environment:
-      CORS_ORIGINS: '["https://staging.dentalpilot.in"]'
       APP_ENVIRONMENT: staging
 
-  frontend:
-    ports:
-      - "8080:80"
+  backend:
+    environment:
+      APP_ENVIRONMENT: staging
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://staging.dentalpilot.in","http://localhost:8080"]}
 
   workers:
     environment:
       APP_ENVIRONMENT: staging
+
+  frontend:
+    ports: !override
+      - "8080:80"
+    volumes: !override
+      - ./nginx/staging:/etc/nginx/conf.d:ro

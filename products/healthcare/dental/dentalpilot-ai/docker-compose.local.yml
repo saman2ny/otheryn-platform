@@ -1,0 +1,147 @@
+# DentalPilot AI — Local development stack
+#
+# Brings up PostgreSQL 16, Redis 7, a one-shot Alembic migration, the FastAPI
+# backend (hot reload) and the background workers. Images are built locally from
+# the real Dockerfiles — no registry pulls and no placeholder images.
+#
+# The Angular frontend is intentionally NOT containerised here: use Angular's
+# native dev server (`cd frontend && npm start`) which is faster and gives
+# proper HMR. See README.md for the full local workflow.
+#
+# Usage:
+#   cp .env.local.example .env.local   # then edit secrets
+#   docker compose -f docker-compose.local.yml up -d --build
+#   docker compose -f docker-compose.local.yml logs -f backend workers
+
+name: dentalpilot-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dentalpilot-local-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dentalpilot}
+      POSTGRES_USER: ${POSTGRES_USER:-dentalpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dentalpilot}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dentalpilot} -d ${POSTGRES_DB:-dentalpilot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - dentalpilot-local
+
+  redis:
+    image: redis:7-alpine
+    container_name: dentalpilot-local-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_local_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - dentalpilot-local
+
+  # One-shot migration runner. Backend and workers wait for this to complete
+  # successfully, so `alembic upgrade head` runs exactly once per `up`.
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: dentalpilot-backend:local
+    container_name: dentalpilot-local-migrate
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-dentalpilot}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      APP_ENVIRONMENT: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - dentalpilot-local
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: dentalpilot-backend:local
+    container_name: dentalpilot-local-backend
+    # No `alembic upgrade head` here — migrations are handled by the `migrate`
+    # service so they are not executed by every backend/worker start.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-dentalpilot}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      APP_ENVIRONMENT: development
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      # Hot reload: mount source over the image copy.
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/scripts:/app/scripts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - dentalpilot-local
+
+  workers:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: dentalpilot-backend:local
+    container_name: dentalpilot-local-workers
+    command: ["python", "-m", "app.workers.run_workers"]
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-dentalpilot}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      APP_ENVIRONMENT: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./backend/app:/app/app
+    restart: unless-stopped
+    networks:
+      - dentalpilot-local
+
+volumes:
+  postgres_local_data:
+  redis_local_data:
+
+networks:
+  dentalpilot-local:
+    driver: bridge
