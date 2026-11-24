@@ -54,6 +54,70 @@ flowchart LR
     W --> RZP
 ```
 
+### 3.1 Local development architecture
+
+```mermaid
+flowchart LR
+    M[migrate\none-shot] --> PG[(PostgreSQL 16\n:5432)]
+    M --> BE[FastAPI backend\n:8000]
+    M --> WK[workers]
+    FE[Angular dev server\n:4200] -->|http://localhost:8000/api/v1| BE
+    BE --> PG
+    WK --> PG
+    BE --> EXT[xAI Grok / Razorpay / S3 / SMTP]
+```
+
+| Service | Access | Port | Role |
+|---|---|---|---|
+| `frontend` | <http://localhost:4200> | `4200` | Angular dev server (HMR) |
+| `backend` | <http://localhost:8000> | `8000` | FastAPI API + `/health` |
+| `postgres` | `localhost:5432` | `5432` | PostgreSQL 16 |
+| `workers` | internal only | — | Email / communication / billing loops |
+| `migrate` | one-shot | — | `alembic upgrade head` |
+
+Redis is **not** part of the stack.
+
+### 3.2 Service inventory
+
+| Service | Type | Public? | Health / verification |
+|---|---|---|---|
+| `frontend` | Browser-accessible application | Yes (`4200`) | Docker healthcheck → `(healthy)`; `curl :4200` |
+| `backend` | HTTP API | Yes (`8000`) | `/health`, `/health/live`, `/health/ready` |
+| `postgres` | Database | Host-only (`5432`) | `pg_isready` |
+| `workers` | Background worker | No | Logs; no HTTP health |
+| `migrate` | One-shot migration | No | Exit code 0; logs |
+| Redis | Excluded | — | Not used |
+
+### 3.3 Request, migration and worker flows
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant F as Frontend :4200
+    participant A as Backend :8000
+    participant D as PostgreSQL :5432
+    B->>F: GET /
+    F-->>B: index.html
+    B->>F: GET /api/v1/... (XHR)
+    F->>A: proxy / direct localhost:8000
+    A->>D: SQL
+    D-->>A: rows
+    A-->>F: JSON
+    F-->>B: render
+```
+
+```mermaid
+flowchart LR
+    U[docker compose up] --> P[postgres healthy]
+    P --> M[migrate: alembic upgrade head]
+    M -->|exit 0| B[backend: uvicorn]
+    M -->|exit 0| W[workers]
+```
+
+- **Migration execution:** `migrate` runs once; backend/workers depend on `service_completed_successfully`.
+- **Worker processing:** workers poll PostgreSQL outboxes and call SMTP/WhatsApp/Razorpay. No Redis.
+- **Service-to-service:** browser → frontend; frontend/browser → backend; backend → PostgreSQL; workers → PostgreSQL; backend/workers → external APIs.
+
 ---
 
 ## 4. Technology Stack
@@ -75,7 +139,7 @@ flowchart LR
 | Payments | Razorpay SDK | `2.0.1` |
 | Storage | boto3 | `>=1.35,<2.0` |
 | Database | PostgreSQL | **16**; SQLite default |
-| Cache/queue | Redis | 7 in Compose — **not used by app code** |
+| Cache/queue | Redis | **not used / removed** |
 
 ---
 
@@ -466,7 +530,7 @@ flowchart TB
 | P1 | Worker threads exit on DB errors | Reliability |
 | P2 | Unpaginated lists | Performance |
 | P2 | No soft deletes/retention | Data governance |
-| P2 | Redis provisioned but unused | Operational confusion |
+| P2 | Redis removed (no runtime dependency) | Resolved |
 | P2 | Python version mismatch (3.11 vs 3.12) | Build inconsistency |
 | P2 | No CSP in production nginx | Security hardening |
 | P3 | No MFA/SSO, no e2e, no load tests | Maturity |
