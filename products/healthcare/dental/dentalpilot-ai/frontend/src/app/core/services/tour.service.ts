@@ -192,25 +192,31 @@ export class TourService {
   private readonly auth = inject(AuthService);
   private tour: Tour | null = null;
 
-  private key(role: TourRole, suffix: string): string {
-    return `dp_tour_${role}_${TOUR_VERSION}_${suffix}`;
+  private currentUser(): { id: string; role: string } | null {
+    const user = this.auth.currentUser();
+    if (!user?.id) return null;
+    return { id: user.id, role: user.role };
   }
 
-  private isCompleted(role: TourRole): boolean {
-    return localStorage.getItem(this.key(role, 'completed')) === '1';
+  private key(userId: string, role: TourRole, suffix: string): string {
+    return `dp_tour_${userId}_${role}_${TOUR_VERSION}_${suffix}`;
   }
 
-  private isSkipped(role: TourRole): boolean {
-    return localStorage.getItem(this.key(role, 'skipped')) === '1';
+  private isCompleted(userId: string, role: TourRole): boolean {
+    return localStorage.getItem(this.key(userId, role, 'completed')) === '1';
   }
 
-  private markCompleted(role: TourRole): void {
-    localStorage.setItem(this.key(role, 'completed'), '1');
-    localStorage.removeItem(this.key(role, 'skipped'));
+  private isSkipped(userId: string, role: TourRole): boolean {
+    return localStorage.getItem(this.key(userId, role, 'skipped')) === '1';
   }
 
-  private markSkipped(role: TourRole): void {
-    localStorage.setItem(this.key(role, 'skipped'), '1');
+  private markCompleted(userId: string, role: TourRole): void {
+    localStorage.setItem(this.key(userId, role, 'completed'), '1');
+    localStorage.removeItem(this.key(userId, role, 'skipped'));
+  }
+
+  private markSkipped(userId: string, role: TourRole): void {
+    localStorage.setItem(this.key(userId, role, 'skipped'), '1');
   }
 
   private resolveRole(role?: TourRole): TourRole | null {
@@ -222,14 +228,17 @@ export class TourService {
   }
 
   maybeStart(): void {
+    const user = this.currentUser();
     const role = this.resolveRole();
-    if (!role || this.isCompleted(role) || this.isSkipped(role)) return;
+    if (!user || !role) return;
+    if (this.isCompleted(user.id, role) || this.isSkipped(user.id, role)) return;
     this.start(role);
   }
 
   start(role?: TourRole): void {
+    const user = this.currentUser();
     const resolved = this.resolveRole(role);
-    if (!resolved) return;
+    if (!user || !resolved) return;
     if (this.tour) this.tour.cancel();
 
     const tour = new Shepherd.Tour({
@@ -243,6 +252,16 @@ export class TourService {
     });
 
     for (const step of TOURS[resolved]) {
+      if (step.selector) {
+        const element = document.querySelector(step.selector);
+        if (!element) {
+          // The target may live on another route or behind an open form.
+          // Log it and show the step centered instead of failing silently.
+          console.warn(
+            `[DentalPilot tour] Missing target for step "${step.id}": ${step.selector}`,
+          );
+        }
+      }
       tour.addStep({
         id: step.id,
         title: step.title,
@@ -259,18 +278,19 @@ export class TourService {
       }
     });
 
-    tour.on('complete', () => this.markCompleted(resolved));
-    tour.on('cancel', () => this.markSkipped(resolved));
+    tour.on('complete', () => this.markCompleted(user.id, resolved));
+    tour.on('cancel', () => this.markSkipped(user.id, resolved));
 
     this.tour = tour;
     void tour.start();
   }
 
   restart(role?: TourRole): void {
+    const user = this.currentUser();
     const resolved = this.resolveRole(role);
-    if (!resolved) return;
-    localStorage.removeItem(this.key(resolved, 'completed'));
-    localStorage.removeItem(this.key(resolved, 'skipped'));
+    if (!user || !resolved) return;
+    localStorage.removeItem(this.key(user.id, resolved, 'completed'));
+    localStorage.removeItem(this.key(user.id, resolved, 'skipped'));
     this.start(resolved);
   }
 }

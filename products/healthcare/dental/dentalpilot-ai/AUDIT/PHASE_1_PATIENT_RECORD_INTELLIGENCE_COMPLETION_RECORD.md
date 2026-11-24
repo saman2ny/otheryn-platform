@@ -128,10 +128,25 @@ The new fields are additive; existing relationships are unchanged.
 - **Library:** `shepherd.js` **16.0.0** (compatible with Angular 21; no competing tour library).
 - **Role-specific tours:** `super_admin` (12 steps) and `owner` (12 steps), covering dashboard, directory, registration, profile, editing, medical/dental history, emergency contacts, duplicate detection, revision history, filters, associations, consent/Passport and audit.
 - **Entry points:** auto-starts on first login (if not completed/skipped) and a **"Guided tour"** button in the shell topbar for manual start/restart.
-- **Persistence:** `localStorage` keys `dp_tour_<role>_1_completed` / `_skipped` (per role, per tour version). No patient data is stored.
-- **Behaviour:** next/previous, skip, finish, Esc, route navigation between steps, selector highlighting, graceful handling of missing elements (Shepherd shows a centered step).
-- **Files:** `frontend/src/app/core/services/tour.service.ts`, `shell.ts`, `shell.html`, `styles.css`, `package.json`/`package-lock.json`.
-- **Validation:** `npm run build` ✅, `npm test` ✅. Browser click-through not executed (no Playwright browsers).
+- **Per-user persistence:** `localStorage` keys `dp_tour_<userId>_<role>_1_completed` / `_skipped` — two different users with the same role do **not** share state. No patient data is stored.
+- **Selector validation:** missing selectors are logged to the console (`[DentalPilot tour] Missing target for step ...`) and the step is shown centered instead of failing silently.
+- **Behaviour:** next/previous, skip, finish, Esc, route navigation between steps, selector highlighting, graceful recovery.
+- **Files:** `frontend/src/app/core/services/tour.service.ts`, `shell.ts`, `shell.html`, `styles.css`, `package.json`/`package-lock.json`, `e2e/tour.spec.ts`.
+- **Validation:**
+  - `npm run build` ✅
+  - `npm test` ✅ (1/1)
+  - **Playwright E2E: 2/2 passed** — Super Admin tour starts and skips; Clinic Owner tour starts, navigates, skips, persists, and does not auto-start after refresh.
+- **Local Docker note:** the `frontend_node_modules` named volume must be refreshed after adding a dependency (`docker compose ... exec frontend npm install`).
+
+---
+
+## 6.2 Runtime fixes (2026-11-24)
+
+- **Fixed `/api/v1/clinic/onboarding` 500** — `OnboardingStep` was used but not imported in `app/routers/clinic.py`. Added the import. Endpoint now returns **200**.
+- **Fixed `/api/v1/analytics/operational` 500** — the query referenced `User.is_active`, which does not exist on the `User` model. Removed the filter. Endpoint now returns **200**.
+- **Added `backend/scripts/seed_demo_data.py`** — local/demo-only, idempotent, refuses `APP_ENVIRONMENT=production`. Seeds 3 fictional patients, 1 demo post and 1 scheduled event for the demo clinic.
+- **Verified dashboard data:** `/dashboard/summary` now returns `contentGeneratedThisMonth: 1`, `postsScheduledUpcoming: 1`, and the demo content/event; patient list returns 4 (1 pre-existing + 3 demo).
+- **Regression:** backend **66 passed**, frontend build/test pass.
 
 ---
 

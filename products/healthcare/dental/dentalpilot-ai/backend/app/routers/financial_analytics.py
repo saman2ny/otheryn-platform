@@ -507,7 +507,6 @@ def get_operational_metrics(
 
     staff_count = db.query(User).filter(
         User.clinic_id == current_user.clinic_id,
-        User.is_active.is_(True),
     ).count()
 
     return ClinicOperationalMetrics(

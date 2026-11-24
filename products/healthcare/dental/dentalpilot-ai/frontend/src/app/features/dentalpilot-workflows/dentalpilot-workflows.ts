@@ -99,6 +99,11 @@ export class DentalPilotWorkflows {
   protected readonly selectedCrmPatientId = signal('');
   protected readonly plans = signal<TreatmentPlan[]>([]);
   protected readonly records = signal<HealthRecord[]>([]);
+  protected readonly filteredRecords = computed(() => {
+    const patientId = this.selectedCrmPatientId();
+    if (!patientId) return this.records();
+    return this.records().filter((record) => record.patientId === patientId);
+  });
   protected readonly revisions = signal<HealthRecordRevision[]>([]);
   protected readonly revisionRecordId = signal('');
   protected readonly recordCorrectionId = signal('');

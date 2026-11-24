@@ -162,7 +162,7 @@
               @if (canManageRoles() && member.role !== 'organization-owner') {
                 <div class="mt-3 flex flex-wrap items-center gap-2">
                   <select
-                    class="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs"
+                    class="dp-select"
                     [ngModel]="roleFor(member)"
                     (ngModelChange)="setMemberRole(member.userId, $event)"
                     [name]="'memberRole-' + member.userId"

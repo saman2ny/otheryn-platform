@@ -17,6 +17,7 @@ from app.schemas.clinic import (
     ClinicClinicalAiSettingsUpdate,
     ClinicProfile,
     OnboardingStatus,
+    OnboardingStep,
     StaffInvitationAccept,
     StaffInvitationCreate,
     StaffInvitationResponse,

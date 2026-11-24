@@ -28,7 +28,7 @@
           placeholder="Phone"
         />
         <select
-          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          class="dp-select"
           [(ngModel)]="patientForm.consentChannel"
           name="consentChannel"
         >
@@ -172,7 +172,7 @@
         <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="editForm.email" name="editEmail" type="email" placeholder="Email" />
         <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="editForm.phone" name="editPhone" placeholder="Phone" />
         <input class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="editForm.dateOfBirth" name="editDob" type="date" />
-        <select class="rounded-md border border-zinc-300 px-3 py-2 text-sm" [(ngModel)]="editForm.consentChannel" name="editConsent">
+        <select class="dp-select" [(ngModel)]="editForm.consentChannel" name="editConsent">
           <option value="email">Email</option>
           <option value="sms">SMS</option>
           <option value="whatsapp">WhatsApp</option>
@@ -325,7 +325,7 @@
     </p>
     <div class="grid gap-3 md:grid-cols-3">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="selectedCrmPatientId()"
         (ngModelChange)="loadPatientCommunications($event)"
         name="communicationPatient"
@@ -336,7 +336,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="communicationForm.channel"
         name="communicationChannel"
       >
@@ -347,7 +347,7 @@
         <option value="in-person">In person</option>
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="communicationForm.direction"
         name="communicationDirection"
       >
@@ -503,7 +503,7 @@
     </p>
     <div class="grid gap-3 md:grid-cols-3">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="ledgerForm.patientId"
         (ngModelChange)="updateLedgerPatient($event)"
         name="ledgerPatient"
@@ -514,7 +514,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="ledgerForm.stageId"
         (ngModelChange)="updateLedgerStage($event)"
         name="ledgerStage"
@@ -528,7 +528,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="ledgerForm.entryType"
         (ngModelChange)="updateLedgerEntryType($event)"
         name="ledgerEntryType"
@@ -539,7 +539,7 @@
       </select>
       @if (ledgerForm.entryType !== 'charge') {
         <select
-          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          class="dp-select"
           [ngModel]="ledgerForm.chargeEntryId"
           (ngModelChange)="updateLedgerCharge($event)"
           name="ledgerCharge"
@@ -564,7 +564,7 @@
         placeholder="Amount"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="ledgerForm.currency"
         name="ledgerCurrency"
       >
@@ -573,7 +573,7 @@
         <option value="EUR">EUR</option>
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="ledgerForm.method"
         name="ledgerMethod"
       >
@@ -655,7 +655,7 @@
     </p>
     <div class="grid gap-3 md:grid-cols-3">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="insuranceClaimForm.patientId"
         (ngModelChange)="updateInsuranceClaimPatient($event)"
         name="claimPatient"
@@ -666,7 +666,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [ngModel]="insuranceClaimForm.chargeEntryId"
         (ngModelChange)="updateInsuranceClaimCharge($event)"
         name="claimCharge"
@@ -701,7 +701,7 @@
         placeholder="Billed amount"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="insuranceClaimForm.supportingRecordId"
         name="claimRecord"
       >
@@ -739,7 +739,7 @@
           </p>
           <div class="mt-3 grid gap-2 md:grid-cols-2">
             <select
-              class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              class="dp-select"
               [ngModel]="insuranceClaimEdit(claim).status"
               (ngModelChange)="updateInsuranceClaimStatus(claim, $event)"
               [name]="'claimStatus-' + claim.id"
@@ -831,7 +831,7 @@
     <h2 class="mb-4 font-semibold text-zinc-900">Create treatment plan</h2>
     <div class="grid gap-3 md:grid-cols-2">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="planForm.patientId"
         name="planPatient"
       >
@@ -879,7 +879,7 @@
         placeholder="Stage value"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="planForm.currency"
         name="planCurrency"
       >
@@ -995,7 +995,7 @@
     <h2 class="mb-4 font-semibold text-zinc-900">Add patient record</h2>
     <div class="grid gap-3 md:grid-cols-2">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="recordForm.patientId"
         name="recordPatient"
       >
@@ -1005,7 +1005,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="recordForm.recordType"
         name="recordType"
       >
@@ -1061,8 +1061,21 @@
       Add record
     </button>
   </section>
+  <div class="mb-3">
+    <select
+      class="dp-select"
+      [ngModel]="selectedCrmPatientId()"
+      (ngModelChange)="selectedCrmPatientId.set($event)"
+      name="passportPatientFilter"
+    >
+      <option value="">All patients</option>
+      @for (patient of patients(); track patient.id) {
+        <option [value]="patient.id">{{ patient.fullName }}</option>
+      }
+    </select>
+  </div>
   <div class="grid gap-3">
-    @for (record of records(); track record.id) {
+    @for (record of filteredRecords(); track record.id) {
       <div class="rounded-lg border border-zinc-200 bg-white p-4">
         <div class="flex justify-between">
           <div>
@@ -1148,7 +1161,13 @@
         }
       </div>
     } @empty {
-      <p class="text-sm text-zinc-500">No patient records are available.</p>
+      <p class="text-sm text-zinc-500">
+        @if (selectedCrmPatientId()) {
+          No records for this patient.
+        } @else {
+          No patient records are available. Add a record above.
+        }
+      </p>
     }
   </div>
 }
@@ -1158,7 +1177,7 @@
     <h2 class="mb-4 font-semibold text-zinc-900">Record-sharing consent</h2>
     <div class="grid gap-3 md:grid-cols-2">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="consentForm.patientId"
         name="consentPatient"
       >
@@ -1186,7 +1205,7 @@
         placeholder="Record IDs, separated by commas"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="consentForm.scope"
         name="consentScope"
       >
@@ -1298,7 +1317,7 @@
     <h2 class="mb-4 font-semibold text-zinc-900">Schedule consent-based reminder</h2>
     <div class="grid gap-3 md:grid-cols-2">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="reminderForm.patientId"
         name="reminderPatient"
       >
@@ -1308,7 +1327,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="reminderForm.reminderType"
         name="reminderType"
       >
@@ -1330,7 +1349,7 @@
         type="datetime-local"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="reminderForm.channel"
         name="reminderChannel"
       >
@@ -1435,7 +1454,7 @@
     <h2 class="mb-4 font-semibold text-zinc-900">Patient visits</h2>
     <div class="grid gap-3 md:grid-cols-3">
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="visitForm.patientId"
         name="visitPatient"
       >
@@ -1445,7 +1464,7 @@
         }
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="visitForm.visitType"
         name="visitType"
       >
@@ -1455,7 +1474,7 @@
         <option value="other">Other</option>
       </select>
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="visitForm.status"
         name="visitStatus"
       >
@@ -1669,7 +1688,7 @@
         placeholder="Provider name"
       />
       <select
-        class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+        class="dp-select"
         [(ngModel)]="integrationForm.integrationType"
         name="integrationType"
       >
@@ -1866,7 +1885,7 @@
           placeholder="Email"
         />
         <select
-          class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+          class="dp-select"
           [(ngModel)]="staffForm.branchId"
           name="staffBranch"
         >
