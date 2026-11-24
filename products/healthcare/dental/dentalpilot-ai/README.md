@@ -4,7 +4,7 @@ DentalPilot AI is the first specialty product in the **Otheryn** healthcare inte
 
 > **Status:** v1.2.0 — a working MVP. Not medical-device certified, not HIPAA/GDPR-certified, and not a live PMS/EHR integration. See [Release boundaries](#release-boundaries) and [`RELEASE_NOTES.md`](RELEASE_NOTES.md).
 
-**Docs:** [Local Setup](docs/notion/SETUP_AND_DEPLOYMENT.md) · [Production Deployment](DEPLOYMENT.md) · [Environment Variables](ENVIRONMENT.md) · [Architecture](docs/notion/TECHNICAL_ARCHITECTURE.md) · [Business Proposal](docs/notion/BUSINESS_PROPOSAL.md) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
+**Docs:** [Setup & Deployment](docs/notion/SETUP_AND_DEPLOYMENT.md) · [Architecture](docs/notion/TECHNICAL_ARCHITECTURE.md) · [Business Proposal](docs/notion/BUSINESS_PROPOSAL.md) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -83,7 +83,7 @@ Production runs on **Railway** (managed) or **Docker Compose VPS**. It uses a st
 
 Key rules: no `--reload` in production; frontend API URL is build-time (`environment.prod.ts`); backend config is runtime; `DATABASE_URL` must use `postgresql+psycopg://`; no development secrets.
 
-Full production guide (Railway, Compose VPS, Nginx, SSL, migrations, backups, rollback, security): [`DEPLOYMENT.md`](DEPLOYMENT.md).
+Full production guide (Railway, Compose VPS, Nginx, SSL, migrations, backups, rollback, security): [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md).
 
 ---
 
@@ -109,9 +109,7 @@ See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) for the 1.2.0 implemented scope, rema
 
 | Document | Audience |
 |---|---|
-| [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) | Developers — local Docker setup |
-| [`DEPLOYMENT.md`](DEPLOYMENT.md) | DevOps — production deployment |
-| [`ENVIRONMENT.md`](ENVIRONMENT.md) | Everyone — environment variables |
+| [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) | Developers & DevOps — local Docker, staging, production, environment variables |
 | [`docs/notion/TECHNICAL_ARCHITECTURE.md`](docs/notion/TECHNICAL_ARCHITECTURE.md) | Engineers — architecture |
 | [`docs/notion/BUSINESS_PROPOSAL.md`](docs/notion/BUSINESS_PROPOSAL.md) | Business — strategy |
 | [`RELEASE_NOTES.md`](RELEASE_NOTES.md) | Everyone — version history |

@@ -1,7 +1,7 @@
 # DentalPilot AI — Local Setup & Development (Docker only)
 
 **Audience:** developers joining DentalPilot AI.
-**Scope:** local development **only**. Production deployment is in [`DEPLOYMENT.md`](../../DEPLOYMENT.md). Environment variables are in [`ENVIRONMENT.md`](../../ENVIRONMENT.md). Architecture is in [`TECHNICAL_ARCHITECTURE.md`](TECHNICAL_ARCHITECTURE.md).
+**Scope:** local development (Docker only), staging, production deployment and the environment variable reference. Architecture is in [`TECHNICAL_ARCHITECTURE.md`](TECHNICAL_ARCHITECTURE.md).
 
 > **Docker Compose is the only supported local workflow.** You do **not** need Node.js, npm, Python, pip, PostgreSQL or Redis on your host. The Compose stack builds the backend image from the real Dockerfile and runs the Angular dev server in a Node container.
 
@@ -73,7 +73,7 @@ DATABASE_URL=postgresql+psycopg://dentalpilot:<the same POSTGRES_PASSWORD>@postg
 
 - `.env.local` is **gitignored**; never commit it.
 - Optional integrations (`XAI_*`, `RAZORPAY_*`, `S3_*`, `SMTP_*`, `WHATSAPP_*`) may be left empty; the app starts and those features return `503`.
-- The full variable reference is in [`ENVIRONMENT.md`](../../ENVIRONMENT.md).
+- The full variable reference is in §O.
 
 ---
 
@@ -172,7 +172,7 @@ Verified log line:
 WARNING:  WatchFiles detected changes in 'app/main.py'. Reloading...
 ```
 
-**Production never uses reload.** See [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
+**Production never uses reload.** See §L (Railway) and §M (Compose VPS).
 
 ---
 
@@ -269,10 +269,362 @@ docker compose -f docker-compose.local.yml up -d --build
 
 ---
 
-## Related documentation
+## K. Staging deployment
 
-- [`DEPLOYMENT.md`](../../DEPLOYMENT.md) — production deployment (Railway + Compose VPS).
-- [`ENVIRONMENT.md`](../../ENVIRONMENT.md) — complete environment variable reference.
+Staging reuses the production Compose stack with staging overrides:
+
+```bash
+cp .env.staging.example .env.staging
+# Edit .env.staging: staging POSTGRES_PASSWORD, JWT_SECRET, CORS_ORIGINS, optional integrations
+docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+```
+
+- HTTP-only Nginx on `http://<staging-host>:8080` (`nginx/staging/default.conf`).
+- `APP_ENVIRONMENT=staging` and staging CORS origins.
+- Separate PostgreSQL volume; **never reuse production credentials**.
+
+---
+
+## L. Production deployment — Railway
+
+### L.1 Create the project
+
+1. Railway → **New Project → Deploy from GitHub repo** (`saman2ny/otheryn-platform`).
+2. Add the services below, setting **Settings → Source → Root Directory** for each.
+
+### L.2 PostgreSQL
+
+1. **New → Database → PostgreSQL**.
+2. In the backend and worker **Variables**, set:
+
+```dotenv
+DATABASE_URL=postgresql+psycopg://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}
+```
+
+> **Critical:** Railway's `${{Postgres.DATABASE_URL}}` is `postgresql://...`; SQLAlchemy would select `psycopg2`, which is **not installed**. Always use `postgresql+psycopg://`.
+3. Use Railway private networking; do not expose Postgres publicly.
+4. **Redis is not used** — do not add a Redis service.
+
+### L.3 Backend
+
+1. Root directory: `products/healthcare/dental/dentalpilot-ai/backend` (monorepo) or `backend` (standalone).
+2. Builder: **Nixpacks** (`railway.toml`).
+3. Start command (from `railway.toml`, do **not** override in the dashboard):
+
+```bash
+alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+4. Health check path: `/health`.
+5. Generate a domain (`api.dentalpilot.in`), attach TLS.
+6. Required variables: `DATABASE_URL`, `JWT_SECRET`, `APP_ENVIRONMENT=production`, `CORS_ORIGINS`.
+7. Optional: `XAI_*`, `RAZORPAY_*`, `S3_*`, `AWS_REGION`, `SMTP_*`, `WHATSAPP_*`.
+
+> **No `--reload` in production.**
+
+### L.4 Worker
+
+1. Add a **separate Railway service** from the same repo/root.
+2. Custom start command:
+
+```bash
+python -m app.workers.run_workers
+```
+
+3. Same `DATABASE_URL`, `JWT_SECRET`, `APP_ENVIRONMENT` and integration variables as the backend.
+4. No public domain, no health path.
+5. The worker **must not run migrations** — the backend start command runs `alembic upgrade head`; the worker only polls.
+6. Logs: Railway → Deployments → Deploy Logs.
+
+### L.5 Frontend
+
+1. Root directory: `products/healthcare/dental/dentalpilot-ai/frontend` (or `frontend`).
+2. Railway detects `frontend/Dockerfile` (`node:20-alpine` → `npm ci && npm run build` → `nginx:alpine`).
+3. **Build-time API URL:** `src/environments/environment.prod.ts` → `https://api.dentalpilot.in/api/v1`. Changing Railway variables does **not** change the bundle; edit the file and rebuild.
+4. Generate a domain (`dentalpilot.in`, `www.dentalpilot.in`), attach TLS.
+5. Nginx serves the SPA, proxies `/api/` to `https://api.dentalpilot.in`, returns `/health` = `healthy`, caches hashed assets.
+
+### L.6 Migrations on Railway
+
+- The backend start command runs `alembic upgrade head` on every deploy.
+- Do **not** add a separate migration service.
+- Migrations are forward-only.
+- Inspect: `railway run alembic current`, `railway run alembic history`.
+
+### L.7 Verify and roll back
+
+```bash
+curl https://api.dentalpilot.in/health
+curl https://api.dentalpilot.in/health/ready
+curl -I https://dentalpilot.in/health
+```
+
+- **Logs:** Railway → service → Deployments → Build/Deploy/HTTP Logs, or `railway logs`.
+- **Rollback:** Railway → service → Deployments → previous deployment → Redeploy.
+- Schema changes are forward-only; a destructive migration requires a restore or follow-up migration.
+
+---
+
+## M. Production deployment — Docker Compose VPS
+
+### M.1 Prerequisites
+
+- Docker 24+ with Compose v2.
+- Ports `80`/`443` free.
+- SSL certificates in `nginx/ssl/`: `fullchain.pem`, `privkey.pem`, `chain.pem`.
+- GHCR images built by CI (or built locally).
+
+### M.2 Environment
+
+```bash
+cp .env.production.example .env.production
+# Edit .env.production: POSTGRES_PASSWORD, JWT_SECRET, CORS_ORIGINS, optional integrations
+```
+
+### M.3 Deploy
+
+```bash
+./deploy.sh production
+```
+
+`deploy.sh`:
+
+1. Sources `.env.production`.
+2. Validates `POSTGRES_PASSWORD` and `JWT_SECRET`.
+3. Pulls images (`${REGISTRY}/${IMAGE_NAME}-backend|frontend:${IMAGE_TAG}`).
+4. Runs `docker compose ... up -d --remove-orphans`.
+5. The one-shot `migrate` service runs `alembic upgrade head` before backend/workers.
+6. Health-checks the frontend and backend.
+
+For staging: `./deploy.sh staging` (HTTP-only, port `8080`, `nginx/staging/default.conf`).
+
+### M.4 Nginx
+
+`nginx/conf.d/default.conf` (mounted by `docker-compose.yml`):
+
+- Listens on `80` (redirects to HTTPS) and `443` (TLS).
+- Proxies `/api/` to `http://backend` (preserving the `/api/` prefix).
+- Adds HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy.
+- Caches hashed static assets for 1 year.
+- `/health` returns `200 healthy`.
+
+### M.5 Migrations
+
+- The one-shot `migrate` service runs `alembic upgrade head` before backend/workers.
+- Do not run migrations manually during a normal deploy.
+- Forward-only.
+
+### M.6 Backups and restore
+
+```bash
+# Backup
+docker compose -f docker-compose.yml exec -T postgres pg_dump -U dentalpilot dentalpilot > dentalpilot-$(date +%F).sql
+
+# Restore (destructive — verify first)
+docker compose -f docker-compose.yml exec -T postgres psql -U dentalpilot dentalpilot < dentalpilot-YYYY-MM-DD.sql
+```
+
+- Enable provider-level backups/PITR where available.
+- Test restore regularly.
+
+### M.7 Health checks and rollback
+
+```bash
+curl -f http://localhost/health
+docker compose -f docker-compose.yml exec -T backend curl -sf http://localhost:8000/health
+```
+
+- Rollback: set `IMAGE_TAG` to the previous immutable tag in `.env.production`, then `./deploy.sh production`.
+- Schema rollback requires a DB restore or a follow-up migration.
+
+---
+
+## N. Production service inventory
+
+| Service | Public access | Port | Purpose | Health / verification |
+|---|---|---|---|---|
+| Frontend (Nginx + Angular) | `https://dentalpilot.in`, `https://www.dentalpilot.in` | `443` (TLS), `80` → 443 | Static SPA + `/api/` reverse proxy | `curl -I https://dentalpilot.in/health` → `200 healthy` |
+| Backend API (FastAPI) | `https://api.dentalpilot.in` | `443` (TLS) | REST API `/api/v1` | `curl https://api.dentalpilot.in/health`; `/health/live`; `/health/ready` |
+| Swagger UI | `https://api.dentalpilot.in/docs` | `443` | Interactive API docs | `curl -I https://api.dentalpilot.in/docs` |
+| OpenAPI JSON | `https://api.dentalpilot.in/openapi.json` | `443` | Schema | `curl https://api.dentalpilot.in/openapi.json` |
+| Worker | **none** (internal) | — | Email / communication / billing loops | `railway logs` / `docker compose logs workers`; no HTTP health |
+| PostgreSQL | **none** (private) | `5432` internal | Database | `pg_isready`; Railway health |
+| Migration | **none** (one-shot) | — | `alembic upgrade head` | Exit code 0; `logs migrate` |
+| Redis | **excluded** | — | Not used by app code | — |
+
+**Public vs internal:** only the frontend and backend API are public. PostgreSQL is private (Railway private networking / Docker network). The worker and migration services have no public endpoint.
+
+**Staging:** frontend `http://<staging-host>:8080`; backend `https://api.staging.dentalpilot.in`; PostgreSQL private.
+
+---
+
+## O. Environment variable reference
+
+### O.1 Build-time vs runtime
+
+| Component | Configuration source | When applied | How to change |
+|---|---|---|---|
+| **Angular frontend** | `frontend/src/environments/environment.prod.ts` | **Build time** (`angular.json` `fileReplacements`) | Edit the file and **rebuild** |
+| **FastAPI backend** | `app/core/config.py` via environment variables | **Runtime** | Change the variable and **restart/redeploy** |
+| **Workers** | Same as backend | **Runtime** | Change the variable and **restart** |
+| **Nginx** | `frontend/nginx.conf` / `nginx/conf.d` | **Runtime** | Rebuild the image or mount a config |
+
+Railway variables do **not** affect the Angular bundle. The frontend API URL is set in `src/environments/environment.prod.ts`:
+
+```ts
+export const environment = {
+  production: true,
+  apiBaseUrl: 'https://api.dentalpilot.in/api/v1',
+};
+```
+
+### O.2 Core variables
+
+| Variable | Service | Required | Purpose | Local / Production | Setting |
+|---|---|---|---|---|---|
+| `APP_ENVIRONMENT` | backend, worker | ✅ | `development` / `test` / `staging` / `production` | both | runtime |
+| `DATABASE_URL` | backend, worker | ✅ | SQLAlchemy URL (`postgresql+psycopg://`) | both | runtime |
+| `JWT_SECRET` | backend, worker | ✅ | JWT signing (32+ chars in production) | both | runtime |
+| `JWT_ALGORITHM` | backend, worker | optional | JWT algorithm | both | runtime |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | optional | Access token lifetime | both | runtime |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | backend | optional | Refresh token lifetime | both | runtime |
+| `CORS_ORIGINS` | backend | ✅ in prod | Allowed origins (JSON array) | both | runtime |
+| `MAX_PATIENT_DOCUMENT_BYTES` | backend, worker | optional | Upload size limit | both | runtime |
+
+> **`DATABASE_URL` must use `postgresql+psycopg://`.** Railway's `${{Postgres.DATABASE_URL}}` is `postgresql://...`; SQLAlchemy would try `psycopg2`, which is **not installed**.
+
+### O.3 Integration variables (all optional)
+
+Disabled integrations fail gracefully (`503`) — the app still starts.
+
+| Variable | Service | Purpose | Local | Production |
+|---|---|---|---|---|
+| `XAI_API_KEY` | backend, worker | xAI Grok API key | optional | optional |
+| `XAI_MODEL` | backend, worker | Grok model (`grok-4.7`) | optional | optional |
+| `XAI_BASE_URL` | backend, worker | xAI API base (`https://api.x.ai/v1`) | optional | optional |
+| `CLINICAL_NOTE_DRAFTING_ENABLED` | backend | Enable AI note drafting | optional | optional |
+| `CLINICAL_AI_DATA_PROCESSING_APPROVED` | backend | Consent gate for AI notes | optional | optional |
+| `RAZORPAY_KEY_ID` | backend, worker | Razorpay key | optional | optional |
+| `RAZORPAY_KEY_SECRET` | backend, worker | Razorpay secret | optional | optional |
+| `RAZORPAY_WEBHOOK_SECRET` | backend, worker | Webhook verification | optional | required with Razorpay |
+| `RAZORPAY_CURRENCY` | backend, worker | Subscription currency | optional | optional |
+| `RAZORPAY_PLAN_IDS` | backend, worker | Tier/cycle → plan IDs (JSON) | optional | required with Razorpay |
+| `PATIENT_PAYMENT_CURRENCY` | backend, worker | Treatment payment currency | optional | optional |
+| `S3_BUCKET` | backend, worker | Document bucket | optional | optional |
+| `S3_ENDPOINT_URL` | backend, worker | S3-compatible endpoint | optional | optional |
+| `AWS_REGION` | backend, worker | AWS region | optional | optional |
+| `S3_KMS_KEY_ID` | backend, worker | KMS key for SSE | optional | optional |
+| `SMTP_HOST` | backend, worker | SMTP server | optional | optional |
+| `SMTP_PORT` | backend, worker | SMTP port | optional | optional |
+| `SMTP_USERNAME` | backend, worker | SMTP user | optional | optional |
+| `SMTP_PASSWORD` | backend, worker | SMTP password | optional | optional |
+| `SMTP_SENDER_EMAIL` | backend, worker | Sender address | optional | optional |
+| `SMTP_SENDER_NAME` | backend, worker | Sender name | optional | optional |
+| `SMTP_USE_SSL` | backend, worker | Implicit SSL | optional | optional |
+| `SMTP_USE_STARTTLS` | backend, worker | STARTTLS | optional | optional |
+| `EMAIL_WORKER_INTERVAL_SECONDS` | worker | Email poll interval | optional | optional |
+| `EMAIL_MAX_ATTEMPTS` | worker | Email retry cap | optional | optional |
+| `WHATSAPP_PHONE_NUMBER_ID` | backend, worker | WhatsApp sender ID | optional | optional |
+| `WHATSAPP_ACCESS_TOKEN` | backend, worker | WhatsApp token | optional | optional |
+| `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | backend, worker | WhatsApp webhook verification | optional | optional |
+| `SUBSCRIPTION_GRACE_PERIOD_DAYS` | worker | Grace period | optional | optional |
+| `BILLING_WEBHOOK_INTERVAL_SECONDS` | worker | Billing poll interval | optional | optional |
+| `BILLING_WEBHOOK_MAX_ATTEMPTS` | worker | Billing retry cap | optional | optional |
+| `SUBSCRIPTION_RECONCILIATION_INTERVAL_SECONDS` | worker | Reconciliation interval | optional | optional |
+
+**Redis is not used by application code.** Do not add Redis variables unless you implement a Redis-backed feature.
+
+### O.4 Compose-only variables
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `POSTGRES_USER` | Postgres container, backend `DATABASE_URL` | DB user |
+| `POSTGRES_PASSWORD` | Postgres container, backend `DATABASE_URL` | DB password |
+| `POSTGRES_DB` | Postgres container, backend `DATABASE_URL` | DB name |
+| `POSTGRES_PORT` | local Compose | Host port for Postgres |
+| `BACKEND_PORT` | local Compose | Host port for FastAPI |
+| `FRONTEND_PORT` | local Compose | Host port for Angular |
+| `REGISTRY` | production Compose | Image registry (e.g. `ghcr.io`) |
+| `IMAGE_NAME` | production Compose | Image name |
+| `IMAGE_TAG` | production Compose | Immutable tag (e.g. `sha-<commit>`) |
+
+### O.5 Local vs production
+
+| Variable | Local (`docker-compose.local.yml`) | Production (Railway / Compose) |
+|---|---|---|
+| `APP_ENVIRONMENT` | `development` | `production` |
+| `DATABASE_URL` | `postgresql+psycopg://...@postgres:5432/...` | `postgresql+psycopg://...` (Railway Postgres) |
+| `JWT_SECRET` | local-only random | 32+ random |
+| `CORS_ORIGINS` | `["http://localhost:4200"]` | `["https://dentalpilot.in"]` |
+| `XAI_*` / `RAZORPAY_*` / `S3_*` / `SMTP_*` | optional/empty | production values |
+| `POSTGRES_*` | local Compose | not used (Railway Postgres) |
+| `REGISTRY` / `IMAGE_NAME` / `IMAGE_TAG` | not used | production Compose |
+
+**Never point a local `.env` at a production database.**
+
+### O.6 Secret handling
+
+- Never commit `.env*` files (the root `.gitignore` ignores them).
+- Railway: set variables in the service settings or `railway variables --set`.
+- Compose VPS: `.env.production` on the host, `chmod 600`.
+- Production `JWT_SECRET` ≥32 chars; `DATABASE_URL` non-SQLite; no `*` CORS.
+- Do not log secrets or patient data.
+
+### O.7 Verify which database you are connected to
+
+```bash
+# Native backend (venv active) — only for non-Docker development
+python -c "from app.core.config import settings; from urllib.parse import urlparse; u=urlparse(settings.database_url); print('host=', u.hostname, 'db=', u.path)"
+
+# Docker Compose backend
+docker compose -f docker-compose.local.yml exec backend python -c "from app.core.config import settings; from urllib.parse import urlparse; u=urlparse(settings.database_url); print('host=', u.hostname, 'db=', u.path)"
+
+# Railway backend
+railway run python -c "from app.core.config import settings; from urllib.parse import urlparse; u=urlparse(settings.database_url); print('host=', u.hostname, 'db=', u.path)"
+```
+
+Expected: local Docker `host= postgres db= /dentalpilot`; production `host= <railway-postgres-host> db= /railway`.
+
+---
+
+## P. Security
+
+- HTTPS/TLS at the edge; HSTS.
+- Explicit CORS origins.
+- JWT (HS256), bcrypt passwords.
+- Webhook signature verification (Razorpay).
+- S3 private bucket + SSE/KMS.
+- Audit events for sensitive actions.
+- **Known gaps:** no app-level rate limiting, tokens in `localStorage`, logout no-op, partial audit coverage, no CSP. See [`AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md`](../../AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md).
+
+---
+
+## Q. Backups, restore and rollback
+
+- **PostgreSQL:** enable Railway backups/PITR; logical `pg_dump` (see §M.6).
+- **Documents:** S3 versioning + lifecycle + tested restore.
+- **Code:** Git history + tags.
+- **Rollback:** Railway → Deployments → previous → Redeploy; Compose → set `IMAGE_TAG` to the previous tag and `./deploy.sh production`.
+- Schema changes are forward-only; a destructive migration requires a DB restore or a follow-up migration.
+
+---
+
+## R. Verification status
+
+| Claim | Status |
+|---|---|
+| Compose config (local/staging/production) | Configuration validated (`docker compose config`) |
+| Nginx config | Configuration validated (`nginx -t`) |
+| Backend image build | Verified |
+| Railway deployment | Documented — **not executed** |
+| Production migrations | Documented — **not executed** |
+| Backup/restore | Documented — **not executed** |
+| Rollback | Documented — **not executed** |
+
+---
+
+## S. Related documentation
+
 - [`TECHNICAL_ARCHITECTURE.md`](TECHNICAL_ARCHITECTURE.md) — architecture.
 - [`BUSINESS_PROPOSAL.md`](BUSINESS_PROPOSAL.md) — business strategy.
 - [`RELEASE_NOTES.md`](../../RELEASE_NOTES.md) — version history.
