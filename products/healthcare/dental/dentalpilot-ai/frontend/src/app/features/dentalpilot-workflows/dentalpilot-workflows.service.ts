@@ -31,6 +31,7 @@ import {
   PatientCreate,
   PatientDuplicate,
   PatientEnquiry,
+  PatientRevision,
   PatientEnquiryCreate,
   PatientPortalShare,
   RecallReminder,
@@ -56,8 +57,26 @@ export class DentalPilotWorkflowsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl;
 
-  listPatients(): Observable<Patient[]> {
-    return this.http.get<Patient[]>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}`);
+  listPatients(q?: string, limit?: number, offset?: number): Observable<Patient[]> {
+    let params = new HttpParams();
+    if (q && q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (limit) {
+      params = params.set('limit', String(limit));
+    }
+    if (offset) {
+      params = params.set('offset', String(offset));
+    }
+    return this.http.get<Patient[]>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}`, {
+      params,
+    });
+  }
+
+  getPatientRevisions(id: string): Observable<PatientRevision[]> {
+    return this.http.get<PatientRevision[]>(
+      `${this.baseUrl}/${API_ENDPOINTS.healthcare.patients}/${id}/revisions`,
+    );
   }
 
   createPatient(payload: PatientCreate): Observable<Patient> {

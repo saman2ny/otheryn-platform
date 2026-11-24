@@ -34,6 +34,9 @@ export class PatientPortal {
   protected readonly patient = signal<Patient | null>(null);
   protected readonly records = signal<HealthRecord[]>([]);
   protected readonly treatmentCharges = signal<PatientPortalTreatmentCharge[]>([]);
+  protected readonly medicalHistory = signal<Record<string, unknown> | null>(null);
+  protected readonly dentalHistory = signal<Record<string, unknown> | null>(null);
+  protected readonly emergencyContacts = signal<Array<Record<string, unknown>>>([]);
   protected readonly selectedRecordIds = signal<Set<string>>(new Set());
   protected readonly shared = signal<PatientPortalSharedRecords | null>(null);
   protected readonly invitationToken = signal('');
@@ -110,6 +113,7 @@ export class PatientPortal {
           this.loading.set(false);
           this.loadRecords();
           this.loadTreatmentCharges();
+          this.loadHealthProfile();
         },
         error: () => this.loading.set(false),
       });
@@ -121,6 +125,31 @@ export class PatientPortal {
     this.records.set([]);
     this.treatmentCharges.set([]);
     this.selectedRecordIds.set(new Set());
+    this.medicalHistory.set(null);
+    this.dentalHistory.set(null);
+    this.emergencyContacts.set([]);
+  }
+
+  private loadHealthProfile(): void {
+    const headers = this.authorizationHeaders();
+    this.http
+      .get<Record<string, unknown>>(
+        `${this.baseUrl}/${API_ENDPOINTS.healthcare.portalMedicalHistory}`,
+        { headers },
+      )
+      .subscribe({ next: (data) => this.medicalHistory.set(data) });
+    this.http
+      .get<Record<string, unknown>>(
+        `${this.baseUrl}/${API_ENDPOINTS.healthcare.portalDentalHistory}`,
+        { headers },
+      )
+      .subscribe({ next: (data) => this.dentalHistory.set(data) });
+    this.http
+      .get<Array<Record<string, unknown>>>(
+        `${this.baseUrl}/${API_ENDPOINTS.healthcare.portalEmergencyContacts}`,
+        { headers },
+      )
+      .subscribe({ next: (data) => this.emergencyContacts.set(data) });
   }
 
   protected toggleRecordSelection(recordId: string, event: Event): void {

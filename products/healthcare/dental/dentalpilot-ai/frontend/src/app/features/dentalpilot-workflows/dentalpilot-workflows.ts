@@ -22,6 +22,7 @@ import {
   PatientCommunication,
   Patient,
   PatientDuplicate,
+  PatientRevision,
   PatientVisit,
   PmsReconciliationRow,
   PmsReconciliationResult,
@@ -274,7 +275,12 @@ export class DentalPilotWorkflows {
         this.patientForm.dateOfBirth = '';
         this.saving.set(false);
       },
-      error: () => this.saving.set(false),
+      error: (error) => {
+        this.saving.set(false);
+        if (error?.status === 409) {
+          this.notifications.error('A patient with this name and email already exists.');
+        }
+      },
     });
   }
 
@@ -368,6 +374,27 @@ export class DentalPilotWorkflows {
     this.service.findDuplicatePatients(this.patientForm.email, this.patientForm.phone).subscribe({
       next: (matches) => this.duplicateMatches.set(matches),
     });
+  }
+
+  protected readonly patientRevisions = signal<PatientRevision[]>([]);
+  protected readonly patientSearch = signal('');
+  protected readonly patientLimit = signal(100);
+
+  protected loadPatientRevisions(patient: Patient): void {
+    this.service.getPatientRevisions(patient.id).subscribe({
+      next: (items) => this.patientRevisions.set(items),
+    });
+  }
+
+  protected searchPatients(): void {
+    this.service.listPatients(this.patientSearch(), this.patientLimit()).subscribe({
+      next: (items) => this.patients.set(items),
+    });
+  }
+
+  protected loadMorePatients(): void {
+    this.patientLimit.update((limit) => limit + 100);
+    this.searchPatients();
   }
 
   protected createEnquiry(): void {

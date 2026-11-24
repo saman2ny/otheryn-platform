@@ -137,6 +137,9 @@ export const API_ENDPOINTS = {
     acceptPortalInvitation: 'patient-portal/invitations/accept',
     portalLogin: 'patient-portal/login',
     portalRecords: 'patient-portal/records',
+    portalMedicalHistory: 'patient-portal/medical-history',
+    portalDentalHistory: 'patient-portal/dental-history',
+    portalEmergencyContacts: 'patient-portal/emergency-contacts',
     portalShares: 'patient-portal/shares',
   },
   growth: {

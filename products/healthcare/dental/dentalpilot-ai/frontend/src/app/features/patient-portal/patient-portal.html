@@ -64,6 +64,52 @@
           Sign out
         </button>
       </section>
+      <section class="mb-5 rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 class="text-lg font-semibold">Health profile</h2>
+        <p class="mt-1 text-sm text-zinc-500">
+          Read-only information shared by your dental practice. Contact the clinic to request changes.
+        </p>
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+          <div class="rounded-lg border border-zinc-200 p-4">
+            <h3 class="text-sm font-semibold">Medical history</h3>
+            @if (medicalHistory(); as history) {
+              <p class="mt-1 text-xs text-zinc-600">
+                Conditions: {{ (history['conditions'] ?? []) }}
+              </p>
+              <p class="mt-1 text-xs text-zinc-600">Allergies: {{ (history['allergies'] ?? []) }}</p>
+              <p class="mt-1 text-xs text-zinc-600">
+                Medications: {{ (history['medications'] ?? []) }}
+              </p>
+              <p class="mt-1 text-xs text-zinc-600">Surgeries: {{ (history['surgeries'] ?? []) }}</p>
+            } @else {
+              <p class="mt-1 text-xs text-zinc-500">No medical history recorded.</p>
+            }
+          </div>
+          <div class="rounded-lg border border-zinc-200 p-4">
+            <h3 class="text-sm font-semibold">Dental history</h3>
+            @if (dentalHistory(); as history) {
+              <p class="mt-1 text-xs text-zinc-600">
+                Previous treatments: {{ (history['previousTreatments'] ?? []) }}
+              </p>
+              <p class="mt-1 text-xs text-zinc-600">Concerns: {{ history['concerns'] ?? '—' }}</p>
+            } @else {
+              <p class="mt-1 text-xs text-zinc-500">No dental history recorded.</p>
+            }
+          </div>
+          <div class="rounded-lg border border-zinc-200 p-4">
+            <h3 class="text-sm font-semibold">Emergency contacts</h3>
+            @if (emergencyContacts().length) {
+              @for (contact of emergencyContacts(); track $index) {
+                <p class="mt-1 text-xs text-zinc-600">
+                  {{ contact['name'] }} ({{ contact['relationship'] ?? '—' }}) — {{ contact['phone'] }}
+                </p>
+              }
+            } @else {
+              <p class="mt-1 text-xs text-zinc-500">No emergency contact recorded.</p>
+            }
+          </div>
+        </div>
+      </section>
       @if (treatmentCharges().length) {
         <section class="mb-5 rounded-xl border border-zinc-200 bg-white p-5">
           <h2 class="text-lg font-semibold">Treatment balances</h2>

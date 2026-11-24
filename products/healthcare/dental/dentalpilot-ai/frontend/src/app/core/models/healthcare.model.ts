@@ -57,6 +57,15 @@ export interface PatientDuplicate {
   matchedOn: string;
 }
 
+export interface PatientRevision {
+  id: string;
+  patientId: string;
+  version: number;
+  snapshot: Record<string, unknown>;
+  createdBy?: string | null;
+  createdAt: string;
+}
+
 export type PatientEnquiryStatus =
   'new' | 'contacted' | 'consultation-booked' | 'converted' | 'closed';
 

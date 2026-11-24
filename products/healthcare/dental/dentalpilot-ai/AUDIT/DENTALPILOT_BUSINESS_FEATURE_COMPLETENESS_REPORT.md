@@ -428,12 +428,12 @@ Counting the classified features in §4 (excluding "not applicable"):
 
 | Status | Count |
 |---|---|
-| FULLY IMPLEMENTED | 30 |
-| PARTIALLY IMPLEMENTED | 9 |
+| FULLY IMPLEMENTED | 31 |
+| PARTIALLY IMPLEMENTED | 8 |
 | NOT IMPLEMENTED | 4 |
 | BLOCKED (external, not counted as complete) | 5 |
 
-**Score:** 30 / (30 + 9 + 4) = **30 / 43 ≈ 70% fully implemented**; 9 partial; 4 missing; 5 blocked.
+**Score:** 31 / (31 + 8 + 4) = **31 / 43 ≈ 72% fully implemented**; 8 partial; 4 missing; 5 blocked.
 
 ### B. End-to-end workflow completeness
 
@@ -517,21 +517,30 @@ Counting the classified features in §4 (excluding "not applicable"):
 ### 14.1 Features implemented
 
 - **Patient editing** — `PATCH /api/v1/healthcare/patients/{patient_id}` with partial-update semantics, server-side validation, clinic/branch scoping, audit event and a revision snapshot.
+- **Duplicate prevention** — `POST /api/v1/healthcare/patients` returns `409` when a patient with the same name + email exists in the clinic.
+- **Partial history merge** — `PATCH` merges `medical_history` / `dental_history` keys instead of overwriting the whole object.
+- **Super Admin oversight** — `super_admin` can list patients across clinics (optional `clinic_id` filter); owners/staff remain clinic/branch scoped.
 - **Patient retrieval by id** — `GET /api/v1/healthcare/patients/{patient_id}`.
+- **Server-side search/pagination** — `GET /api/v1/healthcare/patients?q=&limit=&offset=`.
 - **Medical history** — structured `medical_history` JSON (conditions, allergies, medications, surgeries, notes) via the patient create/update endpoints and the edit form.
 - **Dental history** — structured `dental_history` JSON (previous treatments, conditions, procedures, concerns).
 - **Emergency contacts** — `emergency_contacts` JSON list (name, relationship, phone).
 - **Duplicate detection** — `GET /api/v1/healthcare/patients/duplicates?email=&phone=` (normalized email/phone match, clinic/branch scoped) plus a frontend "Check duplicates" action. No automatic merge.
-- **Revision history** — `GET /api/v1/healthcare/patients/{patient_id}/revisions` (snapshot per update).
+- **Revision history** — `GET /api/v1/healthcare/patients/{patient_id}/revisions` (snapshot per update) + a frontend revision list.
+- **Patient portal read-only** — `GET /api/v1/patient-portal/{medical-history,dental-history,emergency-contacts}` (patient-scoped, audited).
 
 ### 14.2 API endpoints added
 
 | Method | Path | Purpose |
 |---|---|---|
+| GET | `/api/v1/healthcare/patients` | List patients (supports `q`, `limit`, `offset`) |
 | GET | `/api/v1/healthcare/patients/{patient_id}` | Get a patient |
 | PATCH | `/api/v1/healthcare/patients/{patient_id}` | Partial update (demographics, medical/dental history, emergency contacts) |
 | GET | `/api/v1/healthcare/patients/{patient_id}/revisions` | Update history |
 | GET | `/api/v1/healthcare/patients/duplicates` | Duplicate candidates |
+| GET | `/api/v1/patient-portal/medical-history` | Patient read-only medical history |
+| GET | `/api/v1/patient-portal/dental-history` | Patient read-only dental history |
+| GET | `/api/v1/patient-portal/emergency-contacts` | Patient read-only emergency contacts |
 
 ### 14.3 Database changes
 

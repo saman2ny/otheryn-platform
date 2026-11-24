@@ -186,6 +186,30 @@ def get_patient_profile(account: CurrentPatient, db: DbSession) -> PatientRespon
     return PatientResponse.model_validate(patient)
 
 
+@router.get("/medical-history", response_model=dict)
+def get_portal_medical_history(account: CurrentPatient, db: DbSession) -> dict:
+    patient = _patient_for_account(db, account)
+    _audit_portal(db, patient, account.id, "read", "patient-medical-history", patient.id)
+    db.commit()
+    return patient.medical_history or {}
+
+
+@router.get("/dental-history", response_model=dict)
+def get_portal_dental_history(account: CurrentPatient, db: DbSession) -> dict:
+    patient = _patient_for_account(db, account)
+    _audit_portal(db, patient, account.id, "read", "patient-dental-history", patient.id)
+    db.commit()
+    return patient.dental_history or {}
+
+
+@router.get("/emergency-contacts", response_model=list)
+def get_portal_emergency_contacts(account: CurrentPatient, db: DbSession) -> list:
+    patient = _patient_for_account(db, account)
+    _audit_portal(db, patient, account.id, "read", "patient-emergency-contacts", patient.id)
+    db.commit()
+    return patient.emergency_contacts or []
+
+
 @router.get("/records", response_model=list[HealthRecordResponse])
 def list_patient_records(account: CurrentPatient, db: DbSession) -> list[HealthRecord]:
     patient = _patient_for_account(db, account)

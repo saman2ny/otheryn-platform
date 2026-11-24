@@ -11,6 +11,7 @@ from uuid import uuid4
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
 from pydantic import ValidationError
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.core.deps import CurrentUser, DbSession
@@ -287,21 +288,38 @@ def queue_patient_email(
 def clinic_patient(
     db: DbSession, current_user: CurrentUser, patient_id: str
 ) -> Patient | None:
-    query = db.query(Patient).filter(
-        Patient.id == patient_id,
-        Patient.clinic_id == current_user.clinic_id,
-    )
-    if current_user.role == "staff" and current_user.branch_id:
-        query = query.filter(Patient.branch_id == current_user.branch_id)
+    query = db.query(Patient).filter(Patient.id == patient_id)
+    if current_user.role != "super_admin":
+        query = query.filter(Patient.clinic_id == current_user.clinic_id)
+        if current_user.role == "staff" and current_user.branch_id:
+            query = query.filter(Patient.branch_id == current_user.branch_id)
     return query.first()
 
 
 @router.get("/patients", response_model=list[PatientResponse])
-def list_patients(current_user: CurrentUser, db: DbSession) -> list[Patient]:
-    query = db.query(Patient).filter(Patient.clinic_id == current_user.clinic_id)
-    if current_user.role == "staff" and current_user.branch_id:
-        query = query.filter(Patient.branch_id == current_user.branch_id)
-    return query.order_by(Patient.created_at.desc()).all()
+def list_patients(
+    current_user: CurrentUser,
+    db: DbSession,
+    q: str | None = None,
+    clinic_id: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[Patient]:
+    query = db.query(Patient)
+    if current_user.role != "super_admin":
+        query = query.filter(Patient.clinic_id == current_user.clinic_id)
+        if current_user.role == "staff" and current_user.branch_id:
+            query = query.filter(Patient.branch_id == current_user.branch_id)
+    elif clinic_id:
+        query = query.filter(Patient.clinic_id == clinic_id)
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        query = query.filter(
+            (Patient.full_name.ilike(like))
+            | (Patient.email.ilike(like))
+            | (Patient.phone.ilike(like))
+        )
+    return query.order_by(Patient.created_at.desc()).limit(limit).offset(offset).all()
 
 
 @router.get("/patients/duplicates", response_model=list[PatientDuplicateResponse])
@@ -311,10 +329,15 @@ def find_duplicate_patients(
     email: str | None = None,
     phone: str | None = None,
     exclude_patient_id: str | None = None,
+    clinic_id: str | None = None,
 ) -> list[PatientDuplicateResponse]:
-    query = db.query(Patient).filter(Patient.clinic_id == current_user.clinic_id)
-    if current_user.role == "staff" and current_user.branch_id:
-        query = query.filter(Patient.branch_id == current_user.branch_id)
+    query = db.query(Patient)
+    if current_user.role != "super_admin":
+        query = query.filter(Patient.clinic_id == current_user.clinic_id)
+        if current_user.role == "staff" and current_user.branch_id:
+            query = query.filter(Patient.branch_id == current_user.branch_id)
+    elif clinic_id:
+        query = query.filter(Patient.clinic_id == clinic_id)
     if exclude_patient_id:
         query = query.filter(Patient.id != exclude_patient_id)
 
@@ -353,6 +376,22 @@ def create_patient(request: PatientCreate, current_user: CurrentUser, db: DbSess
         current_user.role == "staff" and current_user.branch_id != branch_id
     ):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Patient branch access denied.")
+
+    duplicate = (
+        db.query(Patient)
+        .filter(
+            Patient.clinic_id == current_user.clinic_id,
+            Patient.full_name == request.full_name.strip(),
+            func.lower(Patient.email) == request.email.lower() if request.email else False,
+        )
+        .first()
+    )
+    if duplicate is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "A patient with this name and email already exists.",
+        )
+
     patient = Patient(
         clinic_id=current_user.clinic_id,
         branch_id=branch_id,
@@ -403,6 +442,18 @@ def update_patient(
         ):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Patient branch access denied.")
         patient.branch_id = branch_id
+
+    # Merge nested history objects so a partial update does not wipe other keys.
+    if isinstance(updates.get("medical_history"), dict):
+        updates["medical_history"] = {
+            **(patient.medical_history or {}),
+            **updates["medical_history"],
+        }
+    if isinstance(updates.get("dental_history"), dict):
+        updates["dental_history"] = {
+            **(patient.dental_history or {}),
+            **updates["dental_history"],
+        }
 
     for field, value in updates.items():
         setattr(patient, field, value)
