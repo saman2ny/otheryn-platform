@@ -123,6 +123,18 @@ The new fields are additive; existing relationships are unchanged.
 - **Browser E2E: NOT EXECUTED** (no Playwright browsers installed).
 - **Live API check:** duplicate prevention verified (201 → 409).
 
+## 6.1 Interactive product tours (Shepherd.js)
+
+- **Library:** `shepherd.js` **16.0.0** (compatible with Angular 21; no competing tour library).
+- **Role-specific tours:** `super_admin` (12 steps) and `owner` (12 steps), covering dashboard, directory, registration, profile, editing, medical/dental history, emergency contacts, duplicate detection, revision history, filters, associations, consent/Passport and audit.
+- **Entry points:** auto-starts on first login (if not completed/skipped) and a **"Guided tour"** button in the shell topbar for manual start/restart.
+- **Persistence:** `localStorage` keys `dp_tour_<role>_1_completed` / `_skipped` (per role, per tour version). No patient data is stored.
+- **Behaviour:** next/previous, skip, finish, Esc, route navigation between steps, selector highlighting, graceful handling of missing elements (Shepherd shows a centered step).
+- **Files:** `frontend/src/app/core/services/tour.service.ts`, `shell.ts`, `shell.html`, `styles.css`, `package.json`/`package-lock.json`.
+- **Validation:** `npm run build` ✅, `npm test` ✅. Browser click-through not executed (no Playwright browsers).
+
+---
+
 ## 7. Remaining limitations
 
 - No dedicated Super Admin patient-oversight UI (cross-clinic).

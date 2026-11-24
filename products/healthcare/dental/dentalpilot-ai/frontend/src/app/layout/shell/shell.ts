@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { TourService } from '../../core/services/tour.service';
 
 interface NavLink {
   path: string;
@@ -135,8 +136,18 @@ const NAV_GROUPS: NavGroup[] = [
 })
 export class Shell {
   protected readonly auth = inject(AuthService);
+  private readonly tour = inject(TourService);
   protected readonly navGroups = NAV_GROUPS;
   protected readonly navLinks = NAV_GROUPS.flatMap((group) => group.links);
+
+  constructor() {
+    // Start the role-specific guided tour on first login.
+    setTimeout(() => this.tour.maybeStart(), 1500);
+  }
+
+  protected startTour(): void {
+    this.tour.start();
+  }
 
   protected logout(): void {
     this.auth.logout();
