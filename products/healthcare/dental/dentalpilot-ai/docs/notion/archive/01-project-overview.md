@@ -1,5 +1,7 @@
 # DentalPilot AI — Project Overview
 
+> **ARCHIVED (historical).** Original MVP document. The current AI provider is **Groq**; see `docs/notion/SETUP_AND_DEPLOYMENT.md` for current setup.
+
 **DentalPilot AI is the first specialty product in the broader healthcare intelligence and infrastructure ecosystem described in the strategic blueprint. The parent-company name remains open.**
 
 An AI-powered SaaS platform that helps dental clinics automate marketing — social media posts, patient education content, Google Business updates, and promotional campaigns — in minutes instead of hours.
@@ -14,7 +16,7 @@ Dentists are excellent clinicians but often lack the time, ideas, or budget for 
 |---|---|---|
 | Authentication | Sign up, log in, password reset | Real — JWT + bcrypt |
 | Clinic Profile | Clinic details that steer all AI content (specialty, tone, audience) | Real |
-| AI Content Generator | Generate platform-specific marketing posts from a topic/treatment | Real Claude API call (needs `ANTHROPIC_API_KEY`) |
+| AI Content Generator | Generate platform-specific marketing posts from a topic/treatment | Real Claude API call (needs the former Anthropic API credential) |
 | Content Calendar | Schedule generated content to go live | Real |
 | Export Content | Bundle content as PDF/PNG/CSV | Job records real; file rendering not implemented |
 | Subscription & Billing | Free/Starter/Professional/Enterprise plans, invoices | Real — Razorpay Standard Checkout (order creation + signature-verified capture) |
@@ -47,7 +49,7 @@ What's not real yet: actual file generation for exports (PDF/PNG/CSV), plus a ha
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # set ANTHROPIC_API_KEY and RAZORPAY_KEY_ID/SECRET to enable those features
+cp .env.example .env   # set GROQ_API_KEY and RAZORPAY_KEY_ID/SECRET (see docs/notion/SETUP_AND_DEPLOYMENT.md)
 alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```

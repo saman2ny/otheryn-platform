@@ -1,5 +1,7 @@
 # DentalPilot AI — Backend
 
+> **ARCHIVED (historical).** Original backend document. The current AI provider is **Groq**; see `docs/notion/SETUP_AND_DEPLOYMENT.md` for current setup.
+
 FastAPI backend implementing the REST contract the Angular frontend already expects (see `frontend/src/app/core/constants/api-endpoints.const.ts`). Every route, request/response shape, and error format is built to match the frontend exactly — including camelCase JSON, since the Angular app talks JSON straight off `HttpClient` with no transformation layer.
 
 ## Tech stack
@@ -18,7 +20,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# edit .env: set JWT_SECRET to a real random string; set ANTHROPIC_API_KEY to enable AI
+# edit .env: set JWT_SECRET; set GROQ_API_KEY to enable AI (see docs/notion/SETUP_AND_DEPLOYMENT.md)
 # content generation and RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET to enable payments (see below
 # for both — the app runs fine without either, those two features just return a 503)
 
@@ -54,7 +56,7 @@ All endpoints are prefixed with `/api/v1` (e.g. `http://localhost:8000/api/v1/au
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/content/generate` | Generate a post via Claude (503 if `ANTHROPIC_API_KEY` unset) |
+| POST | `/content/generate` | Generate a post via Claude (503 if the former Anthropic API credential is unset) |
 | GET | `/content` | List generated content for the clinic, newest first |
 | GET | `/content/{content_id}` | Get one item |
 
@@ -91,7 +93,7 @@ All endpoints are prefixed with `/api/v1` (e.g. `http://localhost:8000/api/v1/au
 
 ## AI content generation
 
-`POST /content/generate` calls the real Anthropic API (`claude-opus-4-8`, structured JSON output, adaptive thinking) using the clinic's profile (specialty, brand tone, target audience) as context, so generated copy matches each clinic's voice. **This requires `ANTHROPIC_API_KEY` to be set** — without it, the endpoint returns a clean `503` with an explanatory message (surfaced as a toast in the UI) rather than crashing.
+`POST /content/generate` calls the real Anthropic API (`claude-opus-4-8`, structured JSON output, adaptive thinking) using the clinic's profile (specialty, brand tone, target audience) as context, so generated copy matches each clinic's voice. **This requires the former Anthropic API credential to be set** — without it, the endpoint returns a clean `503` with an explanatory message (surfaced as a toast in the UI) rather than crashing.
 
 ## Payments (Razorpay Standard Checkout)
 
@@ -113,7 +115,7 @@ Requires `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` in `.env` (test-mode keys wor
 |---|---|
 | Auth (register/login/refresh/me) | Real — bcrypt password hashing, JWT access + refresh tokens |
 | Clinic profile | Real — persisted per clinic |
-| AI content generation | Real Claude API call, once `ANTHROPIC_API_KEY` is set |
+| AI content generation | Real Claude API call, once the former Anthropic API credential is set |
 | Content calendar | Real CRUD |
 | Dashboard | Real aggregation queries against the database |
 | Export (PDF/PNG/CSV) | Job records are real; actual file rendering is not implemented — jobs complete instantly with no `downloadUrl` |
@@ -167,7 +169,7 @@ Production runs on Railway at `api.dentalpilot.in`, on real Railway-provisioned 
 
 - **Root Directory**: `backend` (Railway → Service → Settings → Source) — the build context is already this folder, so nothing in the build/start pipeline should `cd backend`.
 - **Start command**: owned entirely by `railway.toml`'s `[deploy].startCommand` — `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Migrations run automatically on every boot. **Never set a Custom Start Command in the Railway dashboard** — it silently overrides both `railway.toml` and `nixpacks.toml`, and caused a `cd: backend: No such file or directory` crash loop before this was caught.
-- **Required environment variables** (Railway → Variables): `DATABASE_URL` (Postgres, `postgresql+psycopg://...`), `JWT_SECRET` (a real random value, never the `.env.example` default), `CORS_ORIGINS` (JSON array including the deployed frontend origin), `ANTHROPIC_API_KEY`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_CURRENCY`.
+- **Required environment variables** (Railway → Variables): `DATABASE_URL` (Postgres, `postgresql+psycopg://...`), `JWT_SECRET` (a real random value, never the `.env.example` default), `CORS_ORIGINS` (JSON array including the deployed frontend origin), `GROQ_API_KEY` (replaces the former Anthropic API credential), `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_CURRENCY`.
 - **Custom domain**: `api.dentalpilot.in` → CNAME → the Railway-generated `*.up.railway.app` hostname, added at whichever DNS host manages `dentalpilot.in`. Railway issues the TLS cert automatically once the domain is verified and a deploy is live.
 - **Status**: confirmed live — `curl https://api.dentalpilot.in/health` → `200 {"status":"ok"}`; `/docs` and real `/api/v1/...` routes also `200`; valid TLS; demo accounts seeded and persisted (see credentials below).
 

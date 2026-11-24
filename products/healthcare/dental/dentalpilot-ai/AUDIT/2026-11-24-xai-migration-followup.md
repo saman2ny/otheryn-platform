@@ -1,5 +1,7 @@
 # Follow-up Audit — 2026-11-24 (xAI Grok migration)
 
+> **Historical record.** This documents the xAI migration; the current AI provider is **Groq**. See `docs/notion/SETUP_AND_DEPLOYMENT.md` for current setup.
+
 **Type:** Dated follow-up. This document does **not** rewrite [`PRODUCT_IMPLEMENTATION_AUDIT.md`](PRODUCT_IMPLEMENTATION_AUDIT.md); that file remains the historical baseline.
 
 ## Scope
@@ -16,7 +18,7 @@ Migration of the active AI provider from Anthropic Claude to **xAI Grok** across
 | Dependencies | `requirements.txt`: `anthropic==0.117.0` removed; `openai>=1.0` added. |
 | Environment templates | `.env.local.example`, `.env.staging.example`, `.env.production.example`, `backend/.env.example` now use `XAI_*`. |
 | Compose | `docker-compose.yml` backend/workers pass `XAI_*`. |
-| Deploy | `deploy.sh` no longer requires `ANTHROPIC_API_KEY` (AI is optional). |
+| Deploy | `deploy.sh` no longer requires the former Anthropic API credential (AI is optional). |
 | Frontend | `operations.model.ts` `generationSource: 'clinician' \| 'xai'`; `dental-operations.html` labels updated to xAI Grok. |
 | Tests | Existing test updated to `xai_api_key` / `generationSource == "xai"`; new `tests/test_ai_provider.py` covers success, model config, missing key, malformed JSON, invalid shape, rate limit, timeout, server error, clinical note success, and approval gate. |
 | Docs | `README.md`, `TECHNICAL_ARCHITECTURE.md`, `SETUP_AND_DEPLOYMENT.md`, `backend/README.md`, `ENVIRONMENT_GUIDE.md` updated; Mermaid provider node now `xAI Grok`. |

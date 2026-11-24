@@ -1,5 +1,7 @@
 # DentalPilot AI — Product Implementation Audit
 
+> **Historical baseline.** This audit predates the Groq migration; the current AI provider is **Groq**. Findings are preserved as historical evidence. See `docs/notion/SETUP_AND_DEPLOYMENT.md` for current setup.
+
 **Audit type:** Read-only, evidence-based
 **Date:** 2026-11-24
 **Scope:** `products/healthcare/dental/dentalpilot-ai/`
@@ -124,7 +126,7 @@ Classification legend: **Fully implemented & tested**, **Implemented, insufficie
 | 14 | Financial reporting | **Implemented, partially tested** | `financial_analytics.py` (5), accounting CSV exports | Ledger/visit analytics tested; financial summary/treatment follow-up/retention not directly tested. |
 | 15 | Communication & notifications | **Implemented, partially tested** | `CommunicationTemplate`, `PatientCommunication`, `CommunicationOutbox`, `EmailOutbox`, workers; `test_email_outbox.py` | Email outbox tested; WhatsApp adapter and communication outbox retry not tested. |
 | 16 | Document storage | **Implemented, tested** | `services/document_storage.py`, `HealthRecord` upload/download; test monkeypatches storage | S3-only, SSE, presigned URLs, audit on download. |
-| 17 | AI clinical assistance | **Partially implemented** | `services/ai_content.py`, `services/clinical_notes.py`, `operations.py` AI note draft/review; `clinic.py` AI settings; `test_ai_note_drafting_is_gated_and_requires_patient_consent` | Gating/consent tested; **requires `ANTHROPIC_API_KEY`**; content generation not tested without a key. |
+| 17 | AI clinical assistance | **Partially implemented** | `services/ai_content.py`, `services/clinical_notes.py`, `operations.py` AI note draft/review; `clinic.py` AI settings; `test_ai_note_drafting_is_gated_and_requires_patient_consent` | Gating/consent tested; **requires the former Anthropic API credential**; content generation not tested without a key. |
 | 18 | Integrations | **Implemented, tested** | `integrations.py` catalog, `IntegrationConnection`, CSV import/export, WhatsApp adapter; tests for CSV + secret non-persistence | WhatsApp live send not tested. |
 | 19 | Administration & analytics | **Backend only** | `admin.py` `GET /admin/clinics` (super admin); no admin UI | No frontend screen; no test. |
 | 20 | Growth OS | **Implemented, tested** | `growth.py` (8), `LocalListingAudit`, `MarketingCampaign`, `ClinicReview`; `test_manual_growth_listing_campaign_and_review_workflows` | Reviews are draft-only (no publishing). |
