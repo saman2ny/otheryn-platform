@@ -349,6 +349,7 @@ railway run pg_dump "$DATABASE_URL" > dentalpilot-$(date +%F).sql
 ## 19. Related documentation
 
 - [`README.md`](README.md) — overview.
+- [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md) — local development and hot reload.
 - [`ENVIRONMENT_GUIDE.md`](ENVIRONMENT_GUIDE.md) — local vs production.
 - [`backend/README.md`](backend/README.md) — backend setup and API.
 - [`frontend/README.md`](frontend/README.md) — Angular setup.

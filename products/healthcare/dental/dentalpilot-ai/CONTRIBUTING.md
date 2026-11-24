@@ -106,10 +106,10 @@ chore(db): add index on patient_enquiries clinic_id
 
 ### 6.1 Setup
 
+Follow the frontend setup in [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md#3-local-frontend-setup). Quick start:
+
 ```bash
-cd products/healthcare/dental/dentalpilot-ai/frontend
-npm ci
-npm start          # http://localhost:4200
+cd products/healthcare/dental/dentalpilot-ai/frontend && npm ci && npm start
 ```
 
 ### 6.2 Conventions
@@ -145,22 +145,17 @@ Then add a `my-feature.routes.ts` and register it in `app.routes.ts` with `authG
 
 ### 7.1 Setup
 
+Follow the backend setup in [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md#5-local-backend-setup). Quick start (native):
+
 ```bash
 cd products/healthcare/dental/dentalpilot-ai/backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# set JWT_SECRET
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && cp .env.example .env
 alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --reload-dir app --port 8000
 ```
 
-Or use the Docker stack:
-
-```bash
-docker compose -f docker-compose.local.yml up -d --build
-```
+Or use the Docker stack: `docker compose -f docker-compose.local.yml up -d --build`.
 
 ### 7.2 Conventions
 
@@ -347,6 +342,7 @@ Keep PRs focused; split large changes.
 ## 15. Related documentation
 
 - [`README.md`](README.md)
+- [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md)
 - [`ENVIRONMENT_GUIDE.md`](ENVIRONMENT_GUIDE.md)
 - [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md)
 - [`backend/README.md`](backend/README.md)

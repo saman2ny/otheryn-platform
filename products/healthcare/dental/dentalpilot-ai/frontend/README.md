@@ -96,6 +96,8 @@ src/
 
 ## B. Local development setup
 
+> For the complete local environment (PostgreSQL, backend, workers, Redis), see [`../LOCAL_DEVELOPMENT.md`](../LOCAL_DEVELOPMENT.md). This section covers frontend-specific commands only.
+
 ### B.1 Prerequisites
 
 - Node.js **22 LTS** recommended (20.19+ minimum).
@@ -170,6 +172,30 @@ Other scripts:
 
 ```bash
 npm run watch      # ng build --watch --configuration development
+```
+
+### B.9 Hot reload
+
+`npm start` runs the Angular dev server (`@angular/build:dev-server`) with the `development` configuration. Verified output:
+
+```text
+Watch mode enabled. Watching for file changes...
+  ➜  Local:   http://localhost:4200/
+```
+
+| Change | Result |
+|---|---|
+| `.ts` component/service | Rebuild; browser updates |
+| `.html` template | Rebuild; view updates |
+| `.css` / `.scss` | Styles rebuilt and re-applied |
+| `angular.json` / `package.json` | Dev server may restart |
+
+No manual restart is required for ordinary edits. Production builds (`npm run build`) do not watch.
+
+If changes are not detected (network shares, Docker volumes):
+
+```bash
+npm start -- --poll 1000
 ```
 
 ---
@@ -365,6 +391,8 @@ Full constants: [`src/app/core/constants/api-endpoints.const.ts`](src/app/core/c
 
 ## E. Railway production deployment (frontend)
 
+> For the full multi-service production deployment (backend, worker, PostgreSQL, domains, TLS, migrations, rollback), see [`../RAILWAY_DEPLOYMENT.md`](../RAILWAY_DEPLOYMENT.md). This section covers the frontend service only.
+
 ### E.1 Build-time vs runtime configuration — read this first
 
 - **Angular environment is build-time.** `environment.prod.ts` is compiled into the JavaScript bundle by `fileReplacements` during `ng build`. Changing an environment variable in Railway **does not** change the API URL.
@@ -448,6 +476,7 @@ Railway → service → **Deployments** → select a previous deployment → **R
 ## G. Related documentation
 
 - [`../README.md`](../README.md) — product overview and local quick start.
+- [`../LOCAL_DEVELOPMENT.md`](../LOCAL_DEVELOPMENT.md) — full local setup and hot reload.
 - [`../backend/README.md`](../backend/README.md) — API contract and backend setup.
 - [`../ENVIRONMENT_GUIDE.md`](../ENVIRONMENT_GUIDE.md) — local vs production.
 - [`../RAILWAY_DEPLOYMENT.md`](../RAILWAY_DEPLOYMENT.md) — Railway services.

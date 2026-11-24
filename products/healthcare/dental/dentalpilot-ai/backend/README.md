@@ -91,6 +91,8 @@ backend/
 
 ## B. Local backend setup
 
+> For the complete local environment (PostgreSQL, Docker Compose, workers, Redis), see [`../LOCAL_DEVELOPMENT.md`](../LOCAL_DEVELOPMENT.md). This section covers backend-specific commands only.
+
 ### B.1 Prerequisites
 
 - **Python 3.12** recommended (3.14 may lack wheels for pinned dependencies).
@@ -165,6 +167,31 @@ pytest tests/test_healthcare_workflows.py -q
 ```
 
 `pytest.ini` sets `pythonpath = .` and `testpaths = tests`.
+
+### B.7 Hot reload
+
+`uvicorn --reload` watches Python files and restarts the server. Verified options: `--reload-dir`, `--reload-include`, `--reload-exclude`.
+
+| Change | Restarts? |
+|---|---|
+| Python file under `app/` | **Yes** |
+| `.env` / environment variables | **No** — restart manually |
+| `requirements.txt` / new dependency | **No** — install, restart |
+| Alembic migration | **No** — run `alembic upgrade head`, then restart |
+
+Recommended:
+
+```bash
+uvicorn app.main:app --reload --reload-dir app --port 8000
+```
+
+The worker has no built-in reload; for development use `watchfiles` (already installed):
+
+```bash
+watchfiles --filter python --sigint-timeout 5 "python -m app.workers.run_workers" app
+```
+
+Production must never use `--reload`.
 
 ---
 
@@ -509,6 +536,8 @@ Not used. See §F.3.
 
 ## H. Railway backend deployment
 
+> For the full multi-service production deployment (frontend, worker, PostgreSQL, domains, TLS, migrations, rollback), see [`../RAILWAY_DEPLOYMENT.md`](../RAILWAY_DEPLOYMENT.md). This section covers the backend and worker services.
+
 ### H.1 Current build path
 
 `backend/railway.toml`:
@@ -641,6 +670,7 @@ See [`../AUDIT/PRODUCT_IMPLEMENTATION_AUDIT.md`](../AUDIT/PRODUCT_IMPLEMENTATION
 ## K. Related documentation
 
 - [`../README.md`](../README.md) — product overview and quick start.
+- [`../LOCAL_DEVELOPMENT.md`](../LOCAL_DEVELOPMENT.md) — full local setup and hot reload.
 - [`../frontend/README.md`](../frontend/README.md) — Angular guide.
 - [`../ENVIRONMENT_GUIDE.md`](../ENVIRONMENT_GUIDE.md) — local vs production.
 - [`../RAILWAY_DEPLOYMENT.md`](../RAILWAY_DEPLOYMENT.md) — Railway services.

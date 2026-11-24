@@ -1,284 +1,191 @@
-# DentalPilot AI — Environment Guide
+# DentalPilot AI — Environment & Configuration Guide
 
-This guide explains the difference between **local development**, **staging**, and **production**, and how to move between them without ever pointing a local process at production data.
+This document owns **environment variable** and **configuration** documentation for DentalPilot AI. It explains what each variable does, which service uses it, and how local, staging and production differ.
 
-> Golden rule: **local data and production data are separate.** A local `.env` must never contain production credentials, and a local `DATABASE_URL` must never point at a production database.
+> For local setup and hot reload, see [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md). For production deployment, see [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md).
 
 ---
 
-## 1. Mental model
+## 1. Environment overview
+
+| Environment | Where it runs | Database | Secrets | Config source |
+|---|---|---|---|---|
+| **Local** | Your machine (Docker Compose or native) | PostgreSQL 16 (Docker) or SQLite | Local-only values | `.env.local` (Docker) or `backend/.env` (native) |
+| **Staging** | Docker Compose on a staging host | PostgreSQL 16 (Compose volume) | Staging-only values | `.env.staging` |
+| **Production** | Railway | Railway PostgreSQL | Railway variables | Railway service variables |
+
+**Local, staging and production data are separate.** A local `.env` must never contain production credentials, and a local `DATABASE_URL` must never point at a production database.
 
 ```mermaid
 flowchart LR
-    subgraph LOCAL["LOCAL (your machine)"]
-      LFE[Angular dev server :4200] --> LAPI[FastAPI :8000]
-      LAPI --> LPG[(Local PostgreSQL 16\nDocker volume)]
+    subgraph LOCAL["LOCAL"]
+      LFE[ng serve :4200] --> LAPI[FastAPI :8000]
+      LAPI --> LPG[(Local Postgres)]
       LW[Workers] --> LPG
-      LAPI --> LREDIS[(Local Redis 7\nunused by app)]
     end
     subgraph PROD["PRODUCTION (Railway)"]
-      PFE[Angular static + Nginx] --> PAPI[FastAPI service]
-      PAPI --> PPG[(Railway PostgreSQL)]
-      PW[Worker service] --> PPG
-      PAPI --> PEXT[Anthropic / Razorpay / S3 / SMTP]
+      PFE[Nginx + Angular] --> PAPI[FastAPI]
+      PAPI --> PPG[(Railway Postgres)]
+      PW[Worker] --> PPG
     end
-    LOCAL -. "git push only\n(no shared DB)" .-> PROD
+    LOCAL -. "git push only" .-> PROD
 ```
-
-- **Local** runs on your machine via Docker Compose (Postgres) or native Python (SQLite).
-- **Production** runs on Railway: separate frontend, backend, worker and Postgres services.
-- There is **no shared database** between local and production.
 
 ---
 
-## 2. Local development
+## 2. Build-time vs runtime configuration
 
-### 2.1 Option A — Docker Compose (recommended, PostgreSQL)
+| Component | Configuration source | When applied | How to change |
+|---|---|---|---|
+| **Angular frontend** | `src/environments/environment.prod.ts` | **Build time** (compiled into the JS bundle by `angular.json` `fileReplacements`) | Edit the file and **rebuild** |
+| **FastAPI backend** | `app/core/config.py` via environment variables | **Runtime** (read on startup) | Change the variable and **restart/redeploy** |
+| **Workers** | Same as backend | **Runtime** | Change the variable and **restart** |
+| **Nginx** | `frontend/nginx.conf` (baked) or mounted config | **Runtime** (container start) | Rebuild the image or mount a config |
 
-Files:
+Railway environment variables do **not** affect the Angular bundle. The frontend API URL is set in `src/environments/environment.prod.ts`:
 
-- `.env.local` — copy of `.env.local.example` (gitignored).
-- `docker-compose.local.yml` — Postgres 16, Redis 7 (unused by app), one-shot `migrate`, FastAPI with hot reload, workers.
-
-```bash
-cd products/healthcare/dental/dentalpilot-ai
-
-cp .env.local.example .env.local
-# Edit .env.local:
-#   POSTGRES_PASSWORD=<local-only password>
-#   JWT_SECRET=<openssl rand -base64 48>
-#   DATABASE_URL=postgresql+psycopg://dentalpilot:<same password>@postgres:5432/dentalpilot
-
-docker compose -f docker-compose.local.yml up -d --build
+```ts
+export const environment = {
+  production: true,
+  apiBaseUrl: 'https://api.dentalpilot.in/api/v1',
+};
 ```
-
-Frontend (separate terminal):
-
-```bash
-cd frontend
-npm ci
-npm start          # http://localhost:4200
-```
-
-| Service | URL / port |
-|---|---|
-| Angular dev server | <http://localhost:4200> |
-| FastAPI | <http://localhost:8000> |
-| Swagger UI | <http://localhost:8000/docs> |
-| Health | <http://localhost:8000/health> |
-| PostgreSQL | `localhost:5432` (container `dentalpilot-local-postgres`) |
-| Redis | `localhost:6379` (unused by the app) |
-
-**Migrations:** the `migrate` service runs `alembic upgrade head` once per `up`; backend/workers wait for it. Do not run `alembic upgrade head` again manually in this mode.
-
-### 2.2 Option B — Native (SQLite, no Docker)
-
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env: JWT_SECRET, DATABASE_URL=sqlite:///./dentalpilot.db
-
-alembic upgrade head
-python scripts/seed_hierarchy.py
-uvicorn app.main:app --reload --port 8000
-```
-
-Workers (second terminal):
-
-```bash
-cd backend
-source .venv/bin/activate
-python -m app.workers.run_workers
-```
-
-Frontend (third terminal):
-
-```bash
-cd frontend
-npm ci
-npm start
-```
-
-> **Known SQLite issue:** `alembic upgrade head` may fail at revision `e78cbd0fad9c` with `ValueError: Constraint must have a name`. Use Option A (PostgreSQL) or apply the named-constraint fix. See [`backend/README.md`](backend/README.md#i-troubleshooting).
-
-### 2.3 Local commands
-
-```bash
-# Status
-docker compose -f docker-compose.local.yml ps
-
-# Logs
-docker compose -f docker-compose.local.yml logs -f backend workers
-
-# Stop / restart
-docker compose -f docker-compose.local.yml stop
-docker compose -f docker-compose.local.yml restart backend workers
-
-# Rebuild
-docker compose -f docker-compose.local.yml up -d --build
-
-# Reset local database (DESTRUCTIVE — local only)
-docker compose -f docker-compose.local.yml down -v
-docker compose -f docker-compose.local.yml up -d --build
-```
-
-### 2.4 Local tests
-
-```bash
-# Backend
-cd backend && source .venv/bin/activate && pytest tests/ -q
-
-# Frontend
-cd frontend && npm test
-```
-
-### 2.5 Local demo accounts
-
-`python scripts/seed_hierarchy.py` (password `password123`):
-
-| Role | Email |
-|---|---|
-| Super Admin | `super-admin@dentalpilot.ai` |
-| Clinic Owner | `owner@brightsmiledental.io` |
-| Clinic Staff | `staff@brightsmiledental.io` |
-
-Local only — never use in staging/production.
 
 ---
 
-## 3. Staging
+## 3. Core environment variables
 
-Staging is the same Docker Compose production stack with staging overrides:
+| Variable | Service | Required | Purpose | Local example | Production example | Setting |
+|---|---|---|---|
+| `APP_ENVIRONMENT` | backend, worker | ✅ | Environment mode (`development`/`test`/`staging`/`production`) | `development` | `production` | runtime |
+| `DATABASE_URL` | backend, worker | ✅ | SQLAlchemy connection string | `postgresql+psycopg://dentalpilot:local@postgres:5432/dentalpilot` | `postgresql+psycopg://…` | runtime |
+| `JWT_SECRET` | backend, worker | ✅ | JWT signing secret (32+ chars in production) | `local-dev-secret` | `<openssl rand -base64 48>` | runtime |
+| `JWT_ALGORITHM` | backend, worker | optional | JWT algorithm | `HS256` | `HS256` | runtime |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | optional | Access token lifetime | `30` | `30` | runtime |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | backend | optional | Refresh token lifetime | `30` | `30` | runtime |
+| `CORS_ORIGINS` | backend | ✅ in prod | Allowed frontend origins (JSON array) | `["http://localhost:4200"]` | `["https://dentalpilot.in"]` | runtime |
+| `MAX_PATIENT_DOCUMENT_BYTES` | backend, worker | optional | Upload size limit (bytes) | `25000000` | `25000000` | runtime |
+
+> **`DATABASE_URL` must use `postgresql+psycopg://`** — the `psycopg` 3 driver is installed, not `psycopg2`. Railway's `${{Postgres.DATABASE_URL}}` is `postgresql://…`; convert it.
+
+### Production validation
+
+`app/core/config.py` enforces in production:
+- `JWT_SECRET` is non-default and ≥32 characters.
+- `DATABASE_URL` is **not** SQLite.
+- `CORS_ORIGINS` does not contain `*`.
+- If Razorpay keys are set, `RAZORPAY_WEBHOOK_SECRET` and all paid tier/cycle plan IDs must be present.
+
+---
+
+## 4. Integration variables (all optional)
+
+Disabled integrations fail gracefully (endpoints return `503`) — the app still starts.
+
+| Variable | Service | Purpose | Notes |
+|---|---|---|---|
+| `ANTHROPIC_API_KEY` | backend, worker | Anthropic AI | Empty disables AI content |
+| `ANTHROPIC_MODEL` | backend, worker | Model name | Default `claude-opus-4-8` |
+| `CLINICAL_NOTE_DRAFTING_ENABLED` | backend | Enable AI note drafting | Requires `CLINICAL_AI_DATA_PROCESSING_APPROVED=true` |
+| `CLINICAL_AI_DATA_PROCESSING_APPROVED` | backend | Consent gate for AI notes | Must be explicitly true |
+| `RAZORPAY_KEY_ID` | backend, worker | Razorpay key | Set with secret |
+| `RAZORPAY_KEY_SECRET` | backend, worker | Razorpay secret | Set with key |
+| `RAZORPAY_WEBHOOK_SECRET` | backend, worker | Webhook signature verification | Required with Razorpay in production |
+| `RAZORPAY_CURRENCY` | backend, worker | Subscription currency | Default `INR` |
+| `RAZORPAY_PLAN_IDS` | backend, worker | Tier/cycle → plan IDs (JSON) | Required with Razorpay in production |
+| `PATIENT_PAYMENT_CURRENCY` | backend, worker | Treatment payment currency | Default `INR` |
+| `S3_BUCKET` | backend, worker | Document storage bucket | Empty disables uploads |
+| `S3_ENDPOINT_URL` | backend, worker | S3-compatible endpoint | Optional (AWS default) |
+| `AWS_REGION` | backend, worker | AWS region | Default `us-east-1` |
+| `S3_KMS_KEY_ID` | backend, worker | KMS key for SSE | Optional |
+| `SMTP_HOST` | backend, worker | SMTP server | Empty disables email |
+| `SMTP_PORT` | backend, worker | SMTP port | Default `587` |
+| `SMTP_USERNAME` | backend, worker | SMTP user | |
+| `SMTP_PASSWORD` | backend, worker | SMTP password | |
+| `SMTP_SENDER_EMAIL` | backend, worker | Sender address | |
+| `SMTP_SENDER_NAME` | backend, worker | Sender name | Default `DentalPilot AI` |
+| `SMTP_USE_SSL` | backend, worker | Implicit SSL | Default `false` |
+| `SMTP_USE_STARTTLS` | backend, worker | STARTTLS | Default `true` |
+| `EMAIL_WORKER_INTERVAL_SECONDS` | worker | Email poll interval | Default `10` |
+| `EMAIL_MAX_ATTEMPTS` | worker | Email retry cap | Default `5` |
+| `WHATSAPP_PHONE_NUMBER_ID` | backend, worker | WhatsApp sender ID | |
+| `WHATSAPP_ACCESS_TOKEN` | backend, worker | WhatsApp token | |
+| `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | backend, worker | Webhook verification | |
+| `SUBSCRIPTION_GRACE_PERIOD_DAYS` | worker | Grace period | Default `7` |
+| `BILLING_WEBHOOK_INTERVAL_SECONDS` | worker | Billing poll interval | Default `5` |
+| `BILLING_WEBHOOK_MAX_ATTEMPTS` | worker | Billing retry cap | Default `10` |
+| `SUBSCRIPTION_RECONCILIATION_INTERVAL_SECONDS` | worker | Reconciliation interval | Default `3600` |
+
+> **Redis is not used by application code.** `REDIS_HOST`/`REDIS_PORT` are passed by Docker Compose but no Redis client is installed or imported. The workers are PostgreSQL-backed.
+
+---
+
+## 5. Compose-only variables (not app config)
+
+These are used by `docker-compose.yml` / `docker-compose.local.yml`, not by `app/core/config.py`:
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `POSTGRES_USER` | Postgres container, backend DATABASE_URL | DB user |
+| `POSTGRES_PASSWORD` | Postgres container, backend DATABASE_URL | DB password |
+| `POSTGRES_DB` | Postgres container, backend DATABASE_URL | DB name |
+| `POSTGRES_PORT` | local Compose | Host port for Postgres |
+| `REDIS_PORT` | local Compose | Host port for Redis (unused by app) |
+| `BACKEND_PORT` | local Compose | Host port for FastAPI |
+| `REGISTRY` | production Compose | Image registry (e.g. `ghcr.io`) |
+| `IMAGE_NAME` | production Compose | Image name |
+| `IMAGE_TAG` | production Compose | Immutable tag (e.g. `sha-<commit>`) |
+
+---
+
+## 6. Local configuration
+
+- **Docker (recommended):** copy `.env.local.example` to `.env.local`, set `POSTGRES_PASSWORD`, `JWT_SECRET`, and `DATABASE_URL` (host `postgres`).
+- **Native:** copy `backend/.env.example` to `backend/.env`, set `JWT_SECRET` and `DATABASE_URL` (SQLite or Postgres).
+
+Full commands, hot reload, startup/shutdown and troubleshooting: [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md).
+
+## 7. Staging configuration
+
+Copy `.env.staging.example` to `.env.staging`, set staging-only credentials, and run:
 
 ```bash
-cp .env.staging.example .env.staging
-# Edit .env.staging: staging POSTGRES_PASSWORD, JWT_SECRET, CORS_ORIGINS, API keys
-
 docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 ```
 
-- HTTP-only Nginx on `http://localhost:8080`.
-- Uses the same GHCR images as production.
-- Staging data is a **separate** Postgres volume (`postgres_data` in the Compose project `dentalpilot-staging`).
-- Never reuse production credentials in staging.
+Staging uses HTTP-only Nginx on port `8080` and staging CORS origins. It must never reuse production secrets.
+
+## 8. Production configuration (Railway)
+
+Set variables in Railway → service → **Variables**:
+
+- **Backend + worker:** `DATABASE_URL`, `JWT_SECRET`, `APP_ENVIRONMENT=production`, `CORS_ORIGINS`, plus optional integrations.
+- **Frontend:** none at runtime; the API URL is build-time in `environment.prod.ts`.
+
+Full service-by-service instructions: [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md).
 
 ---
 
-## 4. Production (Railway)
+## 9. Data separation and safety
 
-### 4.1 Services
+### 9.1 Where data lives
 
-| Service | Root | Start | Public |
-|---|---|---|---|
-| `frontend` | `products/healthcare/dental/dentalpilot-ai/frontend` (or `frontend`) | Dockerfile → Nginx | Custom domain / `*.up.railway.app` |
-| `backend` | `.../dentalpilot-ai/backend` (or `backend`) | `alembic upgrade head && uvicorn ...` (`railway.toml`) | `api.dentalpilot.in` |
-| `worker` | same as backend | `python -m app.workers.run_workers` | No |
-| `Postgres` | Railway-managed | — | Private only |
-| `Redis` | **not used** | — | — |
-
-### 4.2 Production variables (backend + worker)
-
-Set in Railway → service → **Variables** (or `railway variables --set`):
-
-```
-DATABASE_URL=postgresql+psycopg://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}
-JWT_SECRET=<long random, 32+ chars>
-APP_ENVIRONMENT=production
-CORS_ORIGINS=["https://dentalpilot.in"]
-ANTHROPIC_API_KEY=...
-RAZORPAY_KEY_ID=...
-RAZORPAY_KEY_SECRET=...
-RAZORPAY_WEBHOOK_SECRET=...
-RAZORPAY_PLAN_IDS={"starter_monthly":"...","starter_annual":"...", ...}
-PATIENT_PAYMENT_CURRENCY=INR
-S3_BUCKET=...
-AWS_REGION=...
-SMTP_HOST=...
-SMTP_PORT=587
-SMTP_USERNAME=...
-SMTP_PASSWORD=...
-SMTP_SENDER_EMAIL=...
-WHATSAPP_PHONE_NUMBER_ID=...
-WHATSAPP_ACCESS_TOKEN=...
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=...
-```
-
-> **Critical:** use `postgresql+psycopg://`. Railway's `${{Postgres.DATABASE_URL}}` is `postgresql://...` and SQLAlchemy would try `psycopg2`, which is not installed.
-
-### 4.3 Production commands (Railway CLI)
-
-```bash
-railway login
-railway link                 # link to the project/service
-railway status
-railway variables            # list variables
-railway variables --set KEY=value
-railway logs                 # runtime logs
-railway run <command>        # run a command in the service context
-railway redeploy             # redeploy the current service
-railway open                 # open the service in the dashboard
-```
-
-**Deploy from local code** (uploads the current directory — use with care):
-
-```bash
-railway up
-```
-
-**Normal deploy:** push to the connected GitHub branch; Railway builds automatically.
-
-### 4.4 Verify production
-
-```bash
-curl https://api.dentalpilot.in/health
-curl https://api.dentalpilot.in/health/ready
-curl https://api.dentalpilot.in/docs
-curl -I https://dentalpilot.in/health
-```
-
----
-
-## 5. Environment variable comparison
-
-| Variable | Local (`docker-compose.local.yml`) | Production (Railway) |
-|---|---|---|
-| `APP_ENVIRONMENT` | `development` | `production` |
-| `DATABASE_URL` | `postgresql+psycopg://...@postgres:5432/...` or SQLite | `postgresql+psycopg://...` (Railway Postgres) |
-| `JWT_SECRET` | local-only random | long random (32+) |
-| `CORS_ORIGINS` | `["http://localhost:4200"]` | `["https://dentalpilot.in"]` |
-| `ANTHROPIC_API_KEY` | optional/empty | set |
-| `RAZORPAY_*` | optional/test | live + webhook secret + plan IDs |
-| `S3_*` | optional | private bucket |
-| `SMTP_*` | optional | set |
-| `WHATSAPP_*` | optional | set |
-| `POSTGRES_*` | local Compose | not used (Railway Postgres) |
-| `REGISTRY` / `IMAGE_TAG` | Compose production only | not used by Railway Nixpacks |
-
----
-
-## 6. Data separation and safety
-
-### 6.1 Where data lives
-
-| Environment | Database | Data location |
+| Environment | Database | Location |
 |---|---|---|
 | Local Docker | PostgreSQL 16 | Docker volume `dentalpilot-local_postgres_data` |
 | Local native | SQLite | `backend/dentalpilot.db` |
-| Staging Compose | PostgreSQL 16 | Docker volume `dentalpilot_postgres_data` (staging project) |
+| Staging Compose | PostgreSQL 16 | Docker volume `dentalpilot_postgres_data` |
 | Production | Railway PostgreSQL | Railway-managed |
 
-### 6.2 Never do these
+### 9.2 Never do these
 
-- ❌ Put production `DATABASE_URL` / `JWT_SECRET` / API keys in `.env`, `.env.local`, or `.env.staging`.
+- ❌ Put production `DATABASE_URL`, `JWT_SECRET` or API keys in `.env`, `.env.local` or `.env.staging`.
 - ❌ Point a local backend at a production Postgres host.
 - ❌ Run `docker compose ... down -v` against a staging/production Compose project.
 - ❌ Run `alembic downgrade` or `DROP`/`TRUNCATE` against production.
-- ❌ Commit `.env`, `.env.local`, `.env.production`, `.env.staging` (the root `.gitignore` ignores them).
+- ❌ Commit `.env*` files (the root `.gitignore` ignores them).
 
-### 6.3 Verify which database you are connected to
+### 9.3 Verify which database you are connected to
 
 ```bash
 # Native backend (venv active)
@@ -297,35 +204,22 @@ Expected:
 - Local native: `host= None db= ./dentalpilot.db`
 - Production: `host= <railway-postgres-host> db= /railway`
 
-### 6.4 Switching safely
+### 9.4 Switching safely
 
 **Local → production:** commit + push; Railway builds. Local env changes never affect production.
-
-**Production → local:** never copy production secrets to local. Create local-only values.
 
 **Before any production deploy:**
 
 1. `railway status` — confirm the correct project/service.
 2. `railway variables` — confirm `APP_ENVIRONMENT=production`, non-SQLite `DATABASE_URL`, `JWT_SECRET` set.
 3. Run tests locally (`pytest`, `npm test`).
-4. Use backward-compatible migrations (expand/contract).
+4. Use backward-compatible migrations.
 5. Deploy, then `curl /health/ready`.
 6. Keep the previous deployment for rollback.
 
 ---
 
-## 7. Logs, restart, stop
-
-| Action | Local | Production |
-|---|---|---|
-| Logs | `docker compose -f docker-compose.local.yml logs -f backend workers` | `railway logs` |
-| Restart | `docker compose -f docker-compose.local.yml restart backend workers` | `railway redeploy` |
-| Stop | `docker compose -f docker-compose.local.yml stop` | Railway service → Remove (careful) |
-| Status | `docker compose -f docker-compose.local.yml ps` | `railway status` |
-
----
-
-## 8. Troubleshooting
+## 10. Troubleshooting
 
 | Symptom | Check |
 |---|---|
@@ -333,16 +227,17 @@ Expected:
 | Local frontend cannot reach API | Backend on `:8000`; `CORS_ORIGINS` includes `http://localhost:4200` |
 | Production 500 on startup | `railway logs`; usually `DATABASE_URL` scheme or missing `JWT_SECRET` |
 | Production `psycopg2` error | `DATABASE_URL` must be `postgresql+psycopg://` |
-| Production migrations failed | `railway logs`; fix migration, redeploy |
+| Production migrations failed | `railway logs`; fix migration; redeploy |
 | Worker not sending | Check worker logs; SMTP/WhatsApp vars set |
-| Deployed commit is old | Railway → Deployments → Details; check the SHA |
+| Deployed commit is old | Railway → Deployments → Details → SHA |
 
 ---
 
-## 9. Related documentation
+## 11. Related documentation
 
 - [`README.md`](README.md) — overview and quick start.
-- [`backend/README.md`](backend/README.md) — backend setup and API.
-- [`frontend/README.md`](frontend/README.md) — Angular setup.
-- [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md) — Railway service-by-service.
-- [`DEPLOYMENT.md`](DEPLOYMENT.md) — Docker Compose / VPS.
+- [`LOCAL_DEVELOPMENT.md`](LOCAL_DEVELOPMENT.md) — full local setup and hot reload.
+- [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md) — production deployment.
+- [`backend/README.md`](backend/README.md) — backend/worker details.
+- [`frontend/README.md`](frontend/README.md) — Angular details.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution workflow.
