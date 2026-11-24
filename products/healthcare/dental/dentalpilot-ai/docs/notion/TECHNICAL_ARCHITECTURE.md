@@ -406,11 +406,12 @@ flowchart TB
 
 ## 21. Testing Architecture
 
-- **Backend:** `pytest` with `pytest.ini` (`pythonpath = .`, `testpaths = tests`). **25 tests pass** across:
-  - `test_healthcare_workflows.py` (22)
+- **Backend:** `pytest` with `pytest.ini` (`pythonpath = .`, `testpaths = tests`). **25 collected, 25 passed, 0 failed, 0 skipped** (Python 3.12 in Docker):
+  - `test_healthcare_workflows.py` (20)
   - `test_native_operations_and_organizations.py` (4)
   - `test_email_outbox.py` (1)
-- **Frontend:** Vitest via `@angular/build:unit-test`; **1 spec file** (`app.spec.ts`).
+- **Frontend:** `npm test` (Vitest) — **1 spec file, 1 test passed, 0 failed**. No e2e tests exist; no `lint` script exists.
+- **Not executed / not measured:** load tests, migration up/down tests, DAST, dependency CVE scan, production smoke tests.
 - **Gaps:** no auth/billing/subscription tests; no frontend component/service tests beyond the app spec; no e2e; no migration up/down tests; no load tests.
 - **CI:** the only workflow is `products/healthcare/dental/dentalpilot-ai/.github/workflows/ci-cd.yml` — **nested, so GitHub does not execute it**. No repo-root `.github/workflows/`.
 
@@ -425,6 +426,7 @@ flowchart TB
 - **Docker Compose production:** GHCR images, one-shot `migrate` service, Nginx with SSL, `deploy.sh`.
 - **Staging:** `docker-compose.staging.yml` (HTTP-only, port 8080).
 - **Known mismatch:** Railway uses Nixpacks `python311`; the Dockerfile uses Python 3.12. Align before standardizing.
+- **Verification status:** this deployment architecture is documented from `railway.toml`, `nixpacks.toml`, Dockerfiles and Nginx configs. It was **not executed** during this documentation effort. See [`SETUP_AND_DEPLOYMENT.md`](SETUP_AND_DEPLOYMENT.md) for the verification-status table.
 
 ---
 

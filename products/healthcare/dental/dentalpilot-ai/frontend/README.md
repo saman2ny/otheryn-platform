@@ -8,6 +8,7 @@ Angular 21 single-page application. This is a **concise component guide**; the a
 - TypeScript `~5.9.2` (strict), Tailwind CSS `^4.3.3`.
 - Vitest `^4.0.8` for unit tests; Prettier for formatting.
 - Node 22 LTS recommended (20.19+ minimum), npm 11.
+- Tested locally on Node v24.16.0 / npm 11.20.0; lockfile resolves Angular 21.2.18, TypeScript 5.9.3, Vitest 4.1.10. Deployment uses `node:20-alpine` (floating; must be ≥20.19); recommended Node 22 LTS.
 
 ## Commands
 

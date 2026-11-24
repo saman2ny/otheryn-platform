@@ -81,6 +81,8 @@ flowchart LR
 | Database | PostgreSQL | **16** (production/local Docker); SQLite (native default) |
 | Cache/queue | Redis | 7 in Compose — **not used by app code today** |
 
+> **Version verification:** tested locally on Node v24.16.0 / npm 11.20.0 and Python 3.12 (Docker). Deployment uses `node:20-alpine` (floating) and Railway Nixpacks `python311` (3.11) — see [`docs/notion/SETUP_AND_DEPLOYMENT.md`](docs/notion/SETUP_AND_DEPLOYMENT.md) §A.1.
+
 ---
 
 ## 3. Prerequisites

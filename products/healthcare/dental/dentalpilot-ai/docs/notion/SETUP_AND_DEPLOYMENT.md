@@ -32,6 +32,24 @@ python3.12 --version
 
 **Ports:** `4200` Angular, `8000` FastAPI, `5432` Postgres, `6379` Redis.
 
+### A.1 Version verification (tested vs deployed)
+
+| Component | Tested locally | Deployment configuration | Recommended |
+|---|---|---|---|
+| Node.js | v24.16.0 | `frontend/Dockerfile`: `node:20-alpine` (floating) | Node 22 LTS |
+| npm | 11.20.0 | `packageManager` `npm@11.6.2` | 11.x |
+| Angular | 21.2.18 (lockfile) | `npm ci` from `package-lock.json` | 21.2.x |
+| TypeScript | 5.9.3 (lockfile) | same | 5.9.x |
+| Vitest | 4.1.10 (lockfile) | same | 4.x |
+| Python | 3.12 (Docker `python:3.12-slim`) | Railway Nixpacks `python311` (3.11) | 3.12 (align Railway) |
+| FastAPI | 0.139.2 | same | 0.139.x |
+| SQLAlchemy | 2.0.51 | same | 2.0.x |
+| Alembic | 1.18.5 | same | 1.18.x |
+
+Angular 21 requires Node `^20.19.0 || ^22.12.0 || ^24.0.0`. `node:20-alpine` is a floating tag; pin a specific 20.19+ tag or digest for reproducible builds.
+
+**Known mismatch:** Railway uses Python 3.11 (Nixpacks) while the Dockerfile and local tests use Python 3.12. Align before standardizing. Do not change configuration as part of documentation.
+
 ---
 
 ## B. Local development architecture
@@ -275,13 +293,7 @@ alembic history
 python scripts/seed_hierarchy.py
 ```
 
-Demo accounts (local only, password `password123`):
-
-| Role | Email |
-|---|---|
-| Super Admin | `super-admin@dentalpilot.ai` |
-| Clinic Owner | `owner@brightsmiledental.io` |
-| Clinic Staff | `staff@brightsmiledental.io` |
+`python scripts/seed_hierarchy.py` creates local demo accounts (super admin, owner, staff) and prints their credentials to stdout. Run it **only against a local database**; never against staging or production, and never commit or publish the printed credentials.
 
 ### F.5 Backup and restore (local)
 
@@ -538,11 +550,31 @@ cp .env.production.example .env.production
 | CORS headers missing on 500 | `CatchAllExceptionMiddleware` must be registered **before** `CORSMiddleware` (historical bug) |
 | Deployed commit is old | Railway → Deployments → Details → SHA |
 
-**Production demo accounts (seeded; replace before real use):** `super-admin@dentalpilot.ai`, `owner@brightsmiledental.io`, `staff@brightsmiledental.io` — password `password123`. These are demo/test accounts, not production secrets.
+**Security action — demo accounts:** the local seed script creates known demo accounts. If it was ever run against a deployed database (historical documentation claims it was), those accounts must be **rotated or removed immediately** and their credentials must not be reused. Verify with the production owner; do not assume they are active or inactive.
 
 ---
 
-## L. Related documentation
+## L. Verification status
+
+| Claim | Status |
+|---|---|
+| Local Compose configuration | Configuration validated (`docker compose config`) |
+| Local backend container + tests | Locally tested (25 passed, 0 failed) |
+| Local frontend build + tests | Locally tested (build + 1 test) |
+| Angular dev server watch mode | Locally tested (starts in watch mode; no live edit test) |
+| Uvicorn `--reload` | Configuration validated (options); not live-tested |
+| Worker startup | Locally tested (3 threads start; DB error path observed) |
+| Nginx configurations | Configuration validated (`nginx -t`) |
+| Railway production deployment | Documented — **not executed** |
+| Production verify/rollback | Documented — **not executed** |
+| Backup/restore | Documented — **not executed** |
+| Production behavior/security | **Not verified** |
+
+No production deployment, backup/restore, or production behavior was executed during this documentation effort.
+
+---
+
+## M. Related documentation
 
 - [`BUSINESS_PROPOSAL.md`](BUSINESS_PROPOSAL.md) — business strategy.
 - [`TECHNICAL_ARCHITECTURE.md`](TECHNICAL_ARCHITECTURE.md) — engineering design.
