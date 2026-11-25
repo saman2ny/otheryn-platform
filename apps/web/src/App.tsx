@@ -25,6 +25,7 @@ import FAQ from './pages/FAQ';
 import Privacy from './pages/Privacy';
 import CookiePolicy from './pages/CookiePolicy';
 import Terms from './pages/Terms';
+import DocumentationPage from './pages/documentation/DocumentationPage';
 
 export default function App() {
   return (
@@ -53,6 +54,16 @@ export default function App() {
             <Route path="/careers" element={<Careers />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/documentation" element={<DocumentationPage />} />
+            <Route path="/documentation/getting-started" element={<DocumentationPage slug="getting-started" />} />
+            <Route path="/documentation/concepts" element={<DocumentationPage slug="concepts" />} />
+            <Route path="/documentation/architecture" element={<DocumentationPage slug="architecture" />} />
+            <Route path="/documentation/products" element={<DocumentationPage slug="products" />} />
+            <Route path="/documentation/api" element={<DocumentationPage slug="api" />} />
+            <Route path="/documentation/integrations" element={<DocumentationPage slug="integrations" />} />
+            <Route path="/documentation/security" element={<DocumentationPage slug="security" />} />
+            <Route path="/documentation/troubleshooting" element={<DocumentationPage slug="troubleshooting" />} />
+            <Route path="/documentation/changelog" element={<DocumentationPage slug="changelog" />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/terms" element={<Terms />} />

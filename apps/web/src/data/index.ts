@@ -28,7 +28,7 @@ export const footerLinks = {
     { label: 'Blog', href: '/blog' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Security', href: '/security' },
-    { label: 'Documentation', href: '/platform' },
+    { label: 'Documentation', href: '/documentation' },
   ],
   Legal: [
     { label: 'Privacy', href: '/privacy' },

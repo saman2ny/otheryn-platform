@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import URL
 
 
 class Settings(BaseSettings):
@@ -9,6 +10,16 @@ class Settings(BaseSettings):
 
     app_environment: Literal["development", "test", "staging", "production"] = "development"
     database_url: str = "sqlite:///./dentalpilot.db"
+
+    # Optional component-based PostgreSQL configuration. When these are set,
+    # the application builds the SQLAlchemy URL via URL.create() to avoid
+    # manual password interpolation/encoding issues.
+    postgres_host: str = "postgres"
+    postgres_port: int = 5432
+    postgres_user: str | None = None
+    postgres_password: str | None = None
+    postgres_db: str | None = None
+
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
@@ -52,6 +63,22 @@ class Settings(BaseSettings):
     whatsapp_phone_number_id: str | None = None
     whatsapp_access_token: str | None = None
     whatsapp_webhook_verify_token: str | None = None
+
+    @model_validator(mode="after")
+    def resolve_database_url(self) -> "Settings":
+        # Prefer explicit component-based Postgres config. This safely handles
+        # reserved URL characters in passwords without manual string encoding.
+        if self.postgres_user and self.postgres_password and self.postgres_db:
+            url = URL.create(
+                drivername="postgresql+psycopg",
+                username=self.postgres_user,
+                password=self.postgres_password,
+                host=self.postgres_host,
+                port=self.postgres_port,
+                database=self.postgres_db,
+            )
+            self.database_url = url.render_as_string(hide_password=False)
+        return self
 
     @model_validator(mode="after")
     def validate_production_configuration(self) -> "Settings":

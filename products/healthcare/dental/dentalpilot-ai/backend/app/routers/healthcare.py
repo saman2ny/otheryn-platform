@@ -15,7 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.core.deps import CurrentUser, DbSession
-from app.models.billing import PatientPaymentOrder
+from app.models.user import User
 from app.core.config import settings
 from app.models.healthcare import (
     AuditEvent,
@@ -46,7 +46,9 @@ from app.models.healthcare import (
     TreatmentStage,
 )
 from app.schemas.healthcare import (
+    AuditEventListResponse,
     AuditEventResponse,
+    AuditSummaryResponse,
     ClinicPerformanceAnalytics,
     CommunicationOutboxCreate,
     CommunicationOutboxResponse,
@@ -2250,15 +2252,278 @@ def update_reminder(
     return reminder
 
 
-@router.get("/audit", response_model=list[AuditEventResponse])
-def list_audit_events(current_user: CurrentUser, db: DbSession) -> list[AuditEvent]:
+AUDIT_RECORD_CHANGE_ACTIONS = {
+    "create",
+    "update",
+    "delete",
+    "import",
+    "revoke",
+    "approve",
+    "correct",
+    "verify",
+    "configure",
+}
+AUDIT_EXPORT_ACTIONS = {"export", "download"}
+AUDIT_FAILED_OUTCOMES = {"failed", "denied", "error", "rejected"}
+
+
+def _audit_outcome(detail: dict | None) -> str:
+    if not isinstance(detail, dict):
+        return "success"
+    for key in ("outcome", "status", "result"):
+        value = detail.get(key)
+        if isinstance(value, str) and value.lower() in AUDIT_FAILED_OUTCOMES:
+            return "failed"
+    if detail.get("success") is False:
+        return "failed"
+    return "success"
+
+
+def _mask_reference(value: str | None) -> str | None:
+    if not value:
+        return None
+    if len(value) <= 4:
+        return "****"
+    return f"****{value[-4:]}"
+
+
+def _audit_patient_reference(event: AuditEvent) -> str | None:
+    detail = event.detail if isinstance(event.detail, dict) else {}
+    for key in ("patientReference", "patientId", "patient_id"):
+        value = detail.get(key)
+        if isinstance(value, str) and value.strip():
+            return _mask_reference(value)
+    if event.resource_type in {"patient", "patient-record", "patient-enquiry", "treatment-plan", "health-record"} and event.resource_id:
+        return _mask_reference(event.resource_id)
+    return None
+
+
+def _audit_detail_for_response(event: AuditEvent, include_sensitive: bool) -> dict:
+    detail = dict(event.detail) if isinstance(event.detail, dict) else {}
+    for key in list(detail.keys()):
+        lower = key.lower()
+        if lower in {"patientid", "patient_id", "email", "phone", "fullname", "full_name"}:
+            detail[key] = _mask_reference(str(detail[key])) if detail[key] is not None else None
+        if not include_sensitive and ("token" in lower or "secret" in lower or "password" in lower):
+            detail[key] = "[redacted]"
+    return detail
+
+
+def _audit_event_response(event: AuditEvent, actor_names: dict[str, str], can_view_sensitive: bool) -> AuditEventResponse:
+    detail = _audit_detail_for_response(event, can_view_sensitive)
+    return AuditEventResponse(
+        id=event.id,
+        clinic_id=event.clinic_id,
+        branch_id=event.branch_id,
+        actor_id=event.actor_id,
+        actor_type=event.actor_type,
+        actor_name=actor_names.get(event.actor_id) if event.actor_id else event.actor_type,
+        action=event.action,
+        resource_type=event.resource_type,
+        resource_id=event.resource_id,
+        patient_reference=_audit_patient_reference(event),
+        outcome=_audit_outcome(event.detail if isinstance(event.detail, dict) else {}),
+        detail=detail,
+        created_at=event.created_at,
+    )
+
+
+def _audit_base_query(current_user: CurrentUser, db: DbSession):
     query = db.query(AuditEvent).filter(AuditEvent.clinic_id == current_user.clinic_id)
     if current_user.role == "staff" and current_user.branch_id:
         query = query.filter(
-            (AuditEvent.branch_id == current_user.branch_id)
-            | (AuditEvent.branch_id.is_(None))
+            (AuditEvent.branch_id == current_user.branch_id) | (AuditEvent.branch_id.is_(None))
         )
-    return query.order_by(AuditEvent.created_at.desc()).limit(200).all()
+    return query
+
+
+@router.get("/audit/summary", response_model=AuditSummaryResponse)
+def audit_summary(
+    current_user: CurrentUser,
+    db: DbSession,
+    q: str | None = None,
+    action: str | None = None,
+    resource_type: str | None = None,
+    actor_id: str | None = None,
+    outcome: str | None = None,
+    branch_id: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    event_id: str | None = None,
+    ip_address: str | None = None,
+) -> AuditSummaryResponse:
+    items, total, _, _, _ = _query_audit_events(
+        current_user, db, q=q, action=action, resource_type=resource_type, actor_id=actor_id,
+        outcome=outcome, branch_id=branch_id, date_from=date_from, date_to=date_to,
+        event_id=event_id, ip_address=ip_address, page=1, page_size=10000, paginate=False,
+    )
+    record_changes = sum(1 for e in items if e.action in AUDIT_RECORD_CHANGE_ACTIONS)
+    exports = sum(1 for e in items if e.action in AUDIT_EXPORT_ACTIONS)
+    failed_denied = sum(1 for e in items if _audit_outcome(e.detail if isinstance(e.detail, dict) else {}) in AUDIT_FAILED_OUTCOMES)
+    return AuditSummaryResponse(total_events=total, record_changes=record_changes, exports=exports, failed_denied=failed_denied)
+
+
+def _query_audit_events(
+    current_user: CurrentUser,
+    db: DbSession,
+    *,
+    q: str | None,
+    action: str | None,
+    resource_type: str | None,
+    actor_id: str | None,
+    outcome: str | None,
+    branch_id: str | None,
+    date_from: datetime | None,
+    date_to: datetime | None,
+    event_id: str | None,
+    ip_address: str | None,
+    page: int,
+    page_size: int,
+    paginate: bool,
+):
+    query = _audit_base_query(current_user, db)
+    if event_id:
+        query = query.filter(AuditEvent.id == event_id)
+    if action:
+        query = query.filter(AuditEvent.action == action)
+    if resource_type:
+        query = query.filter(AuditEvent.resource_type == resource_type)
+    if actor_id:
+        query = query.filter(AuditEvent.actor_id == actor_id)
+    if branch_id:
+        query = query.filter(AuditEvent.branch_id == branch_id)
+    if date_from:
+        query = query.filter(AuditEvent.created_at >= date_from)
+    if date_to:
+        query = query.filter(AuditEvent.created_at <= date_to)
+    if ip_address:
+        # ipAddress may be stored in detail JSON in future; filter safely
+        try:
+            query = query.filter(AuditEvent.detail["ipAddress"].as_string() == ip_address)
+        except Exception:
+            pass
+
+    rows = query.order_by(AuditEvent.created_at.desc()).all()
+
+    actor_ids = {e.actor_id for e in rows if e.actor_id}
+    actor_names: dict[str, str] = {}
+    if actor_ids:
+        users = db.query(User).filter(User.id.in_(actor_ids)).all()
+        actor_names = {u.id: u.full_name for u in users}
+
+    filtered: list[AuditEvent] = []
+    q_lower = q.lower().strip() if q else ""
+    outcome_lower = outcome.lower().strip() if outcome else ""
+    for event in rows:
+        response_outcome = _audit_outcome(event.detail if isinstance(event.detail, dict) else {})
+        if outcome_lower and response_outcome != outcome_lower:
+            continue
+        if q_lower:
+            actor_name = (actor_names.get(event.actor_id) or event.actor_type or "").lower()
+            patient_ref = (_audit_patient_reference(event) or "").lower()
+            haystack = " ".join([
+                event.id.lower(),
+                event.action.lower(),
+                event.resource_type.lower(),
+                (event.resource_id or "").lower(),
+                actor_name,
+                patient_ref,
+                json.dumps(event.detail, default=str).lower() if isinstance(event.detail, dict) else "",
+            ])
+            if q_lower not in haystack:
+                continue
+        filtered.append(event)
+
+    total = len(filtered)
+    if paginate:
+        start = (page - 1) * page_size
+        end = start + page_size
+        return filtered[start:end], total, actor_names, page, page_size
+    return filtered, total, actor_names, page, page_size
+
+
+@router.get("/audit", response_model=AuditEventListResponse)
+def list_audit_events(
+    current_user: CurrentUser,
+    db: DbSession,
+    q: str | None = None,
+    action: str | None = None,
+    resource_type: str | None = None,
+    actor_id: str | None = None,
+    outcome: str | None = None,
+    branch_id: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    event_id: str | None = None,
+    ip_address: str | None = None,
+    page: int = 1,
+    page_size: int = 25,
+) -> AuditEventListResponse:
+    page = max(1, page)
+    page_size = min(max(page_size, 1), 100)
+    items, total, actor_names, _, _ = _query_audit_events(
+        current_user, db, q=q, action=action, resource_type=resource_type, actor_id=actor_id,
+        outcome=outcome, branch_id=branch_id, date_from=date_from, date_to=date_to,
+        event_id=event_id, ip_address=ip_address, page=page, page_size=page_size, paginate=True,
+    )
+    can_view_sensitive = current_user.role in ("owner", "super_admin")
+    return AuditEventListResponse(
+        items=[_audit_event_response(e, actor_names, can_view_sensitive) for e in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=max(1, (total + page_size - 1) // page_size),
+    )
+
+
+@router.get("/audit/export")
+def export_audit_events(
+    current_user: CurrentUser,
+    db: DbSession,
+    q: str | None = None,
+    action: str | None = None,
+    resource_type: str | None = None,
+    actor_id: str | None = None,
+    outcome: str | None = None,
+    branch_id: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    event_id: str | None = None,
+    ip_address: str | None = None,
+) -> StreamingResponse:
+    if current_user.role not in ("owner", "super_admin", "staff"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not authorized to export audit events.")
+    items, total, actor_names, _, _ = _query_audit_events(
+        current_user, db, q=q, action=action, resource_type=resource_type, actor_id=actor_id,
+        outcome=outcome, branch_id=branch_id, date_from=date_from, date_to=date_to,
+        event_id=event_id, ip_address=ip_address, page=1, page_size=10000, paginate=False,
+    )
+    can_view_sensitive = current_user.role in ("owner", "super_admin")
+    output = io.StringIO(newline="")
+    columns = ["timestamp", "eventId", "actor", "actorType", "action", "resourceType", "resourceId", "patientReference", "branchId", "outcome"]
+    writer = csv.DictWriter(output, fieldnames=columns)
+    writer.writeheader()
+    for event in items:
+        row = _audit_event_response(event, actor_names, can_view_sensitive)
+        writer.writerow({
+            "timestamp": row.created_at.isoformat(),
+            "eventId": row.id,
+            "actor": row.actor_name or row.actor_type,
+            "actorType": row.actor_type,
+            "action": row.action,
+            "resourceType": row.resource_type,
+            "resourceId": row.resource_id or "",
+            "patientReference": row.patient_reference or "",
+            "branchId": row.branch_id or "",
+            "outcome": row.outcome,
+        })
+    audit(db, current_user, "export", "audit-events", detail={"count": total, "filters": {"q": q, "action": action, "resourceType": resource_type, "outcome": outcome}})
+    db.commit()
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="dentalpilot-audit-events.csv"'},
+    )
 
 
 @router.get("/integrations", response_model=list[IntegrationConnectionResponse])

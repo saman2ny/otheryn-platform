@@ -5,6 +5,9 @@ import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS } from '../../core/constants/api-endpoints.const';
 import {
   AuditEvent,
+  AuditEventListResponse,
+  AuditFilters,
+  AuditSummary,
   ClinicBranch,
   ClinicPerformanceAnalytics,
   CommunicationOutbox,
@@ -387,8 +390,37 @@ export class DentalPilotWorkflowsService {
     return this.http.get<RecallReminder[]>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.reminders}`);
   }
 
-  listAudit(): Observable<AuditEvent[]> {
-    return this.http.get<AuditEvent[]>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.audit}`);
+  listAudit(filters: AuditFilters = {}): Observable<AuditEventListResponse> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get<AuditEventListResponse>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.audit}`, { params });
+  }
+
+  getAuditSummary(filters: AuditFilters = {}): Observable<AuditSummary> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'pageSize') {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get<AuditSummary>(`${this.baseUrl}/${API_ENDPOINTS.healthcare.audit}/summary`, { params });
+  }
+
+  exportAuditCsv(filters: AuditFilters = {}): Observable<Blob> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'pageSize') {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.baseUrl}/${API_ENDPOINTS.healthcare.audit}/export`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   listIntegrations(): Observable<IntegrationConnection[]> {

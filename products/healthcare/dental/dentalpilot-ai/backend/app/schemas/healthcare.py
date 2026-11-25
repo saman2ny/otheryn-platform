@@ -680,12 +680,33 @@ class IntegrationSyncResponse(CamelModel):
 
 class AuditEventResponse(CamelModel):
     id: str
+    clinic_id: str
+    branch_id: str | None = None
     actor_id: str | None = None
+    actor_type: str
+    actor_name: str | None = None
     action: str
     resource_type: str
     resource_id: str | None = None
+    patient_reference: str | None = None
+    outcome: str = "success"
     detail: dict
     created_at: datetime
+
+
+class AuditEventListResponse(CamelModel):
+    items: list[AuditEventResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class AuditSummaryResponse(CamelModel):
+    total_events: int
+    record_changes: int
+    exports: int
+    failed_denied: int
 
 
 class IntegrationConnectionCreate(CamelModel):

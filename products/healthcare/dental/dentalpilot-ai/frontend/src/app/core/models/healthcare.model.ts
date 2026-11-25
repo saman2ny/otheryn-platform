@@ -511,12 +511,48 @@ export interface RecordConsent {
 
 export interface AuditEvent {
   id: string;
-  actorId?: string;
+  clinicId?: string;
+  branchId?: string | null;
+  actorId?: string | null;
+  actorType: string;
+  actorName?: string | null;
   action: string;
   resourceType: string;
-  resourceId?: string;
+  resourceId?: string | null;
+  patientReference?: string | null;
+  outcome: 'success' | 'failed';
   detail: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface AuditEventListResponse {
+  items: AuditEvent[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface AuditSummary {
+  totalEvents: number;
+  recordChanges: number;
+  exports: number;
+  failedDenied: number;
+}
+
+export interface AuditFilters {
+  q?: string;
+  action?: string;
+  resourceType?: string;
+  actorId?: string;
+  outcome?: string;
+  branchId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  eventId?: string;
+  ipAddress?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface IntegrationConnection {

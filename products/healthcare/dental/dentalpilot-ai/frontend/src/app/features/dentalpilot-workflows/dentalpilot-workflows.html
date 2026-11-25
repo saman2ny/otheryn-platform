@@ -1726,22 +1726,195 @@
 }
 
 @if (activeTab() === 'governance') {
-  <section class="rounded-lg border border-zinc-200 bg-white p-5">
-    <h2 class="mb-3 font-semibold text-zinc-900">Security & access audit</h2>
-    <p class="mb-4 text-sm text-zinc-500">
-      Clinic-scoped history of patient-record access, changes, sharing, and exports.
-    </p>
-    <div class="grid gap-2">
-      @for (event of audit(); track event.id) {
-        <div class="rounded-md border border-zinc-200 bg-white p-3 text-sm">
-          <strong>{{ event.action }}</strong> · {{ event.resourceType }}
-          <div class="text-xs text-zinc-500">{{ event.createdAt | date: 'medium' }}</div>
+  <section class="space-y-4">
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-xl border border-[#d7dce8] bg-white/80 p-4 shadow-sm">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Total events</p>
+        <p class="mt-2 text-2xl font-semibold text-[#17213b]">{{ auditSummary()?.totalEvents ?? 0 }}</p>
+      </div>
+      <div class="rounded-xl border border-[#d7dce8] bg-white/80 p-4 shadow-sm">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Record changes</p>
+        <p class="mt-2 text-2xl font-semibold text-[#17213b]">{{ auditSummary()?.recordChanges ?? 0 }}</p>
+      </div>
+      <div class="rounded-xl border border-[#d7dce8] bg-white/80 p-4 shadow-sm">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Exports</p>
+        <p class="mt-2 text-2xl font-semibold text-[#17213b]">{{ auditSummary()?.exports ?? 0 }}</p>
+      </div>
+      <div class="rounded-xl border border-[#d7dce8] bg-white/80 p-4 shadow-sm">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Failed / denied</p>
+        <p class="mt-2 text-2xl font-semibold text-[#b94f32]">{{ auditSummary()?.failedDenied ?? 0 }}</p>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-[#d7dce8] bg-white/85 p-4 shadow-sm">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-[#17213b]">Audit Explorer</h2>
+          <p class="text-sm text-slate-500">Clinic-scoped, append-only audit history. Counts reflect current filters.</p>
         </div>
-      } @empty {
-        <p class="text-sm text-zinc-500">No audit events yet.</p>
+        <div class="flex gap-2">
+          <button type="button" class="rounded-md border border-[#d7dce8] px-3 py-2 text-xs font-semibold text-[#17213b]" (click)="auditAdvancedOpen.set(!auditAdvancedOpen())">
+            {{ auditAdvancedOpen() ? 'Hide advanced' : 'Advanced filters' }}
+          </button>
+          <button type="button" class="rounded-md bg-[#2848e8] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" [disabled]="auditExporting()" (click)="exportAuditCsv()">
+            {{ auditExporting() ? 'Exporting...' : 'Export CSV' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <label class="text-xs text-slate-600">Search
+          <input class="mt-1 w-full rounded-md border border-[#d7dce8] px-3 py-2 text-sm" [ngModel]="auditFilters().q" (ngModelChange)="updateAuditFilter('q', $event)" placeholder="User, patient ref, event, resource" />
+        </label>
+        <label class="text-xs text-slate-600">Event type
+          <select class="dp-select mt-1 w-full" [ngModel]="auditFilters().action" (ngModelChange)="updateAuditFilter('action', $event)">
+            <option value="">All actions</option>
+            <option value="access">access</option><option value="create">create</option><option value="update">update</option><option value="delete">delete</option><option value="export">export</option><option value="download">download</option><option value="import">import</option><option value="approve">approve</option><option value="revoke">revoke</option>
+          </select>
+        </label>
+        <label class="text-xs text-slate-600">Resource
+          <select class="dp-select mt-1 w-full" [ngModel]="auditFilters().resourceType" (ngModelChange)="updateAuditFilter('resourceType', $event)">
+            <option value="">All resources</option>
+            <option value="patient">patient</option><option value="patient-enquiries">patient-enquiries</option><option value="health-records">health-records</option><option value="health-record">health-record</option><option value="record-consents">record-consents</option><option value="recall-reminders">recall-reminders</option><option value="audit-events">audit-events</option><option value="patient-csv">patient-csv</option>
+          </select>
+        </label>
+        <label class="text-xs text-slate-600">User
+          <select class="dp-select mt-1 w-full" [ngModel]="auditFilters().actorId" (ngModelChange)="updateAuditFilter('actorId', $event)">
+            <option value="">All users</option>
+            @for (member of staff(); track member.id) {
+              <option [value]="member.id">{{ member.fullName }}</option>
+            }
+          </select>
+        </label>
+        <label class="text-xs text-slate-600">Date from
+          <input type="datetime-local" class="mt-1 w-full rounded-md border border-[#d7dce8] px-3 py-2 text-sm" [ngModel]="auditFilters().dateFrom" (ngModelChange)="updateAuditFilter('dateFrom', $event)" />
+        </label>
+        <label class="text-xs text-slate-600">Date to
+          <input type="datetime-local" class="mt-1 w-full rounded-md border border-[#d7dce8] px-3 py-2 text-sm" [ngModel]="auditFilters().dateTo" (ngModelChange)="updateAuditFilter('dateTo', $event)" />
+        </label>
+        <label class="text-xs text-slate-600">Status
+          <select class="dp-select mt-1 w-full" [ngModel]="auditFilters().outcome" (ngModelChange)="updateAuditFilter('outcome', $event)">
+            <option value="">All outcomes</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed/denied</option>
+          </select>
+        </label>
+        <label class="text-xs text-slate-600">Branch
+          <select class="dp-select mt-1 w-full" [ngModel]="auditFilters().branchId" (ngModelChange)="updateAuditFilter('branchId', $event)">
+            <option value="">All branches</option>
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (auditAdvancedOpen()) {
+        <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <label class="text-xs text-slate-600">Event ID
+            <input class="mt-1 w-full rounded-md border border-[#d7dce8] px-3 py-2 text-sm" [ngModel]="auditFilters().eventId" (ngModelChange)="updateAuditFilter('eventId', $event)" placeholder="Exact event ID" />
+          </label>
+          <label class="text-xs text-slate-600">IP address
+            <input class="mt-1 w-full rounded-md border border-[#d7dce8] px-3 py-2 text-sm" [ngModel]="auditFilters().ipAddress" (ngModelChange)="updateAuditFilter('ipAddress', $event)" placeholder="If available in metadata" />
+          </label>
+        </div>
       }
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" class="rounded-md bg-[#2848e8] px-3 py-2 text-xs font-semibold text-white" (click)="applyAuditFilters()">Apply filters</button>
+        <button type="button" class="rounded-md border border-[#d7dce8] px-3 py-2 text-xs font-semibold text-[#17213b]" (click)="clearAuditFilters()">Clear all filters</button>
+      </div>
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-[#d7dce8] bg-white/85 shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-[#f4f6fb] text-[11px] uppercase tracking-[0.12em] text-slate-500">
+            <tr>
+              <th class="px-3 py-3">Timestamp</th>
+              <th class="px-3 py-3">User / Actor</th>
+              <th class="px-3 py-3">Action</th>
+              <th class="px-3 py-3">Resource</th>
+              <th class="px-3 py-3">Patient ref</th>
+              <th class="px-3 py-3">Branch</th>
+              <th class="px-3 py-3">Status</th>
+              <th class="px-3 py-3">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (auditLoading()) {
+              <tr><td colspan="8" class="px-3 py-8 text-center text-sm text-slate-500">Loading audit events...</td></tr>
+            } @else {
+              @for (event of audit(); track event.id) {
+                <tr class="border-t border-[#e6e9f2] align-top">
+                  <td class="px-3 py-3 whitespace-nowrap text-slate-600">{{ event.createdAt | date: 'medium' }}</td>
+                  <td class="px-3 py-3 text-[#17213b]">{{ event.actorName || event.actorType }}</td>
+                  <td class="px-3 py-3"><span class="rounded-full bg-[#eef2ff] px-2 py-1 text-[11px] font-semibold text-[#2848e8]">{{ event.action }}</span></td>
+                  <td class="px-3 py-3 text-slate-700">{{ event.resourceType }}@if (event.resourceId) { <span class="text-slate-400">#{{ event.resourceId.slice(-6) }}</span> }</td>
+                  <td class="px-3 py-3 text-slate-600">{{ event.patientReference || '—' }}</td>
+                  <td class="px-3 py-3 text-slate-600">{{ event.branchId ? event.branchId.slice(-6) : 'Clinic' }}</td>
+                  <td class="px-3 py-3">
+                    <span class="rounded-full px-2 py-1 text-[11px] font-semibold" [class.bg-emerald-50]="event.outcome === 'success'" [class.text-emerald-700]="event.outcome === 'success'" [class.bg-red-50]="event.outcome !== 'success'" [class.text-red-700]="event.outcome !== 'success'">
+                      {{ event.outcome }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-3"><button type="button" class="text-xs font-semibold text-[#2848e8] underline" (click)="openAuditEvent(event)">View</button></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="8" class="px-3 py-8 text-center text-sm text-slate-500">No audit events match the selected filters.</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col gap-3 border-t border-[#e6e9f2] px-3 py-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-2">
+          <span>{{ auditTotal() }} results</span>
+          <label class="flex items-center gap-2">Rows
+            <select class="dp-select !py-1 !text-xs" [ngModel]="auditPageSize()" (ngModelChange)="changeAuditPageSize(+$event)">
+              @for (size of auditPageSizeOptions; track size) { <option [value]="size">{{ size }}</option> }
+            </select>
+          </label>
+        </div>
+        <div class="flex flex-wrap items-center gap-1">
+          <button type="button" class="rounded border border-[#d7dce8] px-2 py-1 text-xs disabled:opacity-40" [disabled]="auditPage() <= 1" (click)="changeAuditPage(auditPage() - 1)">Previous</button>
+          @for (p of auditPageNumbers(); track p) {
+            <button type="button" class="rounded border px-2 py-1 text-xs" [class.bg-[#2848e8]]="p === auditPage()" [class.text-white]="p === auditPage()" [class.border-[#2848e8]]="p === auditPage()" [class.border-[#d7dce8]]="p !== auditPage()" (click)="changeAuditPage(p)">{{ p }}</button>
+          }
+          <button type="button" class="rounded border border-[#d7dce8] px-2 py-1 text-xs disabled:opacity-40" [disabled]="auditPage() >= auditTotalPages()" (click)="changeAuditPage(auditPage() + 1)">Next</button>
+        </div>
+      </div>
     </div>
   </section>
+
+  @if (selectedAuditEvent(); as selected) {
+    <div class="fixed inset-0 z-50 flex justify-end bg-[#17213b]/20 backdrop-blur-[1px]" (click)="closeAuditEvent()">
+      <aside class="h-full w-full max-w-xl overflow-y-auto border-l border-[#d7dce8] bg-[#f7f4ec] p-5 shadow-2xl" (click)="$event.stopPropagation()">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Audit event details</p>
+            <h3 class="mt-1 text-xl font-semibold text-[#17213b]">{{ selected.action }} · {{ selected.resourceType }}</h3>
+          </div>
+          <button type="button" class="rounded-md border border-[#d7dce8] px-3 py-1.5 text-xs font-semibold" (click)="closeAuditEvent()">Close</button>
+        </div>
+        <dl class="mt-5 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+          <div><dt class="text-slate-500">Event ID</dt><dd class="font-mono text-xs text-[#17213b] break-all">{{ selected.id }}</dd></div>
+          <div><dt class="text-slate-500">Timestamp</dt><dd class="text-[#17213b]">{{ selected.createdAt | date: 'medium' }}</dd></div>
+          <div><dt class="text-slate-500">Actor</dt><dd class="text-[#17213b]">{{ selected.actorName || selected.actorType }}</dd></div>
+          <div><dt class="text-slate-500">Actor type</dt><dd class="text-[#17213b]">{{ selected.actorType }}</dd></div>
+          <div><dt class="text-slate-500">Resource</dt><dd class="text-[#17213b]">{{ selected.resourceType }}</dd></div>
+          <div><dt class="text-slate-500">Resource ID</dt><dd class="font-mono text-xs text-[#17213b] break-all">{{ selected.resourceId || '—' }}</dd></div>
+          <div><dt class="text-slate-500">Patient reference</dt><dd class="text-[#17213b]">{{ selected.patientReference || '—' }}</dd></div>
+          <div><dt class="text-slate-500">Branch</dt><dd class="text-[#17213b]">{{ selected.branchId || 'Clinic' }}</dd></div>
+          <div><dt class="text-slate-500">Outcome</dt><dd class="text-[#17213b]">{{ selected.outcome }}</dd></div>
+        </dl>
+        <div class="mt-5">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Metadata</p>
+          <pre class="mt-2 overflow-x-auto rounded-lg border border-[#d7dce8] bg-white p-3 text-xs text-slate-700">{{ selected.detail | json }}</pre>
+        </div>
+      </aside>
+    </div>
+  }
 }
 
 @if (activeTab() === 'clinic') {

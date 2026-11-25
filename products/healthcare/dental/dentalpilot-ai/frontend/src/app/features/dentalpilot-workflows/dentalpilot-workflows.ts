@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, JsonPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,6 +8,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { TreatmentPaymentOrder, VerifyPaymentRequest } from '../../core/models/billing.model';
 import {
   AuditEvent,
+  AuditEventListResponse,
+  AuditFilters,
+  AuditSummary,
   ClinicBranch,
   ClinicPerformanceAnalytics,
   InsuranceClaim,
@@ -83,7 +86,7 @@ interface InsuranceClaimEditForm {
 
 @Component({
   selector: 'dp-dentalpilot-workflows',
-  imports: [FormsModule, DatePipe, PageHeader, StatCard],
+  imports: [FormsModule, DatePipe, JsonPipe, PageHeader, StatCard],
   templateUrl: './dentalpilot-workflows.html',
 })
 export class DentalPilotWorkflows {
@@ -121,6 +124,28 @@ export class DentalPilotWorkflows {
   protected readonly pmsReconciliationRows = signal<PmsReconciliationRow[]>([]);
   protected readonly selectedPmsRunId = signal('');
   protected readonly audit = signal<AuditEvent[]>([]);
+  protected readonly auditSummary = signal<AuditSummary | null>(null);
+  protected readonly auditTotal = signal(0);
+  protected readonly auditPage = signal(1);
+  protected readonly auditPageSize = signal(25);
+  protected readonly auditTotalPages = signal(1);
+  protected readonly auditLoading = signal(false);
+  protected readonly auditExporting = signal(false);
+  protected readonly selectedAuditEvent = signal<AuditEvent | null>(null);
+  protected readonly auditFilters = signal<AuditFilters>({
+    q: '',
+    action: '',
+    resourceType: '',
+    actorId: '',
+    outcome: '',
+    branchId: '',
+    dateFrom: '',
+    dateTo: '',
+    eventId: '',
+    ipAddress: '',
+  });
+  protected readonly auditAdvancedOpen = signal(false);
+  protected readonly auditPageSizeOptions = [10, 25, 50, 100];
   protected readonly integrations = signal<IntegrationConnection[]>([]);
   protected readonly consents = signal<RecordConsent[]>([]);
   protected readonly recovery = signal<RevenueRecoverySummary | null>(null);
@@ -263,7 +288,9 @@ export class DentalPilotWorkflows {
   constructor() {
     this.route.queryParamMap.subscribe((params) => {
       const tab = params.get('tab');
-      this.activeTab.set(isWorkflowTab(tab) ? tab : 'overview');
+      const nextTab = isWorkflowTab(tab) ? tab : 'overview';
+      this.activeTab.set(nextTab);
+      if (nextTab === 'governance') this.loadAudit(1);
     });
     this.load();
   }
@@ -1252,6 +1279,97 @@ export class DentalPilotWorkflows {
     });
   }
 
+  protected loadAudit(page = this.auditPage()): void {
+    this.auditLoading.set(true);
+    const filters = { ...this.auditFilters(), page, pageSize: this.auditPageSize() };
+    forkJoin({
+      list: this.service.listAudit(filters),
+      summary: this.service.getAuditSummary(filters),
+    }).subscribe({
+      next: ({ list, summary }) => {
+        this.audit.set(list.items);
+        this.auditTotal.set(list.total);
+        this.auditPage.set(list.page);
+        this.auditPageSize.set(list.pageSize);
+        this.auditTotalPages.set(list.totalPages);
+        this.auditSummary.set(summary);
+        this.auditLoading.set(false);
+      },
+      error: () => {
+        this.auditLoading.set(false);
+        this.notifications.error('Unable to load audit events.');
+      },
+    });
+  }
+
+  protected updateAuditFilter(key: keyof AuditFilters, value: string): void {
+    this.auditFilters.update((f) => ({ ...f, [key]: value }));
+  }
+
+  protected applyAuditFilters(): void {
+    this.auditPage.set(1);
+    this.loadAudit(1);
+  }
+
+  protected clearAuditFilters(): void {
+    this.auditFilters.set({
+      q: '', action: '', resourceType: '', actorId: '', outcome: '', branchId: '',
+      dateFrom: '', dateTo: '', eventId: '', ipAddress: '',
+    });
+    this.auditPage.set(1);
+    this.loadAudit(1);
+  }
+
+  protected changeAuditPage(page: number): void {
+    const next = Math.min(Math.max(1, page), this.auditTotalPages());
+    this.loadAudit(next);
+  }
+
+  protected changeAuditPageSize(size: number): void {
+    this.auditPageSize.set(size);
+    this.auditPage.set(1);
+    this.loadAudit(1);
+  }
+
+  protected openAuditEvent(event: AuditEvent): void {
+    this.selectedAuditEvent.set(event);
+  }
+
+  protected closeAuditEvent(): void {
+    this.selectedAuditEvent.set(null);
+  }
+
+  protected exportAuditCsv(): void {
+    this.auditExporting.set(true);
+    this.service.exportAuditCsv(this.auditFilters()).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'dentalpilot-audit-events.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+        this.auditExporting.set(false);
+        this.notifications.success('Audit CSV export downloaded.');
+        this.loadAudit(this.auditPage());
+      },
+      error: () => {
+        this.auditExporting.set(false);
+        this.notifications.error('Unable to export audit events.');
+      },
+    });
+  }
+
+  protected auditPageNumbers(): number[] {
+    const total = this.auditTotalPages();
+    const current = this.auditPage();
+    const pages: number[] = [];
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, start + 4);
+    for (let i = Math.max(1, end - 4); i <= end; i++) pages.push(i);
+    return pages;
+  }
+
   protected exportCsv(): void {
     this.exportingCsv.set(true);
     this.service.exportCsv().subscribe({
@@ -1276,7 +1394,8 @@ export class DentalPilotWorkflows {
       plans: this.service.listPlans(),
       records: this.service.listRecords(),
       reminders: this.service.listReminders(),
-      audit: this.service.listAudit(),
+      audit: this.service.listAudit({ page: 1, pageSize: 25 }),
+      auditSummary: this.service.getAuditSummary({}),
       integrations: this.service.listIntegrations(),
       consents: this.service.listConsents(),
       recovery: this.service.getRevenueRecovery(),
@@ -1298,7 +1417,12 @@ export class DentalPilotWorkflows {
         this.plans.set(result.plans);
         this.records.set(result.records);
         this.reminders.set(result.reminders);
-        this.audit.set(result.audit);
+        this.audit.set(result.audit.items);
+        this.auditTotal.set(result.audit.total);
+        this.auditPage.set(result.audit.page);
+        this.auditPageSize.set(result.audit.pageSize);
+        this.auditTotalPages.set(result.audit.totalPages);
+        this.auditSummary.set(result.auditSummary);
         this.integrations.set(result.integrations);
         this.consents.set(result.consents);
         this.recovery.set(result.recovery);

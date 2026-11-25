@@ -39,7 +39,11 @@ services:
     container_name: dentalpilot-migrate
     command: ["alembic", "upgrade", "head"]
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-CHANGE_ME}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-dentalpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB:-dentalpilot}
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME}
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-production}
     depends_on:
@@ -55,7 +59,11 @@ services:
     # Migrations are handled by the one-shot `migrate` service, not on every boot.
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-CHANGE_ME}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-dentalpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB:-dentalpilot}
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
@@ -116,7 +124,11 @@ services:
     container_name: dentalpilot-workers
     command: ["python", "-m", "app.workers.run_workers"]
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dentalpilot}:${POSTGRES_PASSWORD:-CHANGE_ME}@postgres:5432/${POSTGRES_DB:-dentalpilot}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-dentalpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB:-dentalpilot}
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME}
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-production}
       GROQ_API_KEY: ${GROQ_API_KEY:-}

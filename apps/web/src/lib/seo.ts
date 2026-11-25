@@ -93,6 +93,46 @@ export const routeMeta: Record<string, RouteMeta> = {
     title: 'Terms — Otheryn',
     description: 'The terms of using Otheryn services.',
   },
+  '/documentation': {
+    title: 'Documentation — Otheryn',
+    description: 'Implementation-first Otheryn documentation for platform concepts, products, APIs, integrations, security, and operations.',
+  },
+  '/documentation/getting-started': {
+    title: 'Getting Started — Otheryn Documentation',
+    description: 'Start here for Otheryn documentation scope, repository layout, and local development entry points.',
+  },
+  '/documentation/concepts': {
+    title: 'Platform Concepts — Otheryn Documentation',
+    description: 'Otheryn platform concepts, UETI capability model, and implementation status conventions.',
+  },
+  '/documentation/architecture': {
+    title: 'Architecture — Otheryn Documentation',
+    description: 'Architecture overview for the Otheryn monorepo, public website, and implemented DentalPilot AI product.',
+  },
+  '/documentation/products': {
+    title: 'Products & Modules — Otheryn Documentation',
+    description: 'Implemented Otheryn products and modules, with planned roadmap items clearly labeled.',
+  },
+  '/documentation/api': {
+    title: 'API Reference — Otheryn Documentation',
+    description: 'Reference for implemented API surfaces visible in the Otheryn repository.',
+  },
+  '/documentation/integrations': {
+    title: 'Integrations — Otheryn Documentation',
+    description: 'Implemented and configuration-dependent integrations for Otheryn products and web services.',
+  },
+  '/documentation/security': {
+    title: 'Security & Governance — Otheryn Documentation',
+    description: 'Security and governance controls documented with implementation evidence and planned capability labels.',
+  },
+  '/documentation/troubleshooting': {
+    title: 'Operations & Troubleshooting — Otheryn Documentation',
+    description: 'Operational checks and troubleshooting guidance for Otheryn web and local product workflows.',
+  },
+  '/documentation/changelog': {
+    title: 'Release Notes — Otheryn Documentation',
+    description: 'Evidence-based release notes for Otheryn documentation and website changes.',
+  },
 };
 
 const DEFAULT_META: RouteMeta = {
